@@ -1,0 +1,8 @@
+# CMake build tree — generated, includes fetched SDL3/GLM sources and binaries.
+build/
+
+# Compiled SPIR-V shaders are produced by glslc during the build (from Chunk 5).
+shaders/compiled/
+
+# Editor / OS cruft.
+.DS_Store
