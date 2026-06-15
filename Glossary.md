@@ -369,3 +369,222 @@ machine the selected GPU is "Apple M2 Pro" via the MoltenVK driver.
 **Further reading**
 - [MoltenVK (GitHub)](https://github.com/KhronosGroup/MoltenVK)
 - [Vulkan Guide — Portability](https://docs.vulkan.org/guide/latest/portability_initialization.html)
+
+______________________________________________________________________
+
+## Chunk 3 — Swapchain
+
+## SWAPCHAIN
+
+**What it is**
+A `VkSwapchainKHR` — a small set of images, managed as a rotating queue, that you
+render into and then hand to the display. At any moment one image is being shown
+on screen while the application draws the next into a different one; when the new
+one is ready it is *presented* and the roles rotate. The swapchain is created for
+a specific surface, at a specific size, format, and present mode.
+
+**Why it matters**
+You must never draw directly into the image currently being scanned out to the
+monitor — the viewer would see it half-finished (tearing) or flickering. The
+swapchain solves this by giving you separate images to work on and a controlled
+hand-off back to the display. It is also intrinsically tied to the window's size
+and the surface's properties, which is why resizing the window forces it to be
+rebuilt. In OpenGL the equivalent buffers were hidden; Vulkan makes the swapchain
+an explicit object you configure and own.
+
+**How it appears in this project**
+The whole of `src/swapchain.h` / `src/swapchain.cpp`. `Swapchain::create` chooses
+the format, present mode, extent, and image count, then calls
+`vkCreateSwapchainKHR` and retrieves the images. `recreate` rebuilds it on resize
+(after `VulkanContext::waitIdle`). `src/main.cpp` calls `recreate()` when
+`SdlContext::takeResized()` reports a resize.
+
+**Further reading**
+- [Vulkan Tutorial — Swap chain](https://vulkan-tutorial.com/Drawing_a_triangle/Presentation/Swap_chain)
+- [Vulkan Guide — Swapchain](https://docs.vulkan.org/guide/latest/wsi.html)
+
+______________________________________________________________________
+
+## IMAGE_VIEW
+
+**What it is**
+A `VkImageView` — a description of *how to read or write* a `VkImage`: which
+portion (mip levels, array layers), interpreted as which format, with which
+channel ordering. The image holds the pixels; the view is the lens you look at
+them through. You can have several different views of one image.
+
+**Why it matters**
+A raw `VkImage` is opaque memory with no agreed interpretation, so the pipeline
+never binds one directly — it always binds a view. The indirection is what lets
+the same image be used in different ways (e.g. a colour target now, a texture
+later, or one layer of a cube map) without copying. For the swapchain it is small
+but mandatory: each presentable image needs a view before a framebuffer (Chunk 4)
+can attach it.
+
+**How it appears in this project**
+`Swapchain::create` builds one `VkImageView` per swapchain image with
+`vkCreateImageView`: a 2D view of the colour aspect, one mip level, one layer,
+identity channel swizzle. They are stored in `m_imageViews` and destroyed in
+`Swapchain::destroy` (the images themselves belong to the swapchain).
+
+**Further reading**
+- [Vulkan Tutorial — Image views](https://vulkan-tutorial.com/Drawing_a_triangle/Presentation/Image_views)
+- [Vulkan Spec — Image Views](https://docs.vulkan.org/spec/latest/chapters/resources.html#resources-image-views)
+
+______________________________________________________________________
+
+## PRESENT_MODE
+
+**What it is**
+The policy by which finished swapchain images are handed to the display. The two
+that matter here:
+- **FIFO** — a strict first-in-first-out queue, one image shown per vertical
+  refresh. No tearing, and it is the only mode the spec guarantees exists. This
+  is classic v-sync.
+- **MAILBOX** — like FIFO but the queue holds only one waiting image; a newer one
+  replaces it rather than queueing behind it. No tearing, lower latency, but it
+  renders images that may never be shown (it burns more GPU/power and needs an
+  extra image).
+
+**Why it matters**
+The present mode is the direct trade-off between latency, smoothness, power, and
+tearing. FIFO is the safe, power-friendly default; MAILBOX trades efficiency for
+responsiveness. There is also IMMEDIATE (present right away, tearing allowed),
+which this project never selects. Choosing the mode is how you tune that balance.
+
+**How it appears in this project**
+`choosePresentMode` in `src/swapchain.cpp` prefers `VK_PRESENT_MODE_MAILBOX_KHR`
+and falls back to `VK_PRESENT_MODE_FIFO_KHR`. On this machine MAILBOX is not
+offered, so FIFO is used — printed in the swapchain log line.
+
+**Further reading**
+- [Vulkan Spec — VkPresentModeKHR](https://docs.vulkan.org/spec/latest/chapters/VK_KHR_surface/wsi.html#VkPresentModeKHR)
+- [Vulkan Tutorial — Presentation mode](https://vulkan-tutorial.com/Drawing_a_triangle/Presentation/Swap_chain)
+
+______________________________________________________________________
+
+## SCREEN_TEARING
+
+**What it is**
+A visual artefact where the top and bottom parts of the screen show two
+different frames at once, split by a horizontal seam. It happens when the image
+being scanned out to the monitor is changed partway through a refresh, so the
+display shows part of the old frame and part of the new one.
+
+**Why it matters**
+Tearing is the core problem the swapchain and present modes exist to manage. The
+display refreshes at fixed intervals (the vertical blank); if you swap the
+displayed image at any other moment, the seam appears. Synchronising the swap to
+the vertical blank (as FIFO and MAILBOX both do) eliminates it. Understanding
+tearing is what makes the present-mode choices meaningful rather than arbitrary.
+
+**How it appears in this project**
+Not a code symbol — it is the artefact avoided by choosing a v-synced present
+mode in `choosePresentMode` (`src/swapchain.cpp`). Both FIFO and MAILBOX prevent
+it; only the unused IMMEDIATE mode would allow it.
+
+**Further reading**
+- [Screen tearing (Wikipedia)](https://en.wikipedia.org/wiki/Screen_tearing)
+- [Vertical blanking interval (Wikipedia)](https://en.wikipedia.org/wiki/Vertical_blanking_interval)
+
+______________________________________________________________________
+
+## DOUBLE_BUFFERING
+
+**What it is**
+Using two images: one being displayed (the *front* buffer) and one being drawn
+into (the *back* buffer). When the back buffer is finished, the two are swapped.
+The viewer only ever sees a complete image.
+
+**Why it matters**
+It is the minimum needed to avoid showing a half-drawn frame. With a single
+buffer the viewer would watch the image being painted; with two, drawing always
+happens off-screen and only finished frames are shown. The cost is that, with
+strict v-sync, the GPU can stall waiting for the swap — which is what triple
+buffering improves on.
+
+**How it appears in this project**
+`Swapchain::create` requests `minImageCount + 1` images. On this surface the
+minimum is 2, giving 3 — so the project actually runs triple-buffered, but
+double buffering is the concept this "+1" builds up from.
+
+**Further reading**
+- [Multiple buffering (Wikipedia)](https://en.wikipedia.org/wiki/Multiple_buffering)
+- [Vulkan Tutorial — Swap chain](https://vulkan-tutorial.com/Drawing_a_triangle/Presentation/Swap_chain)
+
+______________________________________________________________________
+
+## TRIPLE_BUFFERING
+
+**What it is**
+Using three images instead of two: one on display and two the application can
+cycle through, so it never has to wait for the displayed image to be released
+before starting the next frame.
+
+**Why it matters**
+With double buffering and strict v-sync, if the application finishes early it
+must sit idle until the next refresh frees the front buffer. A third image lets
+it start the following frame immediately, keeping the GPU busy and reducing
+latency — at the cost of one more image's worth of memory. MAILBOX present mode
+relies on this extra image to always present the freshest frame.
+
+**How it appears in this project**
+The `minImageCount + 1` request in `Swapchain::create` resolves to 3 images on
+this Mac (printed as "3 images" in the swapchain log), i.e. triple buffering.
+
+**Further reading**
+- [Multiple buffering — triple buffering (Wikipedia)](https://en.wikipedia.org/wiki/Multiple_buffering#Triple_buffering)
+- [Vulkan Guide — Swapchain image count](https://docs.vulkan.org/guide/latest/wsi.html)
+
+______________________________________________________________________
+
+## COLOUR_FORMAT
+
+**What it is**
+A `VkFormat` describing how the colour of one pixel is stored: which channels are
+present, in what order, at what bit depth, and how the stored numbers map to
+values. For example `VK_FORMAT_B8G8R8A8_SRGB` is blue, green, red, alpha, each 8
+bits, with the values interpreted in the sRGB encoding.
+
+**Why it matters**
+The format determines memory size, precision, channel order, and — crucially —
+whether the hardware applies sRGB conversion when reading and writing. Picking the
+wrong one gives swapped colours, banding, or an image that looks too dark or too
+bright. The swapchain's format must be one the surface supports, so it is chosen
+from a queried list rather than assumed.
+
+**How it appears in this project**
+`chooseSurfaceFormat` in `src/swapchain.cpp` prefers `VK_FORMAT_B8G8R8A8_SRGB`.
+The chosen format is stored in `m_imageFormat`, used to create the image views,
+printed at startup, and will be declared to the render pass in Chunk 4.
+
+**Further reading**
+- [Vulkan Spec — Formats](https://docs.vulkan.org/spec/latest/chapters/formats.html)
+- [Understanding Vulkan image formats](https://www.khronos.org/blog/understanding-vulkan-image-formats)
+
+______________________________________________________________________
+
+## COLOUR_SPACE
+
+**What it is**
+A `VkColorSpaceKHR` describing how the numeric pixel values in a presented image
+should be interpreted as actual light by the display — for the swapchain, almost
+always `VK_COLOR_SPACE_SRGB_NONLINEAR_KHR` (standard sRGB). It is paired with the
+colour format when choosing a surface format.
+
+**Why it matters**
+Human brightness perception is non-linear, and displays emit light non-linearly,
+so a "gamma" encoding (sRGB) packs values to match perception and avoid banding
+in dark tones. The colour space tells the display which encoding the values are
+in; mismatch it and the whole image looks wrong. Format (how bits are stored) and
+colour space (how those values become light) are two halves of one decision,
+which is why Vulkan picks them together as a `VkSurfaceFormatKHR`.
+
+**How it appears in this project**
+`chooseSurfaceFormat` requires `VK_COLOR_SPACE_SRGB_NONLINEAR_KHR` alongside the
+sRGB format. The pair is passed to `vkCreateSwapchainKHR` as `imageFormat` and
+`imageColorSpace`.
+
+**Further reading**
+- [sRGB (Wikipedia)](https://en.wikipedia.org/wiki/SRGB)
+- [Vulkan Spec — Color Spaces](https://docs.vulkan.org/spec/latest/chapters/VK_KHR_surface/wsi.html#VkColorSpaceKHR)

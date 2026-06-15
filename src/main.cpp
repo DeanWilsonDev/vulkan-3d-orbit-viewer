@@ -6,13 +6,15 @@
 // until the user closes the window.
 //
 // Chunk 1 built the first beat: a resizable window driven by an event loop.
-// Chunk 2 adds the next beat: bringing Vulkan up — instance, device, queues, and
-// the surface that ties Vulkan to the window — but still draws nothing.
-// Windowing stays in SdlContext; all Vulkan lives in VulkanContext.
-// See Glossary: WINDOWING_SYSTEM, EVENT_LOOP, VULKAN_INSTANCE
+// Chunk 2 brought Vulkan up — instance, device, queues, and the surface tying
+// Vulkan to the window. Chunk 3 adds the swapchain: the chain of images the
+// renderer will present to the screen, rebuilt whenever the window resizes.
+// Still nothing is drawn. See Glossary: WINDOWING_SYSTEM, EVENT_LOOP,
+// VULKAN_INSTANCE, SWAPCHAIN
 
 #include "sdl_context.h"
 #include "vulkan_context.h"
+#include "swapchain.h"
 
 #include <cstdlib>
 #include <exception>
@@ -44,17 +46,30 @@ int main() {
         VulkanContext vulkan(sdl.window(), kEnableValidation);
         std::cout << "Vulkan initialised successfully.\n";
 
+        // --- Chapter 3: the swapchain ----------------------------------------
+        // The images the renderer will draw into and present to the window. It
+        // is sized to the window, so the loop below rebuilds it on resize.
+        // See Glossary: SWAPCHAIN
+        Swapchain swapchain(vulkan, sdl.window());
+
         // --- The main loop ---------------------------------------------------
         // A real-time application is a loop, and each iteration is one frame.
-        // For now the loop only handles input; in later chunks it will also
-        // update the camera and render. It runs until processEvents() reports
-        // that the user wants to quit. See Glossary: EVENT_LOOP
+        // For now the loop handles input and reacts to resizes; in later chunks
+        // it will also update the camera and render. It runs until
+        // processEvents() reports that the user wants to quit.
+        // See Glossary: EVENT_LOOP
         bool running = true;
         while (running) {
             // Handle every input event that arrived since the previous frame.
-            // This is the only work the loop does in Chunk 1.
             // See Glossary: EVENT_POLLING
             running = sdl.processEvents();
+
+            // If the window changed size, the swapchain images no longer match
+            // it and must be rebuilt before the next frame would be drawn.
+            // See Glossary: SWAPCHAIN
+            if (sdl.takeResized()) {
+                swapchain.recreate();
+            }
         }
     } catch (const std::exception& e) {
         // Any failure during setup (SDL init or window creation) is thrown and

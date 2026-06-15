@@ -53,6 +53,13 @@ public:
     VkQueue          presentQueue() const { return m_presentQueue; }
     const QueueFamilyIndices& queueFamilies() const { return m_queueFamilies; }
 
+    // Block until the GPU has finished all outstanding work on this device. Used
+    // before destroying resources the GPU might still be using — e.g. the old
+    // swapchain when the window is resized, and during teardown. This is a heavy
+    // stall, so it is only ever used on rare, non-per-frame events; Chunk 6
+    // introduces the fine-grained synchronisation used per frame instead.
+    void waitIdle() const { vkDeviceWaitIdle(m_device); }
+
 private:
     // Each of these is one step of construction, kept as a named function so the
     // constructor reads like a checklist of what Vulkan startup requires.

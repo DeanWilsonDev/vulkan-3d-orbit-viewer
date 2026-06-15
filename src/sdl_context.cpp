@@ -56,6 +56,14 @@ bool SdlContext::processEvents() {
             case SDL_EVENT_WINDOW_CLOSE_REQUESTED:
                 return false;
 
+            // The window's size in actual pixels changed (a drag-resize, a
+            // maximise, or a move between displays of different scale). The
+            // swapchain is sized to the window, so it must be rebuilt; we record
+            // that here and let the main loop act on it. See Glossary: SWAPCHAIN
+            case SDL_EVENT_WINDOW_PIXEL_SIZE_CHANGED:
+                m_resized = true;
+                break;
+
             default:
                 // Every other event is ignored for now. Mouse and keyboard
                 // events get handled in Chunk 10 when the orbit camera arrives.
@@ -64,4 +72,12 @@ bool SdlContext::processEvents() {
     }
     // No quit request was seen this frame, so the application keeps running.
     return true;
+}
+
+bool SdlContext::takeResized() {
+    // Hand the caller the pending-resize state and clear it, so a single resize
+    // triggers exactly one swapchain rebuild.
+    bool was = m_resized;
+    m_resized = false;
+    return was;
 }

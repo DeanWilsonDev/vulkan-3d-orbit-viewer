@@ -31,9 +31,15 @@ public:
 
     // Drain every event that has arrived since the previous frame and reduce
     // them to one answer: should the application keep running? Returns false
-    // once the user has asked to close the window or quit the app.
+    // once the user has asked to close the window or quit the app. Resize events
+    // are recorded here and reported separately via takeResized().
     // See Glossary: EVENT_LOOP, EVENT_POLLING
     bool processEvents();
+
+    // Returns true exactly once after the window's drawable size has changed,
+    // then clears the flag. The main loop uses this to know when to rebuild the
+    // swapchain. See Glossary: SWAPCHAIN
+    bool takeResized();
 
     // The raw SDL window handle. From Chunk 2 we hand this to SDL so it can
     // create a Vulkan surface for the window. Exposed read-only.
@@ -41,4 +47,5 @@ public:
 
 private:
     SDL_Window* m_window = nullptr;   // The OS window; owned and destroyed by this object.
+    bool m_resized = false;           // Set when a resize event arrives, cleared by takeResized().
 };
