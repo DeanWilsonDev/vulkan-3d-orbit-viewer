@@ -1,18 +1,19 @@
 #pragma once
 
 // Renderer — owns the per-frame machinery and runs one frame of the
-// acquire → record → submit → present cycle. This is the minimal frame loop:
-// a single command buffer and a single in-flight frame. Chunk 6 expands it to
-// two frames in flight with the full synchronisation treatment; the concepts are
-// introduced here because Chunk 5 needs to actually show its triangle.
-// See Glossary: COMMAND_BUFFER, FRAME_LOOP
+// acquire → record → submit → present cycle. It keeps two frames "in flight" so
+// the CPU can record the next frame while the GPU is still finishing the current
+// one, instead of the two stalling on each other.
+// See Glossary: COMMAND_BUFFER, FRAME_LOOP, FRAMES_IN_FLIGHT, SYNCHRONISATION
 //
 // (The spec assigns command buffers + synchronisation to Chunk 6 and a separate
-// renderer file is not in its layout; this file is a documented deviation made
-// to give Chunk 5 visible output — see docs/DECISIONS.md.)
+// renderer file is not in its layout; this file is a documented deviation —
+// the frame loop was brought forward to Chunk 5 for visible output, and Chunk 6
+// expanded it to two frames in flight. See docs/DECISIONS.md.)
 
 #include <vulkan/vulkan.h>
 
+#include <array>
 #include <cstdint>
 #include <vector>
 
@@ -38,6 +39,11 @@ public:
     // (the image count could change). See Glossary: SEMAPHORE
     void onSwapchainRecreated(const Swapchain& swapchain);
 
+    // How many frames the CPU may be working on ahead of the GPU. Two is the
+    // usual sweet spot: enough to keep both busy, not so many that input latency
+    // grows. See Glossary: FRAMES_IN_FLIGHT
+    static constexpr uint32_t kMaxFramesInFlight = 2;
+
 private:
     void createCommandResources();
     void createSyncObjects(uint32_t imageCount);
@@ -48,17 +54,25 @@ private:
 
     VulkanContext& m_context;
 
-    // A command pool allocates command buffers; one command buffer records this
-    // frame's draw commands. See Glossary: COMMAND_POOL, COMMAND_BUFFER
-    VkCommandPool   m_commandPool = VK_NULL_HANDLE;
-    VkCommandBuffer m_commandBuffer = VK_NULL_HANDLE;
+    // A command pool allocates command buffers; one command buffer per frame in
+    // flight, so a frame being recorded never touches a buffer the GPU is still
+    // reading. See Glossary: COMMAND_POOL, COMMAND_BUFFER
+    VkCommandPool                                       m_commandPool = VK_NULL_HANDLE;
+    std::array<VkCommandBuffer, kMaxFramesInFlight>     m_commandBuffers{};
 
-    // Synchronisation. imageAvailable: GPU waits for the swapchain image to be
-    // free before drawing. renderFinished: present waits for drawing to finish
-    // (one per swapchain image, the robust pattern). inFlight: the CPU waits on
-    // this fence so it does not start a new frame before the last one's GPU work
-    // is done. See Glossary: SEMAPHORE, FENCE, GPU_CPU_SYNC
-    VkSemaphore              m_imageAvailable = VK_NULL_HANDLE;
-    std::vector<VkSemaphore> m_renderFinished;   // indexed by swapchain image
-    VkFence                  m_inFlight = VK_NULL_HANDLE;
+    // Synchronisation, split by what each primitive coordinates:
+    //  - imageAvailable (per frame): the GPU waits for the acquired swapchain
+    //    image to be free before drawing into it.
+    //  - renderFinished (per swapchain image): present waits for that image's
+    //    drawing to finish. Per-image, so it is never reused while the
+    //    presentation engine may still be waiting on it.
+    //  - inFlight (per frame): the CPU waits on this fence so it does not start
+    //    reusing a frame's resources before that frame's GPU work is done.
+    // See Glossary: SEMAPHORE, FENCE, GPU_CPU_SYNC, SYNCHRONISATION
+    std::array<VkSemaphore, kMaxFramesInFlight> m_imageAvailable{};
+    std::vector<VkSemaphore>                    m_renderFinished;   // indexed by swapchain image
+    std::array<VkFence, kMaxFramesInFlight>     m_inFlight{};
+
+    // Which in-flight frame slot (0..kMaxFramesInFlight-1) the next frame uses.
+    uint32_t m_currentFrame = 0;
 };

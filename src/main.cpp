@@ -71,10 +71,10 @@ int main() {
         // See Glossary: GRAPHICS_PIPELINE
         ShaderPipeline pipeline(vulkan, renderPass.handle());
 
-        // --- Chapter 6 (preview): the frame loop machinery -------------------
-        // Command buffer + synchronisation that drive one frame. A minimal
-        // single-frame-in-flight version lives here so Chunk 5 can show output;
-        // Chunk 6 expands it. See Glossary: COMMAND_BUFFER, FRAME_LOOP
+        // --- Chapter 6: command buffers and synchronisation ------------------
+        // Command buffers + the semaphores/fences that drive each frame, with two
+        // frames in flight so the CPU records ahead while the GPU draws.
+        // See Glossary: COMMAND_BUFFER, FRAME_LOOP, FRAMES_IN_FLIGHT, SYNCHRONISATION
         Renderer renderer(vulkan, swapchain);
 
         // --- The main loop ---------------------------------------------------

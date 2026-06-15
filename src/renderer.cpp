@@ -39,14 +39,14 @@ void Renderer::createCommandResources() {
         throw std::runtime_error("vkCreateCommandPool failed");
     }
 
-    // Allocate one primary command buffer — the kind that can be submitted to a
-    // queue directly. See Glossary: COMMAND_BUFFER
+    // Allocate one primary command buffer per frame in flight — the kind that
+    // can be submitted to a queue directly. See Glossary: COMMAND_BUFFER
     VkCommandBufferAllocateInfo allocInfo{};
     allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
     allocInfo.commandPool = m_commandPool;
     allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-    allocInfo.commandBufferCount = 1;
-    if (vkAllocateCommandBuffers(m_context.device(), &allocInfo, &m_commandBuffer) != VK_SUCCESS) {
+    allocInfo.commandBufferCount = kMaxFramesInFlight;
+    if (vkAllocateCommandBuffers(m_context.device(), &allocInfo, m_commandBuffers.data()) != VK_SUCCESS) {
         throw std::runtime_error("vkAllocateCommandBuffers failed");
     }
 }
@@ -55,10 +55,23 @@ void Renderer::createSyncObjects(uint32_t imageCount) {
     VkSemaphoreCreateInfo semInfo{};
     semInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
 
-    // imageAvailable signals (GPU-side) when the acquired swapchain image is
-    // ready to be rendered into. See Glossary: SEMAPHORE
-    if (vkCreateSemaphore(m_context.device(), &semInfo, nullptr, &m_imageAvailable) != VK_SUCCESS) {
-        throw std::runtime_error("vkCreateSemaphore (imageAvailable) failed");
+    // The in-flight fence is created already signalled so each frame slot's very
+    // first wait returns immediately instead of deadlocking. See Glossary: FENCE
+    VkFenceCreateInfo fenceInfo{};
+    fenceInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
+    fenceInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
+
+    // Per-frame primitives: one imageAvailable semaphore and one inFlight fence
+    // for each frame that may be in flight at once. See Glossary: FRAMES_IN_FLIGHT
+    for (uint32_t i = 0; i < kMaxFramesInFlight; ++i) {
+        // imageAvailable signals (GPU-side) when the acquired swapchain image is
+        // ready to be rendered into. See Glossary: SEMAPHORE
+        if (vkCreateSemaphore(m_context.device(), &semInfo, nullptr, &m_imageAvailable[i]) != VK_SUCCESS) {
+            throw std::runtime_error("vkCreateSemaphore (imageAvailable) failed");
+        }
+        if (vkCreateFence(m_context.device(), &fenceInfo, nullptr, &m_inFlight[i]) != VK_SUCCESS) {
+            throw std::runtime_error("vkCreateFence failed");
+        }
     }
 
     // One renderFinished semaphore per swapchain image. Tying it to the image
@@ -70,15 +83,6 @@ void Renderer::createSyncObjects(uint32_t imageCount) {
             throw std::runtime_error("vkCreateSemaphore (renderFinished) failed");
         }
     }
-
-    // The in-flight fence is created already signalled so the very first frame's
-    // wait returns immediately instead of deadlocking. See Glossary: FENCE
-    VkFenceCreateInfo fenceInfo{};
-    fenceInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
-    fenceInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
-    if (vkCreateFence(m_context.device(), &fenceInfo, nullptr, &m_inFlight) != VK_SUCCESS) {
-        throw std::runtime_error("vkCreateFence failed");
-    }
 }
 
 void Renderer::destroySyncObjects() {
@@ -86,13 +90,15 @@ void Renderer::destroySyncObjects() {
         vkDestroySemaphore(m_context.device(), s, nullptr);
     }
     m_renderFinished.clear();
-    if (m_imageAvailable != VK_NULL_HANDLE) {
-        vkDestroySemaphore(m_context.device(), m_imageAvailable, nullptr);
-        m_imageAvailable = VK_NULL_HANDLE;
-    }
-    if (m_inFlight != VK_NULL_HANDLE) {
-        vkDestroyFence(m_context.device(), m_inFlight, nullptr);
-        m_inFlight = VK_NULL_HANDLE;
+    for (uint32_t i = 0; i < kMaxFramesInFlight; ++i) {
+        if (m_imageAvailable[i] != VK_NULL_HANDLE) {
+            vkDestroySemaphore(m_context.device(), m_imageAvailable[i], nullptr);
+            m_imageAvailable[i] = VK_NULL_HANDLE;
+        }
+        if (m_inFlight[i] != VK_NULL_HANDLE) {
+            vkDestroyFence(m_context.device(), m_inFlight[i], nullptr);
+            m_inFlight[i] = VK_NULL_HANDLE;
+        }
     }
 }
 
@@ -164,15 +170,23 @@ bool Renderer::drawFrame(Swapchain& swapchain, RenderPass& renderPass, ShaderPip
     const VkDevice device = m_context.device();
     const uint64_t noTimeout = std::numeric_limits<uint64_t>::max();
 
-    // Wait until the previous frame using this fence has finished on the GPU, so
-    // we do not overwrite resources it is still reading. See Glossary: FENCE
-    vkWaitForFences(device, 1, &m_inFlight, VK_TRUE, noTimeout);
+    // All per-frame resources are indexed by the current in-flight slot, so two
+    // consecutive frames use independent command buffers and fences and never
+    // collide. See Glossary: FRAMES_IN_FLIGHT
+    const uint32_t frame = m_currentFrame;
+    VkCommandBuffer cmd = m_commandBuffers[frame];
+
+    // Wait until this slot's previous frame has finished on the GPU, so we do not
+    // overwrite resources it is still reading. With two slots, slot N only blocks
+    // on the frame from two iterations ago, so the CPU keeps running ahead.
+    // See Glossary: FENCE
+    vkWaitForFences(device, 1, &m_inFlight[frame], VK_TRUE, noTimeout);
 
     // Acquire the next image to draw into; the GPU will signal imageAvailable
     // when it is actually ready. See Glossary: SWAPCHAIN, SEMAPHORE
     uint32_t imageIndex = 0;
     VkResult acquire = vkAcquireNextImageKHR(device, swapchain.handle(), noTimeout,
-                                             m_imageAvailable, VK_NULL_HANDLE, &imageIndex);
+                                             m_imageAvailable[frame], VK_NULL_HANDLE, &imageIndex);
     if (acquire == VK_ERROR_OUT_OF_DATE_KHR) {
         // The swapchain no longer matches the surface (e.g. just resized). Tell
         // the caller to recreate it; we drew nothing this frame.
@@ -184,16 +198,16 @@ bool Renderer::drawFrame(Swapchain& swapchain, RenderPass& renderPass, ShaderPip
 
     // Only reset the fence once we are committed to submitting work that will
     // re-signal it; resetting earlier would deadlock if we returned above.
-    vkResetFences(device, 1, &m_inFlight);
+    vkResetFences(device, 1, &m_inFlight[frame]);
 
-    vkResetCommandBuffer(m_commandBuffer, 0);
-    recordCommandBuffer(m_commandBuffer, imageIndex, swapchain, renderPass, pipeline);
+    vkResetCommandBuffer(cmd, 0);
+    recordCommandBuffer(cmd, imageIndex, swapchain, renderPass, pipeline);
 
     // Submit the recorded work to the graphics queue. It waits on imageAvailable
     // at the colour-output stage (so vertex work can start earlier) and signals
     // renderFinished for this image when done, plus the inFlight fence for the
     // CPU. See Glossary: SUBMISSION_QUEUE, SEMAPHORE, FENCE
-    VkSemaphore waitSemaphores[] = {m_imageAvailable};
+    VkSemaphore waitSemaphores[] = {m_imageAvailable[frame]};
     VkPipelineStageFlags waitStages[] = {VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT};
     VkSemaphore signalSemaphores[] = {m_renderFinished[imageIndex]};
 
@@ -203,10 +217,10 @@ bool Renderer::drawFrame(Swapchain& swapchain, RenderPass& renderPass, ShaderPip
     submit.pWaitSemaphores = waitSemaphores;
     submit.pWaitDstStageMask = waitStages;
     submit.commandBufferCount = 1;
-    submit.pCommandBuffers = &m_commandBuffer;
+    submit.pCommandBuffers = &cmd;
     submit.signalSemaphoreCount = 1;
     submit.pSignalSemaphores = signalSemaphores;
-    if (vkQueueSubmit(m_context.graphicsQueue(), 1, &submit, m_inFlight) != VK_SUCCESS) {
+    if (vkQueueSubmit(m_context.graphicsQueue(), 1, &submit, m_inFlight[frame]) != VK_SUCCESS) {
         throw std::runtime_error("vkQueueSubmit failed");
     }
 
@@ -222,6 +236,11 @@ bool Renderer::drawFrame(Swapchain& swapchain, RenderPass& renderPass, ShaderPip
     present.pImageIndices = &imageIndex;
 
     VkResult presentResult = vkQueuePresentKHR(m_context.presentQueue(), &present);
+
+    // Advance to the next in-flight slot for the following frame. Done after a
+    // successful submit so the slots rotate 0,1,0,1,…. See Glossary: FRAMES_IN_FLIGHT
+    m_currentFrame = (m_currentFrame + 1) % kMaxFramesInFlight;
+
     if (presentResult == VK_ERROR_OUT_OF_DATE_KHR || presentResult == VK_SUBOPTIMAL_KHR) {
         return true;  // recreate the swapchain
     }

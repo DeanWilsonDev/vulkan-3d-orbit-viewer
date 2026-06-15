@@ -133,7 +133,11 @@ void RenderPass::createRenderPass() {
     // A dependency makes the layout transition into the subpass happen at the
     // right moment: after the image is available and before we write colour or
     // depth. It is the bridge between work outside the render pass (EXTERNAL) and
-    // our subpass. See Glossary: SUBPASS
+    // our subpass — effectively an implicit pipeline barrier that also performs
+    // the attachments' image-layout transitions (UNDEFINED → attachment-optimal,
+    // and colour → PRESENT_SRC at the end), so this project needs no explicit
+    // vkCmdPipelineBarrier. See Glossary: SUBPASS, PIPELINE_BARRIER,
+    // IMAGE_LAYOUT_TRANSITION
     VkSubpassDependency dependency{};
     dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
     dependency.dstSubpass = 0;

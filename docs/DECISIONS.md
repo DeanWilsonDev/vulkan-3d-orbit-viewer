@@ -10,7 +10,7 @@ Decisions inherited directly from `SPEC.md` ("Confirmed Decisions" table —
 C++, SDL3, Vulkan, MoltenVK, GLM, OBJ, layered files) are not repeated here
 unless the implementation added nuance to them.
 
-Status as of writing: Chunks 1–5 complete.
+Status as of writing: Chunks 1–6 complete.
 
 ______________________________________________________________________
 
@@ -219,14 +219,38 @@ ______________________________________________________________________
   working directory for a local course build; a shipped app would instead copy
   shaders next to the executable or embed them.
 
+## Chunk 6 — Command buffers and synchronisation
+
+- **Scope (consequence of the Chunk 5 decision): this chunk *expands* the frame
+  loop rather than introducing it.** Because Chunk 5 pulled command buffers + a
+  minimal 1-frame sync forward, Chunk 6's real work was: raise to two frames in
+  flight, complete the synchronisation, and add the remaining glossary entries
+  (`SYNCHRONISATION`, `FRAMES_IN_FLIGHT`, `PIPELINE_BARRIER`,
+  `IMAGE_LAYOUT_TRANSITION`).
+- **Frames in flight = 2.** Per-frame command buffer, image-available semaphore,
+  and in-flight fence are now `std::array`s of size 2; `m_currentFrame` cycles
+  `0,1`. This lets the CPU record frame K+1 while the GPU runs frame K.
+- **`renderFinished` semaphores stay per swapchain image** (not per frame) — the
+  validation-safe pattern retained from Chunk 5. So there are two distinct counts:
+  per-frame (2) and per-image (swapchain image count, 3 here).
+- **No explicit `vkCmdPipelineBarrier`.** All ordering and image-layout
+  transitions this project needs are handled by the render pass's attachment
+  layouts + subpass dependency (an implicit barrier). `PIPELINE_BARRIER` and
+  `IMAGE_LAYOUT_TRANSITION` are documented as concepts and tied to that code; an
+  explicit barrier would only be needed for render-to-texture / compute steps.
+- **Changes stayed in `renderer.h/.cpp`** (+ a comment in `render_pass.cpp` and
+  `main.cpp`), not `vulkan_context` as the spec's Chunk 6 file list suggested —
+  consistent with the Chunk 5 decision to keep the frame loop in `Renderer`.
+- **Verified "full frame rate / no unnecessary stalling"** with a temporary FPS
+  counter: steady ~119 fps on this 120 Hz (ProMotion) display, i.e. capped at the
+  v-synced refresh rate (FIFO), which is the expected best case. Counter reverted.
+
 ______________________________________________________________________
 
 ## Open items / things deferred deliberately
 
-- **Frames in flight = 1** today; raise to 2 in Chunk 6 (its core task), along
-  with pipeline barriers and image-layout-transition coverage.
 - **`Renderer` lives in its own file**, where the spec attributed command buffers
-  to `vulkan_context`; revisit if consolidating in Chunk 6.
+  to `vulkan_context`. Settled: keeping it separate; noted as a deviation.
 - **`findMemoryType` location**: still a local static in `render_pass.cpp`; may
   move to `VulkanContext` in Chunk 7 when buffers need the same logic.
 - **Swapchain `recreate()`** currently destroys before recreating (no

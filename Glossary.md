@@ -1394,3 +1394,122 @@ reports the swapchain is out of date.
 **Further reading**
 - [Vulkan Tutorial — Rendering and presentation](https://vulkan-tutorial.com/Drawing_a_triangle/Drawing/Rendering_and_presentation)
 - [Game Programming Patterns — Game Loop](https://gameprogrammingpatterns.com/game-loop.html)
+
+______________________________________________________________________
+
+## Chunk 6 — Command Buffers and Synchronisation (completing the set)
+
+> The frame loop itself was built in Chunk 5 (see the entries above). Chunk 6
+> raises it to two frames in flight and completes the synchronisation concepts.
+
+## SYNCHRONISATION
+
+**What it is**
+The umbrella discipline of controlling the order and visibility of work across the
+GPU and CPU: which operations must finish before others start, and when one
+operation's writes become visible to another. Vulkan's tools for it are
+semaphores (GPU↔GPU), fences (GPU→CPU), pipeline barriers and subpass
+dependencies (ordering + memory visibility within the GPU), and events.
+
+**Why it matters**
+Vulkan executes work asynchronously and does almost nothing implicitly, so
+*correctness* depends on the application stating every ordering and visibility
+requirement explicitly. Get it wrong and you get races: flickering, corruption,
+or crashes that may only appear on some hardware. This explicitness is also the
+source of Vulkan's performance — the driver never inserts conservative,
+just-in-case stalls the way older APIs did.
+
+**How it appears in this project**
+Spread across the renderer and render pass: the per-frame fence + two semaphores
+in `Renderer::drawFrame` (GPU↔GPU and GPU→CPU ordering), the subpass dependency
+in `RenderPass::createRenderPass` (intra-GPU ordering + layout transitions), and
+`VulkanContext::waitIdle` (the coarse, whole-device stall used on resize/shutdown).
+
+**Further reading**
+- [Vulkan Guide — Synchronization](https://docs.vulkan.org/guide/latest/synchronization.html)
+- [Khronos — Synchronization examples](https://github.com/KhronosGroup/Vulkan-Docs/wiki/Synchronization-Examples)
+
+______________________________________________________________________
+
+## FRAMES_IN_FLIGHT
+
+**What it is**
+The number of frames the CPU is allowed to be working on before it must wait for
+the GPU to catch up. With N frames in flight, there are N independent copies of
+the per-frame resources (command buffer, image-available semaphore, in-flight
+fence) so frame K+1 can be recorded while frame K is still executing on the GPU.
+
+**Why it matters**
+With only one frame in flight the CPU records a frame, submits it, then sits idle
+waiting for the GPU to finish before starting the next — the two take turns and
+both are underused. Allowing a second frame keeps both busy and smooths out
+frame-time spikes. Going higher adds little throughput but increases input
+latency (the CPU runs further ahead of what is shown), so two is the common
+default.
+
+**How it appears in this project**
+`Renderer::kMaxFramesInFlight = 2`. Command buffers, `m_imageAvailable`, and
+`m_inFlight` are arrays of that size; `m_currentFrame` cycles `0,1,0,1,…` and
+indexes them in `drawFrame`. (The `renderFinished` semaphores are per swapchain
+*image*, a separate count.)
+
+**Further reading**
+- [Vulkan Tutorial — Frames in flight](https://vulkan-tutorial.com/Drawing_a_triangle/Drawing/Frames_in_flight)
+- [Vulkan Guide — Swapchain & frame pacing](https://docs.vulkan.org/guide/latest/swapchain_semaphore_reuse.html)
+
+______________________________________________________________________
+
+## PIPELINE_BARRIER
+
+**What it is**
+An explicit synchronisation command (`vkCmdPipelineBarrier`) inserted into a
+command buffer that says: work in these pipeline stages before the barrier must
+complete, and their memory writes become visible, before work in these stages
+after it begins. It can also carry image-layout transitions and queue-family
+ownership transfers.
+
+**Why it matters**
+It is the fine-grained, in-command-buffer tool for GPU-side ordering and memory
+visibility — the thing you reach for when one GPU operation depends on another's
+output (e.g. render-to-texture then sample it). Subpass dependencies inside a
+render pass are essentially the render pass's built-in form of the same mechanism.
+
+**How it appears in this project**
+No *explicit* `vkCmdPipelineBarrier` is used: the only ordering and layout work
+needed is handled by the render pass's subpass dependency and attachment layouts
+(`RenderPass::createRenderPass`). The concept is documented because it is the
+general mechanism, and any render-to-texture or compute step added later would use
+it directly. See Glossary: IMAGE_LAYOUT_TRANSITION, SUBPASS
+
+**Further reading**
+- [Vulkan Guide — Synchronization (barriers)](https://docs.vulkan.org/guide/latest/synchronization.html)
+- [Vulkan Spec — Pipeline barriers](https://docs.vulkan.org/spec/latest/chapters/synchronization.html#synchronization-pipeline-barriers)
+
+______________________________________________________________________
+
+## IMAGE_LAYOUT_TRANSITION
+
+**What it is**
+Changing a `VkImage` from one *layout* to another. A layout is the internal memory
+arrangement the GPU expects an image to be in for a particular use — e.g.
+`COLOR_ATTACHMENT_OPTIMAL` for rendering into it, `PRESENT_SRC_KHR` for handing it
+to the display, `SHADER_READ_ONLY_OPTIMAL` for sampling it as a texture.
+Transitions happen via pipeline barriers or, inside a render pass, automatically.
+
+**Why it matters**
+The same image is laid out differently in memory depending on how it is being
+used, and using it in the wrong layout is undefined behaviour. Making layouts
+explicit lets the GPU store images in the most efficient form for each use (for
+example, compressed for rendering) instead of one compromise format. It is one of
+the more Vulkan-specific concepts with no direct OpenGL equivalent.
+
+**How it appears in this project**
+Handled implicitly by the render pass. Each attachment declares an `initialLayout`
+and `finalLayout` (e.g. the colour attachment goes `UNDEFINED` →
+`COLOR_ATTACHMENT_OPTIMAL` during the pass → `PRESENT_SRC_KHR` at the end), and the
+subpass dependency schedules those transitions. No manual transition code is
+needed in this project.
+
+**Further reading**
+- [Vulkan Tutorial — Image layout transitions](https://vulkan-tutorial.com/Texture_mapping/Images)
+- [Vulkan Spec — Image layouts](https://docs.vulkan.org/spec/latest/chapters/resources.html#resources-image-layouts)
