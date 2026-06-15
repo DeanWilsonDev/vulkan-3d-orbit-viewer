@@ -10,7 +10,7 @@ Decisions inherited directly from `SPEC.md` ("Confirmed Decisions" table —
 C++, SDL3, Vulkan, MoltenVK, GLM, OBJ, layered files) are not repeated here
 unless the implementation added nuance to them.
 
-Status as of writing: Chunks 1–4 complete.
+Status as of writing: Chunks 1–5 complete.
 
 ______________________________________________________________________
 
@@ -178,15 +178,60 @@ ______________________________________________________________________
   subpasses; the dependency is included as correct practice for the layout
   transition even though nothing is drawn yet.
 
+## Chunk 5 — Shaders and the graphics pipeline
+
+- **Scope decision (reversed from Chunk 4): build the frame loop and show the
+  triangle.** Unlike Chunk 4, Chunk 5's "what gets built" explicitly lists
+  "a hardcoded triangle rendered using the pipeline" — rendering is in-scope by
+  the spec's own words. Asked the user, who chose to bring the minimal
+  command-buffer + synchronisation machinery (the spec's Chunk 6 content) forward
+  so the triangle is actually visible. This restores the spec's "earliest visible
+  output" goal and makes Chunk 5's checkpoint literally verifiable. **Consequence:**
+  Chunk 6 becomes "expand to frames-in-flight = 2 + robust sync + barriers/layout
+  transitions" rather than introducing command buffers from scratch.
+- **New file `renderer.h/.cpp` (deviation from the spec's file list).** The spec
+  would put command buffers + sync in `vulkan_context`. A dedicated `Renderer`
+  keeps `VulkanContext` focused on instance/device and isolates the per-frame
+  orchestration. Documented here as the deviation it is.
+- **Single frame in flight in Chunk 5** (one command buffer, one image-available
+  semaphore, one fence). The minimum that can present; Chunk 6 raises it to 2.
+- **Per-swapchain-image `renderFinished` semaphores**, not per-frame. This is the
+  pattern current validation layers expect (a per-frame render-finished semaphore
+  can still be in use by the presentation engine when reused). They are rebuilt in
+  `onSwapchainRecreated` since the image count could change.
+- **Hardcoded triangle via `gl_VertexIndex`, no vertex buffer.** Three positions
+  live in `mesh.vert`; vertex buffers arrive in Chunk 7. Cull mode is therefore
+  `NONE` (the triangle's winding is not guaranteed); back-face culling waits for
+  Chunk 7.
+- **Dynamic viewport + scissor.** Left dynamic in the pipeline and set per-frame,
+  so the single pipeline survives window resizes without rebuilding.
+- **Depth test enabled in the pipeline** (`LESS`, depth write on) against the
+  Chunk 4 depth attachment, even though a single triangle does not need it — it
+  exercises the full target set and is correct for what follows.
+- **Colour: flat orange `(0.90, 0.55, 0.20)`** in `mesh.frag`, chosen to read
+  clearly against the dark blue-grey clear colour. Per-fragment lighting is
+  Chunk 11.
+- **Shader build: `glslc` via `Vulkan::glslc`**, compiling `mesh.vert`/`mesh.frag`
+  to `shaders/compiled/*.spv` as a CMake custom target the executable depends on.
+  Compilation is never a manual step (matches the spec).
+- **Shader location baked in via `SHADER_DIR` compile definition** (absolute path
+  to `shaders/compiled`). Simplest reliable way to find SPIR-V regardless of
+  working directory for a local course build; a shipped app would instead copy
+  shaders next to the executable or embed them.
+
 ______________________________________________________________________
 
 ## Open items / things deferred deliberately
 
-- **First on-screen frame** (clear colour visible): deferred from Chunk 4 to
-  Chunk 6 per the scope decision above.
-- **`findMemoryType` location**: may move from `render_pass.cpp` to
-  `VulkanContext` in Chunk 7.
+- **Frames in flight = 1** today; raise to 2 in Chunk 6 (its core task), along
+  with pipeline barriers and image-layout-transition coverage.
+- **`Renderer` lives in its own file**, where the spec attributed command buffers
+  to `vulkan_context`; revisit if consolidating in Chunk 6.
+- **`findMemoryType` location**: still a local static in `render_pass.cpp`; may
+  move to `VulkanContext` in Chunk 7 when buffers need the same logic.
 - **Swapchain `recreate()`** currently destroys before recreating (no
-  `oldSwapchain`); could be upgraded if smooth resize-while-rendering is wanted.
+  `oldSwapchain`); could be upgraded for smoother resize-while-rendering.
 - **Startup double swapchain-create log**: left in place; trivial to suppress
   with an "extent unchanged → skip" guard if desired.
+- **Minimised window** uses a busy-wait `continue` (skips drawing); fine for a
+  POC, could block on events to save power.

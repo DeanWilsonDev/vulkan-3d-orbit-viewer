@@ -66,6 +66,8 @@ add_executable(vulkan-orbit-viewer
     src/vulkan_context.cpp
     src/swapchain.cpp
     src/render_pass.cpp
+    src/shader_pipeline.cpp
+    src/renderer.cpp
 )
 
 # Let the sources include each other by bare filename ("sdl_context.h").
@@ -75,3 +77,34 @@ target_include_directories(vulkan-orbit-viewer PRIVATE src)
 # a header-only interface target that just adds GLM's include path;
 # Vulkan::Vulkan adds the Vulkan headers and links the loader.
 target_link_libraries(vulkan-orbit-viewer PRIVATE SDL3::SDL3 glm::glm Vulkan::Vulkan)
+
+# --- Shader compilation ------------------------------------------------------
+# GLSL shaders are compiled to SPIR-V at build time with glslc (shipped in the
+# Vulkan SDK; FindVulkan exposes it as the Vulkan::glslc target). Shader
+# compilation is part of the build, never a manual step.
+# See Glossary: SPIR_V, GLSL
+set(SHADER_SRC_DIR ${CMAKE_CURRENT_SOURCE_DIR}/shaders)
+set(SHADER_OUT_DIR ${CMAKE_CURRENT_SOURCE_DIR}/shaders/compiled)
+file(MAKE_DIRECTORY ${SHADER_OUT_DIR})
+
+set(SHADER_SOURCES mesh.vert mesh.frag)
+set(SHADER_SPV_FILES)
+foreach(shader ${SHADER_SOURCES})
+    set(spv ${SHADER_OUT_DIR}/${shader}.spv)
+    add_custom_command(
+        OUTPUT ${spv}
+        COMMAND Vulkan::glslc ${SHADER_SRC_DIR}/${shader} -o ${spv}
+        DEPENDS ${SHADER_SRC_DIR}/${shader}
+        COMMENT "Compiling ${shader} -> SPIR-V"
+        VERBATIM)
+    list(APPEND SHADER_SPV_FILES ${spv})
+endforeach()
+
+# A target that builds all SPIR-V, made a dependency of the executable so the
+# shaders are always up to date before we run.
+add_custom_target(shaders DEPENDS ${SHADER_SPV_FILES})
+add_dependencies(vulkan-orbit-viewer shaders)
+
+# Bake the compiled-shader directory in so the program finds its SPIR-V from any
+# working directory (simple and reliable for this local course build).
+target_compile_definitions(vulkan-orbit-viewer PRIVATE SHADER_DIR="${SHADER_OUT_DIR}")

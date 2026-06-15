@@ -811,3 +811,586 @@ later, a sensible near/far range in the perspective projection.
 **Further reading**
 - [Z-fighting (Wikipedia)](https://en.wikipedia.org/wiki/Z-fighting)
 - [NVIDIA — Depth precision visualized](https://developer.nvidia.com/content/depth-precision-visualized)
+
+______________________________________________________________________
+
+## Chunk 5 — Shaders and the Graphics Pipeline
+
+## SHADER
+
+**What it is**
+A small program that runs on the GPU, in parallel across many data elements, as
+one stage of the graphics pipeline. The two in this project are the vertex shader
+(runs per vertex) and the fragment shader (runs per fragment). They are written
+in GLSL and compiled to SPIR-V.
+
+**Why it matters**
+Shaders are the *programmable* part of an otherwise fixed pipeline: they are where
+you express how vertices are positioned and how surfaces are coloured and lit. The
+GPU runs thousands of shader invocations simultaneously, which is why graphics
+work is expressed as tiny per-element programs rather than loops on the CPU.
+
+**How it appears in this project**
+`shaders/mesh.vert` and `shaders/mesh.frag`, compiled to SPIR-V by the build and
+loaded in `ShaderPipeline` (`src/shader_pipeline.cpp`) as `VkShaderModule`s that
+become the pipeline's programmable stages.
+
+**Further reading**
+- [Vulkan Tutorial — Shader modules](https://vulkan-tutorial.com/Drawing_a_triangle/Graphics_pipeline_basics/Shader_modules)
+- [LearnOpenGL — Shaders](https://learnopengl.com/Getting-started/Shaders)
+
+______________________________________________________________________
+
+## VERTEX_SHADER
+
+**What it is**
+The pipeline stage that runs once per input vertex. Its required output is the
+vertex's clip-space position via the built-in `gl_Position`; it may also pass
+extra per-vertex data (colour, normal, texture coordinates) down to later stages.
+
+**Why it matters**
+It is where geometry is transformed: from the model's own coordinates into the
+final on-screen position. In later chunks this is where the model-view-projection
+matrix is applied, turning a 3D model and a camera into 2D screen positions. Run
+per vertex, it is far cheaper than doing the same work per pixel.
+
+**How it appears in this project**
+`shaders/mesh.vert`. In Chunk 5 it outputs three hardcoded corners selected by
+`gl_VertexIndex`; from Chunk 7 it reads real vertex attributes, and from Chunk 8
+it applies the MVP transform.
+
+**Further reading**
+- [Vulkan Spec — Vertex shaders](https://docs.vulkan.org/spec/latest/chapters/pipelines.html)
+- [LearnOpenGL — Hello Triangle](https://learnopengl.com/Getting-started/Hello-Triangle)
+
+______________________________________________________________________
+
+## FRAGMENT_SHADER
+
+**What it is**
+The pipeline stage that runs once per fragment — each candidate pixel a triangle
+covers — and outputs that fragment's colour (and implicitly contributes its
+depth). Its inputs are values interpolated across the triangle from the vertex
+shader's outputs.
+
+**Why it matters**
+It is where surface appearance is decided: texturing, lighting, and colour all
+happen here. Because there are vastly more fragments than vertices, the fragment
+shader is usually the pipeline's heaviest stage, so what you do per fragment
+matters most for performance.
+
+**How it appears in this project**
+`shaders/mesh.frag`. In Chunk 5 it outputs one flat orange colour; Chunk 11 turns
+it into a lit shader computing diffuse lighting per fragment.
+
+**Further reading**
+- [Vulkan Tutorial — Fragment shader](https://vulkan-tutorial.com/Drawing_a_triangle/Graphics_pipeline_basics/Shader_modules)
+- [LearnOpenGL — Basic Lighting](https://learnopengl.com/Lighting/Basic-Lighting)
+
+______________________________________________________________________
+
+## FRAGMENT
+
+**What it is**
+A single candidate pixel produced by rasterising a triangle: it has a screen
+position, an interpolated depth, and interpolated attributes, and it is processed
+by the fragment shader. A fragment becomes a pixel only if it survives the depth
+test and other per-fragment operations.
+
+**Why it matters**
+The distinction between *fragment* and *pixel* matters: many fragments can map to
+the same pixel across overlapping triangles, and only one (or a blend) ends up
+stored. Understanding fragments explains where per-pixel cost comes from and why
+depth testing and overdraw are performance topics.
+
+**How it appears in this project**
+Not a code symbol — it is the unit the fragment shader (`shaders/mesh.frag`)
+operates on, and what the depth test in the pipeline keeps or discards.
+
+**Further reading**
+- [Fragment (computer graphics) (Wikipedia)](https://en.wikipedia.org/wiki/Fragment_(computer_graphics))
+- [Vulkan Spec — Fragment operations](https://docs.vulkan.org/spec/latest/chapters/fragops.html)
+
+______________________________________________________________________
+
+## GLSL
+
+**What it is**
+The OpenGL Shading Language — a C-like high-level language for writing shaders.
+Vulkan does not consume GLSL directly; the GLSL source is compiled to SPIR-V
+bytecode first (here by `glslc`).
+
+**Why it matters**
+It is the human-readable form shaders are authored in: familiar syntax, vector
+and matrix types, and built-ins like `gl_Position`. Keeping authoring in GLSL but
+shipping SPIR-V gives the best of both — readable source, portable bytecode.
+
+**How it appears in this project**
+`shaders/mesh.vert` and `shaders/mesh.frag` are GLSL (note the `#version 450`).
+`CMakeLists.txt` compiles them with `Vulkan::glslc`.
+
+**Further reading**
+- [GLSL (Wikipedia)](https://en.wikipedia.org/wiki/OpenGL_Shading_Language)
+- [Khronos GLSL specification](https://www.khronos.org/registry/OpenGL/specs/gl/GLSLangSpec.4.60.html)
+
+______________________________________________________________________
+
+## SPIR_V
+
+**What it is**
+A binary intermediate representation (bytecode) for shaders that Vulkan consumes
+directly. GLSL (or HLSL) is compiled ahead of time into SPIR-V, which the GPU
+driver then turns into native machine code when the pipeline is created.
+
+**Why it matters**
+Shipping bytecode instead of source means the driver does not have to embed a full
+GLSL compiler, compilation is more predictable and faster at load time, and tools
+can target one stable format from many source languages. It is a key part of
+Vulkan's "explicit, low-overhead" philosophy.
+
+**How it appears in this project**
+`glslc` produces `shaders/compiled/mesh.vert.spv` and `mesh.frag.spv` during the
+build. `ShaderPipeline::readFile` loads the bytecode and `createShaderModule`
+wraps it in a `VkShaderModule`.
+
+**Further reading**
+- [SPIR-V (Wikipedia)](https://en.wikipedia.org/wiki/Standard_Portable_Intermediate_Representation)
+- [Khronos — SPIR-V overview](https://www.khronos.org/spir/)
+
+______________________________________________________________________
+
+## PROGRAMMABLE_PIPELINE_STAGES
+
+**What it is**
+The stages of the graphics pipeline that run your shader code — principally the
+vertex shader and fragment shader (plus optional geometry, tessellation, and mesh
+stages). They sit between and around the fixed-function stages.
+
+**Why it matters**
+The split between programmable and fixed-function stages is the core shape of a
+modern GPU pipeline: fixed-function hardware does the heavy, standardised work
+(rasterisation, blending) at full speed, while programmable stages let you define
+the parts that vary between applications (transforms, shading).
+
+**How it appears in this project**
+The two `VkPipelineShaderStageCreateInfo` entries in `ShaderPipeline` declare the
+vertex and fragment stages and which module/entry point each uses.
+
+**Further reading**
+- [Vulkan Tutorial — Graphics pipeline introduction](https://vulkan-tutorial.com/Drawing_a_triangle/Graphics_pipeline_basics/Introduction)
+- [Render pipeline overview (Khronos)](https://docs.vulkan.org/guide/latest/pipelines.html)
+
+______________________________________________________________________
+
+## FIXED_FUNCTION_PIPELINE
+
+**What it is**
+The non-programmable stages of the pipeline, configured rather than coded: input
+assembly, rasterisation, depth/stencil testing, colour blending, and the
+viewport/scissor transform. You set their parameters via state structs at pipeline
+creation.
+
+**Why it matters**
+These operations are the same for every application and map to dedicated, highly
+optimised hardware, so they are exposed as configuration, not code. Knowing which
+parts are fixed-function (and merely configured) versus programmable tells you
+where you can change behaviour and where you can only tune parameters.
+
+**How it appears in this project**
+All the `VkPipeline*StateCreateInfo` structs in `ShaderPipeline::ShaderPipeline`:
+input assembly, rasteriser, multisample, depth/stencil, colour blend, viewport.
+
+**Further reading**
+- [Vulkan Tutorial — Fixed functions](https://vulkan-tutorial.com/Drawing_a_triangle/Graphics_pipeline_basics/Fixed_functions)
+- [Fixed-function (Wikipedia)](https://en.wikipedia.org/wiki/Fixed-function)
+
+______________________________________________________________________
+
+## GRAPHICS_PIPELINE
+
+**What it is**
+A `VkPipeline` — a single immutable object that bundles *everything* needed to
+turn draw calls into pixels: the shader stages plus every fixed-function setting
+(vertex input, input assembly, rasteriser, depth/stencil, blending, viewport
+policy) and a reference to the render pass it targets.
+
+**Why it matters**
+Vulkan bakes all this state into one object up front so that, at draw time, the
+driver has no decisions left to make — binding a pipeline is cheap and there are
+no surprise recompiles mid-frame (the stalls that plagued older APIs). The cost is
+that almost any state change means building a different pipeline; the standard
+escape hatch is *dynamic state* for a few frequently-changing settings.
+
+**How it appears in this project**
+Built in `ShaderPipeline::ShaderPipeline` via `vkCreateGraphicsPipelines`. Viewport
+and scissor are left dynamic so the one pipeline survives window resizes; it is
+bound each frame with `vkCmdBindPipeline` in `Renderer::recordCommandBuffer`.
+
+**Further reading**
+- [Vulkan Tutorial — Conclusion (pipeline)](https://vulkan-tutorial.com/Drawing_a_triangle/Graphics_pipeline_basics/Conclusion)
+- [Vulkan Guide — Pipelines](https://docs.vulkan.org/guide/latest/pipelines.html)
+
+______________________________________________________________________
+
+## PIPELINE_LAYOUT
+
+**What it is**
+A `VkPipelineLayout` — the declaration of what external resources a pipeline's
+shaders can access: which descriptor set layouts (uniforms, textures) and which
+push-constant ranges. It is the interface between the pipeline and the data bound
+to it.
+
+**Why it matters**
+Separating the layout from the pipeline lets the driver know the shape of the
+shader's inputs independently of the shader code, and lets multiple pipelines
+share a layout. It is required even when empty, because the pipeline must declare
+its (possibly nonexistent) resource interface.
+
+**How it appears in this project**
+`ShaderPipeline` creates an **empty** `VkPipelineLayout` — the hardcoded triangle
+reads nothing external. Chunk 8 fills it in with a descriptor set layout for the
+uniform buffer (MVP matrices).
+
+**Further reading**
+- [Vulkan Spec — Pipeline layouts](https://docs.vulkan.org/spec/latest/chapters/descriptorsets.html#descriptorsets-pipelinelayout)
+- [Vulkan Guide — Descriptor sets](https://docs.vulkan.org/guide/latest/descriptor_sets.html)
+
+______________________________________________________________________
+
+## RASTERISATION
+
+**What it is**
+The fixed-function step that converts a primitive (here, a triangle defined by
+its clip-space vertices) into a set of fragments — figuring out which pixels the
+triangle covers and interpolating the per-vertex outputs across them.
+
+**Why it matters**
+It is the bridge from geometry to pixels, the moment 3D becomes 2D coverage. It is
+also where attribute interpolation happens, which is why a colour or normal set
+per vertex produces a smooth gradient across the triangle's interior.
+
+**How it appears in this project**
+Performed by the GPU between the vertex and fragment shaders. Its parameters are
+the `VkPipelineRasterizationStateCreateInfo` (and input assembly topology) in
+`ShaderPipeline`. The `vkCmdDraw(cmd, 3, …)` call feeds it the triangle.
+
+**Further reading**
+- [Rasterisation (Wikipedia)](https://en.wikipedia.org/wiki/Rasterisation)
+- [Scratchapixel — Rasterization](https://www.scratchapixel.com/lessons/3d-basic-rendering/rasterization-practical-implementation/overview-rasterization-algorithm.html)
+
+______________________________________________________________________
+
+## RASTERISER
+
+**What it is**
+The fixed-function hardware/stage that performs rasterisation, configured by a
+`VkPipelineRasterizationStateCreateInfo`. Its settings include polygon fill mode,
+face culling, front-face winding, and line width.
+
+**Why it matters**
+Its configuration decides which fragments even reach the fragment shader. Face
+culling here (disabled in Chunk 5, enabled in Chunk 7) is a major optimisation:
+skipping triangles that face away from the camera roughly halves fragment work
+for closed meshes.
+
+**How it appears in this project**
+The `rasteriser` struct in `ShaderPipeline`: `POLYGON_MODE_FILL`, `CULL_MODE_NONE`
+(no culling yet, since the hardcoded triangle's winding is not guaranteed),
+counter-clockwise front face, line width 1.0.
+
+**Further reading**
+- [Vulkan Spec — Rasterization](https://docs.vulkan.org/spec/latest/chapters/primsrast.html)
+- [Vulkan Tutorial — Fixed functions](https://vulkan-tutorial.com/Drawing_a_triangle/Graphics_pipeline_basics/Fixed_functions)
+
+______________________________________________________________________
+
+## CLIP_SPACE
+
+**What it is**
+The coordinate space the vertex shader outputs into via `gl_Position`, a 4D
+homogeneous coordinate (x, y, z, w). The GPU clips primitives against the view
+volume in this space, then divides x, y, z by w (the "perspective divide") to get
+normalised device coordinates.
+
+**Why it matters**
+It is the agreed hand-off point between your shader and the fixed-function
+pipeline: whatever transforms you apply, the vertex shader's job is to land
+vertices in clip space. The w component is what makes perspective possible — the
+divide by w is what makes distant things smaller (covered in Chunk 8).
+
+**How it appears in this project**
+`shaders/mesh.vert` writes `gl_Position` directly in clip space. In Chunk 5 the
+hardcoded positions already have w = 1, so clip space equals NDC; Chunk 8
+introduces a real projection matrix that produces a meaningful w.
+
+**Further reading**
+- [Vulkan coordinate systems (Khronos guide)](https://docs.vulkan.org/guide/latest/mapping_data_to_shaders.html)
+- [LearnOpenGL — Coordinate systems](https://learnopengl.com/Getting-started/Coordinate-Systems)
+
+______________________________________________________________________
+
+## NDC_SPACE
+
+**What it is**
+Normalised device coordinates — the coordinate space after the perspective divide.
+In Vulkan, x and y run from -1 to +1 across the framebuffer (with +Y pointing
+*down*), and z runs from 0 to 1 (near to far). The viewport transform then maps
+NDC to actual pixel coordinates.
+
+**Why it matters**
+NDC is the resolution-independent space in which "where on screen" is finally
+defined; everything before it is about getting vertices here. Vulkan's
+conventions differ from OpenGL's (OpenGL's Y points up and z is -1..1), which is a
+classic source of upside-down images and depth bugs when porting.
+
+**How it appears in this project**
+The triangle's hardcoded coordinates in `shaders/mesh.vert` are effectively NDC
+(w = 1). The +Y-down convention is why the vertex marked "top" uses a negative Y.
+`Renderer`'s viewport maps NDC to the swapchain extent.
+
+**Further reading**
+- [Vulkan NDC and viewport (Sascha Willems)](https://www.saschawillems.de/blog/2019/03/29/flipping-the-vulkan-viewport/)
+- [Vulkan Spec — Coordinate transformations](https://docs.vulkan.org/spec/latest/chapters/vertexpostproc.html)
+
+______________________________________________________________________
+
+## VIEWPORT
+
+**What it is**
+The transform that maps normalised device coordinates to a rectangular region of
+the framebuffer in pixels, including the depth range mapping (minDepth..maxDepth).
+A `VkViewport` specifies x, y, width, height, and the depth range.
+
+**Why it matters**
+It is what ties resolution-independent NDC to actual pixels, so it must match the
+render target's size — which is exactly why it changes on every window resize.
+Making it dynamic state avoids rebuilding the pipeline each time the window
+changes size.
+
+**How it appears in this project**
+Declared (count 1) but left dynamic in `ShaderPipeline`, then set each frame to
+the swapchain extent with `vkCmdSetViewport` in `Renderer::recordCommandBuffer`.
+
+**Further reading**
+- [Vulkan Spec — Controlling the viewport](https://docs.vulkan.org/spec/latest/chapters/vertexpostproc.html#vertexpostproc-viewport)
+- [Vulkan Tutorial — Fixed functions](https://vulkan-tutorial.com/Drawing_a_triangle/Graphics_pipeline_basics/Fixed_functions)
+
+______________________________________________________________________
+
+## SCISSOR
+
+**What it is**
+A rectangle that further restricts where fragments may be written: anything
+outside the scissor rectangle is discarded, regardless of the viewport. A
+`VkRect2D` defines it.
+
+**Why it matters**
+Where the viewport *scales* geometry into a region, the scissor simply *clips*
+output to a rectangle — useful for UI panels, split-screen, or limiting redraw.
+For a full-window render the scissor just matches the whole framebuffer, but it is
+a mandatory part of the pipeline's viewport state.
+
+**How it appears in this project**
+Declared (count 1) and left dynamic in `ShaderPipeline`, set each frame to cover
+the full swapchain extent with `vkCmdSetScissor` in `Renderer::recordCommandBuffer`.
+
+**Further reading**
+- [Vulkan Spec — Scissor test](https://docs.vulkan.org/spec/latest/chapters/fragops.html#fragops-scissor)
+- [Vulkan Tutorial — Fixed functions](https://vulkan-tutorial.com/Drawing_a_triangle/Graphics_pipeline_basics/Fixed_functions)
+
+______________________________________________________________________
+
+## COLOUR_BLENDING
+
+**What it is**
+The fixed-function step that combines a fragment shader's output colour with the
+colour already in the attachment, according to a blend equation and factors. When
+disabled, the new colour simply replaces the old one.
+
+**Why it matters**
+Blending is how transparency and many compositing effects are achieved (e.g.
+`src_alpha`/`one_minus_src_alpha` for alpha blending). For opaque geometry it is
+turned off so colours overwrite directly, which is both correct and faster.
+
+**How it appears in this project**
+`ShaderPipeline`'s `blendAttachment` has `blendEnable = VK_FALSE` (opaque triangle)
+with all four colour channels writable. Transparency is out of scope for this
+project but the slot is configured.
+
+**Further reading**
+- [Vulkan Tutorial — Color blending](https://vulkan-tutorial.com/Drawing_a_triangle/Graphics_pipeline_basics/Fixed_functions)
+- [LearnOpenGL — Blending](https://learnopengl.com/Advanced-OpenGL/Blending)
+
+______________________________________________________________________
+
+## Chunk 5 (early) — Frame-loop concepts
+
+> These concepts belong to the spec's Chunk 6 ("Command Buffers and
+> Synchronisation"), but the minimal frame loop was brought forward into Chunk 5
+> so the triangle could actually be shown (see `docs/DECISIONS.md`). Chunk 6
+> expands them with frames-in-flight, pipeline barriers, and layout transitions.
+
+## COMMAND_BUFFER
+
+**What it is**
+A `VkCommandBuffer` — a recorded list of GPU commands (begin render pass, bind
+pipeline, set viewport, draw, …) that is built on the CPU and then submitted to a
+queue to be executed by the GPU.
+
+**Why it matters**
+Vulkan does not execute commands the moment you call them; you *record* them into
+a buffer and *submit* the buffer. This separation lets work be recorded in advance
+(even on multiple threads) and replayed efficiently, and it is the foundation of
+Vulkan's low CPU overhead — the opposite of OpenGL's immediate-mode calls.
+
+**How it appears in this project**
+`Renderer` allocates one primary command buffer and re-records it each frame in
+`recordCommandBuffer` (render pass + pipeline + viewport/scissor + `vkCmdDraw`),
+then submits it in `drawFrame`.
+
+**Further reading**
+- [Vulkan Tutorial — Command buffers](https://vulkan-tutorial.com/Drawing_a_triangle/Drawing/Command_buffers)
+- [Vulkan Guide — Command buffers](https://docs.vulkan.org/guide/latest/command_buffers.html)
+
+______________________________________________________________________
+
+## COMMAND_POOL
+
+**What it is**
+A `VkCommandPool` — the allocator that command buffers are created from. A pool is
+tied to one queue family, and command buffers from it can only be submitted to
+that family's queues.
+
+**Why it matters**
+Command buffers are allocated in bulk from a pool so the driver can manage their
+memory cheaply; pools also make resetting many buffers at once efficient. Tying a
+pool to a queue family is what guarantees a recorded buffer is compatible with the
+queue it is submitted to.
+
+**How it appears in this project**
+`Renderer::createCommandResources` creates a pool for the graphics queue family
+with the `RESET_COMMAND_BUFFER` flag (so the single buffer can be re-recorded each
+frame), and allocates the command buffer from it.
+
+**Further reading**
+- [Vulkan Spec — Command pools](https://docs.vulkan.org/spec/latest/chapters/cmdbuffers.html#commandbuffers-pools)
+- [Vulkan Tutorial — Command pools](https://vulkan-tutorial.com/Drawing_a_triangle/Drawing/Command_buffers)
+
+______________________________________________________________________
+
+## SEMAPHORE
+
+**What it is**
+A `VkSemaphore` — a synchronisation primitive that orders work **between GPU
+operations**. A queue operation can be told to wait on a semaphore before starting
+and to signal one when it finishes; the CPU is not involved.
+
+**Why it matters**
+The frame's steps run on the GPU and must not overlap incorrectly: presentation
+must not start before rendering finishes, and rendering must not start before the
+swapchain image is available. Semaphores express exactly these GPU-to-GPU
+orderings without stalling the CPU.
+
+**How it appears in this project**
+`Renderer` uses `m_imageAvailable` (acquire → render ordering) and a per-image
+`m_renderFinished` (render → present ordering). The submit waits on the first and
+signals the second; the present waits on the second.
+
+**Further reading**
+- [Vulkan Tutorial — Semaphores](https://vulkan-tutorial.com/Drawing_a_triangle/Drawing/Rendering_and_presentation)
+- [Vulkan Guide — Synchronization](https://docs.vulkan.org/guide/latest/synchronization.html)
+
+______________________________________________________________________
+
+## FENCE
+
+**What it is**
+A `VkFence` — a synchronisation primitive that lets the **CPU wait for the GPU**.
+A queue submit can signal a fence when its work completes, and the CPU can block
+on (or poll) that fence.
+
+**Why it matters**
+Semaphores order GPU work but the CPU cannot see them; a fence is how the CPU
+knows a frame's GPU work is done so it can safely reuse that frame's resources
+(command buffer, etc.). It is the GPU→CPU half of synchronisation.
+
+**How it appears in this project**
+`Renderer`'s `m_inFlight` fence. It is created already signalled (so the first
+frame does not deadlock), waited on at the top of `drawFrame`, reset, and signalled
+by `vkQueueSubmit` when the frame's GPU work completes.
+
+**Further reading**
+- [Vulkan Tutorial — Frames in flight](https://vulkan-tutorial.com/Drawing_a_triangle/Drawing/Frames_in_flight)
+- [Vulkan Guide — Synchronization](https://docs.vulkan.org/guide/latest/synchronization.html)
+
+______________________________________________________________________
+
+## GPU_CPU_SYNC
+
+**What it is**
+The umbrella idea that the CPU and GPU run asynchronously and their work must be
+explicitly coordinated: GPU-to-GPU ordering with semaphores, GPU-to-CPU signalling
+with fences, and whole-device draining with `vkDeviceWaitIdle`.
+
+**Why it matters**
+The CPU records and submits frames while the GPU is still executing earlier ones;
+without explicit synchronisation you would read or destroy resources the GPU is
+still using, causing corruption or crashes. Vulkan makes this coordination the
+application's responsibility (OpenGL hid it), which is both its burden and its
+performance advantage.
+
+**How it appears in this project**
+The whole of `Renderer::drawFrame` (fence wait + semaphores) is the per-frame
+case; `VulkanContext::waitIdle` is the coarse case used on resize and at shutdown.
+
+**Further reading**
+- [Vulkan Guide — Synchronization](https://docs.vulkan.org/guide/latest/synchronization.html)
+- [Yet another blog explaining Vulkan synchronization (Maister)](https://themaister.net/blog/2019/08/14/yet-another-blog-explaining-vulkan-synchronization/)
+
+______________________________________________________________________
+
+## SUBMISSION_QUEUE
+
+**What it is**
+A queue (here, the graphics queue) that command buffers are submitted to for the
+GPU to execute. `vkQueueSubmit` hands one or more command buffers to a queue,
+along with the semaphores to wait on and signal; `vkQueuePresentKHR` submits a
+present request to the present queue.
+
+**Why it matters**
+The queue is the actual hand-off point from CPU to GPU. Batching work into queue
+submissions (rather than per-command calls) is central to Vulkan's efficiency, and
+the semaphores/fences attached to a submission are how its execution is ordered
+relative to everything else.
+
+**How it appears in this project**
+`Renderer::drawFrame` calls `vkQueueSubmit` on `m_context.graphicsQueue()` and
+`vkQueuePresentKHR` on `m_context.presentQueue()`.
+
+**Further reading**
+- [Vulkan Spec — Queue submission](https://docs.vulkan.org/spec/latest/chapters/cmdbuffers.html#commandbuffers-submission)
+- [Vulkan Guide — Queues](https://docs.vulkan.org/guide/latest/queues.html)
+
+______________________________________________________________________
+
+## FRAME_LOOP
+
+**What it is**
+The repeating per-frame cycle a real-time renderer runs: **acquire** a swapchain
+image, **record** a command buffer that draws into it, **submit** that work to a
+queue, and **present** the result — all coordinated by semaphores and a fence.
+
+**Why it matters**
+It is the concrete realisation of the event loop for a GPU renderer, and the place
+all the synchronisation pieces come together. Getting its ordering and resize
+handling right is what separates a renderer that runs smoothly from one that
+flickers, tears, or crashes on resize.
+
+**How it appears in this project**
+`Renderer::drawFrame` implements one iteration; the `while (running)` loop in
+`src/main.cpp` calls it each frame and triggers swapchain recreation when it
+reports the swapchain is out of date.
+
+**Further reading**
+- [Vulkan Tutorial — Rendering and presentation](https://vulkan-tutorial.com/Drawing_a_triangle/Drawing/Rendering_and_presentation)
+- [Game Programming Patterns — Game Loop](https://gameprogrammingpatterns.com/game-loop.html)

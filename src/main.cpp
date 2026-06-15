@@ -6,18 +6,21 @@
 // until the user closes the window.
 //
 // Chunk 1 built the first beat: a resizable window driven by an event loop.
-// Chunk 2 brought Vulkan up — instance, device, queues, and the surface tying
-// Vulkan to the window. Chunk 3 added the swapchain. Chunk 4 adds the render
-// pass, a depth buffer, and one framebuffer per swapchain image — the "stage"
-// the renderer will draw onto, with the clear colour configured. Drawing and
-// presenting that clear colour to screen waits until Chunk 6 (command buffers
-// and synchronisation). See Glossary: WINDOWING_SYSTEM, EVENT_LOOP,
-// VULKAN_INSTANCE, SWAPCHAIN, RENDER_PASS
+// Chunk 2 brought Vulkan up — instance, device, queues, surface. Chunk 3 added
+// the swapchain; Chunk 4 the render pass, depth buffer, and framebuffers. Chunk 5
+// is the payoff: a graphics pipeline (compiled shaders + fixed-function state)
+// and a minimal frame loop that draws a hardcoded triangle and presents it — the
+// project's first visible output. See Glossary: WINDOWING_SYSTEM, EVENT_LOOP,
+// VULKAN_INSTANCE, SWAPCHAIN, RENDER_PASS, GRAPHICS_PIPELINE, FRAME_LOOP
 
 #include "sdl_context.h"
 #include "vulkan_context.h"
 #include "swapchain.h"
 #include "render_pass.h"
+#include "shader_pipeline.h"
+#include "renderer.h"
+
+#include <SDL3/SDL_video.h>   // SDL_GetWindowSizeInPixels (minimised-window check)
 
 #include <cstdlib>
 #include <exception>
@@ -62,27 +65,54 @@ int main() {
         // FRAMEBUFFER, DEPTH_BUFFER
         RenderPass renderPass(vulkan, swapchain);
 
+        // --- Chapter 5: the graphics pipeline --------------------------------
+        // Compiled shaders plus all the fixed-function state, baked into one
+        // immutable pipeline object built for the render pass above.
+        // See Glossary: GRAPHICS_PIPELINE
+        ShaderPipeline pipeline(vulkan, renderPass.handle());
+
+        // --- Chapter 6 (preview): the frame loop machinery -------------------
+        // Command buffer + synchronisation that drive one frame. A minimal
+        // single-frame-in-flight version lives here so Chunk 5 can show output;
+        // Chunk 6 expands it. See Glossary: COMMAND_BUFFER, FRAME_LOOP
+        Renderer renderer(vulkan, swapchain);
+
         // --- The main loop ---------------------------------------------------
-        // A real-time application is a loop, and each iteration is one frame.
-        // For now the loop handles input and reacts to resizes; in later chunks
-        // it will also update the camera and render. It runs until
-        // processEvents() reports that the user wants to quit.
-        // See Glossary: EVENT_LOOP
+        // Each iteration is one frame: handle input, then draw and present. The
+        // swapchain and its size-dependent resources are rebuilt whenever the
+        // window resizes or the swapchain reports itself out of date.
+        // See Glossary: EVENT_LOOP, FRAME_LOOP
         bool running = true;
         while (running) {
             // Handle every input event that arrived since the previous frame.
             // See Glossary: EVENT_POLLING
             running = sdl.processEvents();
+            if (!running) break;
 
-            // If the window changed size, the swapchain images no longer match
-            // it and must be rebuilt — and with them the depth buffer and
-            // framebuffers that are sized to the swapchain.
-            // See Glossary: SWAPCHAIN, FRAMEBUFFER
-            if (sdl.takeResized()) {
+            // While the window is minimised its drawable size is zero, which is
+            // an invalid render target — skip drawing until it is restored.
+            int pxW = 0, pxH = 0;
+            SDL_GetWindowSizeInPixels(sdl.window(), &pxW, &pxH);
+            if (pxW == 0 || pxH == 0) continue;
+
+            // Draw + present one frame. A resize event, or an out-of-date result
+            // from the draw, means the swapchain (and its dependent resources)
+            // must be rebuilt before the next frame. See Glossary: SWAPCHAIN
+            bool needsRecreate = sdl.takeResized();
+            if (!needsRecreate) {
+                needsRecreate = renderer.drawFrame(swapchain, renderPass, pipeline);
+            }
+            if (needsRecreate) {
+                vulkan.waitIdle();          // ensure nothing is using the old resources
                 swapchain.recreate();
-                renderPass.recreate();
+                renderPass.recreate();      // depth + framebuffers follow the swapchain
+                renderer.onSwapchainRecreated(swapchain);
             }
         }
+
+        // The loop has exited; wait for the GPU to finish its last frame before
+        // the RAII destructors start tearing Vulkan objects down.
+        vulkan.waitIdle();
     } catch (const std::exception& e) {
         // Any failure during setup (SDL init or window creation) is thrown and
         // caught here. Report it and exit non-zero so a shell or CI run can see
