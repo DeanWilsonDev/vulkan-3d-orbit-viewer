@@ -15,9 +15,12 @@ SdlContext::SdlContext(const std::string& title, int width, int height) {
     // Create the OS window. SDL3 dropped the explicit x/y position arguments
     // SDL2 had — the windowing system decides placement. SDL_WINDOW_RESIZABLE
     // lets the user resize the window; from Chunk 3 we will respond to resize
-    // events by recreating the Vulkan swapchain.
-    // See Glossary: SDL3
-    m_window = SDL_CreateWindow(title.c_str(), width, height, SDL_WINDOW_RESIZABLE);
+    // events by recreating the Vulkan swapchain. SDL_WINDOW_VULKAN tells SDL to
+    // load the Vulkan loader library and prepare the window so a Vulkan surface
+    // can later be created for it (done in VulkanContext).
+    // See Glossary: SDL3, SURFACE
+    m_window = SDL_CreateWindow(title.c_str(), width, height,
+                                SDL_WINDOW_RESIZABLE | SDL_WINDOW_VULKAN);
     if (m_window == nullptr) {
         // Window creation failed: shut the subsystem we just started back down
         // before throwing, so a failed constructor leaves nothing leaked.

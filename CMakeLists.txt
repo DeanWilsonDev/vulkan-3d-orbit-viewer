@@ -22,6 +22,14 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 # SDK (needed from Chunk 2 onward).
 include(FetchContent)
 
+# --- Vulkan SDK --------------------------------------------------------------
+# Unlike SDL3 and GLM, Vulkan is NOT fetched: the loader, headers, and (on
+# macOS) MoltenVK come from the Vulkan SDK installed on the host machine. This
+# is the standard way to do Vulkan development. find_package locates the loader
+# library and headers; we link against the Vulkan::Vulkan target it defines.
+# See Glossary: VULKAN_INSTANCE
+find_package(Vulkan REQUIRED)
+
 # --- SDL3 --------------------------------------------------------------------
 # SDL3 is the windowing + input layer. It hides the platform window system
 # (X11/Wayland on Linux, Cocoa on macOS, Win32 on Windows) behind one API and,
@@ -55,11 +63,13 @@ FetchContent_MakeAvailable(SDL3 glm)
 add_executable(vulkan-orbit-viewer
     src/main.cpp
     src/sdl_context.cpp
+    src/vulkan_context.cpp
 )
 
 # Let the sources include each other by bare filename ("sdl_context.h").
 target_include_directories(vulkan-orbit-viewer PRIVATE src)
 
 # SDL3::SDL3 pulls in the correct platform libraries transparently; glm::glm is
-# a header-only interface target that just adds GLM's include path.
-target_link_libraries(vulkan-orbit-viewer PRIVATE SDL3::SDL3 glm::glm)
+# a header-only interface target that just adds GLM's include path;
+# Vulkan::Vulkan adds the Vulkan headers and links the loader.
+target_link_libraries(vulkan-orbit-viewer PRIVATE SDL3::SDL3 glm::glm Vulkan::Vulkan)
