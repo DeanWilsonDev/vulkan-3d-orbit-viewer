@@ -60,6 +60,24 @@ public:
     // introduces the fine-grained synchronisation used per frame instead.
     void waitIdle() const { vkDeviceWaitIdle(m_device); }
 
+    // --- Memory + buffer helpers (used from Chunk 7) -------------------------
+
+    // Find a memory type index that is allowed by typeFilter (a bitmask from a
+    // resource's memory requirements) and has all the requested properties (e.g.
+    // device-local, or host-visible). See Glossary: MEMORY_TYPES
+    uint32_t findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties) const;
+
+    // Create a VkBuffer and back it with memory of the requested properties.
+    // See Glossary: VERTEX_BUFFER, GPU_MEMORY
+    void createBuffer(VkDeviceSize size, VkBufferUsageFlags usage,
+                      VkMemoryPropertyFlags properties,
+                      VkBuffer& buffer, VkDeviceMemory& memory) const;
+
+    // Copy `size` bytes from one buffer to another using a one-time command on
+    // the graphics queue. This is how data reaches device-local memory the CPU
+    // cannot write to directly. See Glossary: STAGING_BUFFER
+    void copyBuffer(VkBuffer src, VkBuffer dst, VkDeviceSize size) const;
+
 private:
     // Each of these is one step of construction, kept as a named function so the
     // constructor reads like a checklist of what Vulkan startup requires.
@@ -68,6 +86,7 @@ private:
     void createSurface(SDL_Window* window);
     void pickPhysicalDevice();
     void createLogicalDevice();
+    void createUploadPool();   // small command pool for one-time transfer commands
 
     bool m_enableValidation = false;
 
@@ -79,6 +98,11 @@ private:
     VkDevice                 m_device = VK_NULL_HANDLE;          // our logical handle to that GPU
     VkQueue                  m_graphicsQueue = VK_NULL_HANDLE;   // retrieved from the device (not separately destroyed)
     VkQueue                  m_presentQueue = VK_NULL_HANDLE;
+
+    // Command pool dedicated to short-lived, one-time transfer commands (the
+    // staging copies in Chunk 7). Separate from the renderer's per-frame pool.
+    // See Glossary: COMMAND_POOL
+    VkCommandPool m_uploadPool = VK_NULL_HANDLE;
 
     QueueFamilyIndices m_queueFamilies;
 };

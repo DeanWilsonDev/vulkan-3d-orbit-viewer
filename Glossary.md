@@ -1513,3 +1513,284 @@ needed in this project.
 **Further reading**
 - [Vulkan Tutorial — Image layout transitions](https://vulkan-tutorial.com/Texture_mapping/Images)
 - [Vulkan Spec — Image layouts](https://docs.vulkan.org/spec/latest/chapters/resources.html#resources-image-layouts)
+
+______________________________________________________________________
+
+## Chunk 7 — Vertex and Index Buffers
+
+## MESH
+
+**What it is**
+In 3D graphics, a mesh is a surface built from many small flat polygons — almost
+always triangles — defined by a set of vertices and a list of which vertices form
+each triangle. It is the standard way to represent the shape of an object.
+
+**Why it matters**
+GPUs are built to rasterise triangles extremely fast, so essentially all real-time
+3D geometry is expressed as triangle meshes, however the object was originally
+modelled. Understanding "a model is just vertices + triangles" demystifies
+everything from a cube to a character: they differ only in how many vertices and
+how they are connected.
+
+**How it appears in this project**
+The `Mesh` class (`src/mesh.h` / `src/mesh.cpp`) owns the GPU buffers for one
+mesh. `Mesh::cube` builds a 24-vertex, 12-triangle cube; Chunk 9 will populate the
+same class from an OBJ file.
+
+**Further reading**
+- [Polygon mesh (Wikipedia)](https://en.wikipedia.org/wiki/Polygon_mesh)
+- [Triangle mesh (Wikipedia)](https://en.wikipedia.org/wiki/Triangle_mesh)
+
+______________________________________________________________________
+
+## VERTEX_ATTRIBUTES
+
+**What it is**
+The per-vertex pieces of data a vertex carries into the pipeline. Position is the
+essential one; common others are normal, texture coordinate (UV), colour, and
+tangent. Each attribute has a location, a format, and an offset within the vertex.
+
+**Why it matters**
+Attributes are the inputs the vertex shader reads and (interpolated) the fragment
+shader receives — they are how per-vertex information drives shading. The pipeline
+must be told each attribute's layout so the GPU can fetch it from the vertex
+buffer; a mismatch between the struct, the attribute descriptions, and the shader
+inputs is a frequent bug.
+
+**How it appears in this project**
+The `Vertex` struct (position, normal, uv) and `Vertex::attributeDescriptions()`
+in `src/mesh.cpp`, which map each field to a shader `location` and `format`. The
+pipeline consumes them in `ShaderPipeline`; the vertex shader declares matching
+`layout(location = …) in` variables.
+
+**Further reading**
+- [Vulkan Tutorial — Vertex input description](https://vulkan-tutorial.com/Vertex_buffers/Vertex_input_description)
+- [Vulkan Spec — Vertex input](https://docs.vulkan.org/spec/latest/chapters/fxvertex.html)
+
+______________________________________________________________________
+
+## VERTEX_BUFFER
+
+**What it is**
+A `VkBuffer` holding the array of vertices for a mesh. It is bound before drawing,
+and the pipeline's binding/attribute descriptions tell the GPU how to read one
+vertex out of it (stride and per-attribute layout).
+
+**Why it matters**
+It is the GPU-side home of geometry. Putting vertices in a buffer (rather than
+hardcoding them in a shader, as Chunk 5 did) is what lets a program draw arbitrary
+models, and storing it in device-local memory makes the GPU's per-vertex fetches
+fast.
+
+**How it appears in this project**
+`Mesh::m_vertexBuffer`, created device-local and filled via staging in
+`Mesh::uploadDeviceLocal`, and bound with `vkCmdBindVertexBuffers` in
+`Mesh::bindAndDraw`. Its layout is described to the pipeline by
+`Vertex::bindingDescription()` / `attributeDescriptions()`.
+
+**Further reading**
+- [Vulkan Tutorial — Vertex buffer creation](https://vulkan-tutorial.com/Vertex_buffers/Vertex_buffer_creation)
+- [Vulkan Spec — Buffers](https://docs.vulkan.org/spec/latest/chapters/resources.html#resources-buffers)
+
+______________________________________________________________________
+
+## INDEX_BUFFER
+
+**What it is**
+A `VkBuffer` of integers that index into the vertex buffer, specifying which
+vertices form each triangle. Drawing with `vkCmdDrawIndexed` reads indices in
+order, three per triangle.
+
+**Why it matters**
+Vertices are usually shared between many triangles (a cube corner touches three
+faces; a smooth surface, six or more). Without indices you would duplicate each
+shared vertex once per triangle. Indices let you store each unique vertex once and
+just reference it — saving memory and bandwidth, and letting the GPU's post-
+transform vertex cache skip re-shading reused vertices.
+
+**How it appears in this project**
+`Mesh::m_indexBuffer` (36 indices for the cube's 12 triangles), bound with
+`vkCmdBindIndexBuffer` and drawn with `vkCmdDrawIndexed` in `Mesh::bindAndDraw`.
+
+**Further reading**
+- [Vulkan Tutorial — Index buffer](https://vulkan-tutorial.com/Vertex_buffers/Index_buffer)
+- [Vertex cache / indexed rendering (Wikipedia)](https://en.wikipedia.org/wiki/Polygon_mesh#Vertex-vertex_meshes)
+
+______________________________________________________________________
+
+## GPU_MEMORY
+
+**What it is**
+Memory that the GPU uses for its resources — buffers and images. On a discrete
+GPU this is separate physical memory (VRAM) across a bus from system RAM; on an
+integrated GPU (like the Apple M2) it is shared with system RAM but still exposed
+through Vulkan's memory model. You allocate it explicitly with `vkAllocateMemory`
+and bind resources to it.
+
+**Why it matters**
+Vulkan makes memory management the application's job — unlike OpenGL, which hid it.
+You decide how much to allocate, of which type, and you are responsible for
+binding and freeing it. This control is powerful (sub-allocation, aliasing,
+pooling) but means you must understand memory types and the cost of where data
+lives.
+
+**How it appears in this project**
+`VulkanContext::createBuffer` allocates and binds memory for every buffer;
+`findMemoryType` chooses the type; the depth image (`RenderPass`) allocates memory
+too. The M2's unified memory is why host-visible and device-local can be the same
+physical RAM here.
+
+**Further reading**
+- [Vulkan Spec — Device memory](https://docs.vulkan.org/spec/latest/chapters/memory.html)
+- [Vulkan Memory Allocator (AMD)](https://gpuopen.com/vulkan-memory-allocator/)
+
+______________________________________________________________________
+
+## MEMORY_TYPES
+
+**What it is**
+A GPU advertises several *memory types*, each a combination of a heap and property
+flags such as `DEVICE_LOCAL` (fast for the GPU), `HOST_VISIBLE` (mappable by the
+CPU), and `HOST_COHERENT` (CPU writes visible without manual flushing). When
+allocating, you pick a type that both satisfies the resource's requirements and
+has the properties you need.
+
+**Why it matters**
+Where a resource lives determines both performance and how you can write to it.
+The fastest memory for the GPU is usually not writable by the CPU, and CPU-writable
+memory is usually slower for the GPU — the tension that the staging-buffer pattern
+resolves. Choosing the right memory type is a core Vulkan skill.
+
+**How it appears in this project**
+`VulkanContext::findMemoryType` scans `VkPhysicalDeviceMemoryProperties` for a type
+matching a resource's `memoryTypeBits` and the requested property flags. It is
+called for the depth image, staging buffers, and device-local buffers.
+
+**Further reading**
+- [Vulkan Tutorial — Memory requirements](https://vulkan-tutorial.com/Vertex_buffers/Vertex_buffer_creation)
+- [Vulkan Spec — Memory types and heaps](https://docs.vulkan.org/spec/latest/chapters/memory.html#memory-device)
+
+______________________________________________________________________
+
+## HOST_VISIBLE_MEMORY
+
+**What it is**
+Memory with the `HOST_VISIBLE` property: it can be mapped into the CPU's address
+space with `vkMapMemory` so the CPU can read or write it directly. Usually paired
+with `HOST_COHERENT` so writes do not need explicit flushing.
+
+**Why it matters**
+It is the only memory the CPU can write to directly, so any data that originates on
+the CPU must pass through it. The catch is that it is often not the fastest memory
+for the GPU to read repeatedly, which is why it is typically used as a temporary
+staging area rather than the final home for static geometry.
+
+**How it appears in this project**
+The staging buffer in `Mesh::uploadDeviceLocal` is allocated `HOST_VISIBLE |
+HOST_COHERENT`, mapped, filled with `memcpy`, and unmapped — the CPU-writable
+stepping stone toward device-local memory. See Glossary: STAGING_BUFFER
+
+**Further reading**
+- [Vulkan Spec — Host access to memory](https://docs.vulkan.org/spec/latest/chapters/memory.html#memory-device-hostaccess)
+- [Vulkan Tutorial — Staging buffer](https://vulkan-tutorial.com/Vertex_buffers/Staging_buffer)
+
+______________________________________________________________________
+
+## DEVICE_LOCAL_MEMORY
+
+**What it is**
+Memory with the `DEVICE_LOCAL` property: the memory that is fastest for the GPU to
+access. On a discrete card this is VRAM. It is frequently *not* host-visible, so
+the CPU cannot write to it directly.
+
+**Why it matters**
+Static, frequently-read resources (vertex buffers, index buffers, textures) belong
+in device-local memory for best performance. Because the CPU usually cannot write
+it directly, getting data there requires copying from a host-visible staging
+buffer — the reason the staging pattern exists.
+
+**How it appears in this project**
+The real vertex and index buffers in `Mesh::uploadDeviceLocal` are allocated
+`DEVICE_LOCAL` with `TRANSFER_DST` usage, then filled by copying from the staging
+buffer. The depth image is device-local too.
+
+**Further reading**
+- [Vulkan Tutorial — Staging buffer](https://vulkan-tutorial.com/Vertex_buffers/Staging_buffer)
+- [Vulkan Spec — Memory properties](https://docs.vulkan.org/spec/latest/chapters/memory.html#VkMemoryPropertyFlagBits)
+
+______________________________________________________________________
+
+## STAGING_BUFFER
+
+**What it is**
+A temporary host-visible buffer used to get CPU data into device-local memory: the
+CPU writes the data into the staging buffer, then a GPU copy command transfers it
+into the device-local destination buffer, after which the staging buffer is
+discarded.
+
+**Why it matters**
+It resolves the tension between "only host-visible memory is CPU-writable" and
+"only device-local memory is fast for the GPU". The one-time double copy (CPU→
+staging, then GPU staging→device-local) is well worth it for resources read every
+frame thereafter. It is the standard idiom for uploading static geometry and
+textures.
+
+**How it appears in this project**
+`Mesh::uploadDeviceLocal` implements the full pattern, and
+`VulkanContext::copyBuffer` performs the GPU-side copy on a one-time command buffer
+from the dedicated upload pool.
+
+**Further reading**
+- [Vulkan Tutorial — Staging buffer](https://vulkan-tutorial.com/Vertex_buffers/Staging_buffer)
+- [Vulkan Guide — Transfer queues & staging](https://docs.vulkan.org/guide/latest/queues.html)
+
+______________________________________________________________________
+
+## WINDING_ORDER
+
+**What it is**
+The order — clockwise or counter-clockwise — in which a triangle's three vertices
+are listed, as seen from a given side. It defines which side of the triangle is
+its "front" face. A consistent winding across a mesh distinguishes outward-facing
+from inward-facing surfaces.
+
+**Why it matters**
+It is how the GPU decides facing for back-face culling: with a chosen front-face
+winding, triangles wound the other way are considered back-facing. Get the winding
+(or the `frontFace` setting) wrong and a solid object renders inside-out — outer
+faces vanish and you see its back interior. Vulkan's +Y-down NDC flips apparent
+winding relative to OpenGL, a classic gotcha.
+
+**How it appears in this project**
+The cube in `Mesh::cube` is wound counter-clockwise as seen from outside. Because
+Chunk 7 uses no viewport Y-flip, Vulkan sees that as clockwise on screen, so the
+pipeline sets `frontFace = VK_FRONT_FACE_CLOCKWISE`. See Glossary: BACK_FACE_CULLING
+
+**Further reading**
+- [Back-face culling & winding (Wikipedia)](https://en.wikipedia.org/wiki/Back-face_culling)
+- [Flipping the Vulkan viewport (Sascha Willems)](https://www.saschawillems.de/blog/2019/03/29/flipping-the-vulkan-viewport/)
+
+______________________________________________________________________
+
+## BACK_FACE_CULLING
+
+**What it is**
+A fixed-function optimisation that discards triangles facing away from the camera
+before they are rasterised, decided from each triangle's winding order relative to
+the configured front face.
+
+**Why it matters**
+For a closed, opaque object you can never see its back-facing triangles — they are
+always hidden by nearer front-facing ones — so rasterising them is wasted work.
+Culling them roughly halves the fragments processed. It must be paired with correct
+and consistent winding, or it culls the wrong half.
+
+**How it appears in this project**
+Enabled in `ShaderPipeline` with `cullMode = VK_CULL_MODE_BACK_BIT` and a
+`frontFace` matching the cube's winding. Chunk 5's single triangle used
+`CULL_MODE_NONE` because its winding was not guaranteed; with a real mesh, culling
+is turned on. See Glossary: WINDING_ORDER
+
+**Further reading**
+- [Back-face culling (Wikipedia)](https://en.wikipedia.org/wiki/Back-face_culling)
+- [Vulkan Spec — Basic polygon rasterization (facing)](https://docs.vulkan.org/spec/latest/chapters/primsrast.html#primsrast-polygons-basic)

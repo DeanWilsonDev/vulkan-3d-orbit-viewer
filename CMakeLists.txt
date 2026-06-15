@@ -68,6 +68,7 @@ add_executable(vulkan-orbit-viewer
     src/render_pass.cpp
     src/shader_pipeline.cpp
     src/renderer.cpp
+    src/mesh.cpp
 )
 
 # Let the sources include each other by bare filename ("sdl_context.h").

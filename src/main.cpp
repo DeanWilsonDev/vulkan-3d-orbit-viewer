@@ -19,6 +19,7 @@
 #include "render_pass.h"
 #include "shader_pipeline.h"
 #include "renderer.h"
+#include "mesh.h"
 
 #include <SDL3/SDL_video.h>   // SDL_GetWindowSizeInPixels (minimised-window check)
 
@@ -77,6 +78,13 @@ int main() {
         // See Glossary: COMMAND_BUFFER, FRAME_LOOP, FRAMES_IN_FLIGHT, SYNCHRONISATION
         Renderer renderer(vulkan, swapchain);
 
+        // --- Chapter 7: the mesh ---------------------------------------------
+        // A hardcoded cube uploaded to GPU buffers. With no transforms yet it
+        // sits directly in clip space, so it will look like a flat square/odd
+        // polygon — perspective arrives in Chunk 8. See Glossary: MESH,
+        // VERTEX_BUFFER, INDEX_BUFFER
+        Mesh cube = Mesh::cube(vulkan);
+
         // --- The main loop ---------------------------------------------------
         // Each iteration is one frame: handle input, then draw and present. The
         // swapchain and its size-dependent resources are rebuilt whenever the
@@ -100,7 +108,7 @@ int main() {
             // must be rebuilt before the next frame. See Glossary: SWAPCHAIN
             bool needsRecreate = sdl.takeResized();
             if (!needsRecreate) {
-                needsRecreate = renderer.drawFrame(swapchain, renderPass, pipeline);
+                needsRecreate = renderer.drawFrame(swapchain, renderPass, pipeline, cube);
             }
             if (needsRecreate) {
                 vulkan.waitIdle();          // ensure nothing is using the old resources

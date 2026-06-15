@@ -1,5 +1,6 @@
 #include "renderer.h"
 
+#include "mesh.h"
 #include "render_pass.h"
 #include "shader_pipeline.h"
 #include "swapchain.h"
@@ -111,7 +112,7 @@ void Renderer::onSwapchainRecreated(const Swapchain& swapchain) {
 
 void Renderer::recordCommandBuffer(VkCommandBuffer cmd, uint32_t imageIndex,
                                    Swapchain& swapchain, RenderPass& renderPass,
-                                   ShaderPipeline& pipeline) {
+                                   ShaderPipeline& pipeline, const Mesh& mesh) {
     // Recording starts here: every vkCmd* call below appends a command to be run
     // later on the GPU, rather than executing now. See Glossary: COMMAND_BUFFER
     VkCommandBufferBeginInfo begin{};
@@ -156,9 +157,10 @@ void Renderer::recordCommandBuffer(VkCommandBuffer cmd, uint32_t imageIndex,
     scissor.extent = extent;
     vkCmdSetScissor(cmd, 0, 1, &scissor);
 
-    // Draw 3 vertices, 1 instance: the hardcoded triangle. The vertex shader
-    // produces the corners from gl_VertexIndex. See Glossary: RASTERISATION
-    vkCmdDraw(cmd, 3, 1, 0, 0);
+    // Bind the mesh's vertex + index buffers and draw it (indexed). The
+    // hardcoded triangle of Chunk 5 is gone; geometry now comes from GPU buffers.
+    // See Glossary: VERTEX_BUFFER, INDEX_BUFFER, MESH
+    mesh.bindAndDraw(cmd);
 
     vkCmdEndRenderPass(cmd);
     if (vkEndCommandBuffer(cmd) != VK_SUCCESS) {
@@ -166,7 +168,8 @@ void Renderer::recordCommandBuffer(VkCommandBuffer cmd, uint32_t imageIndex,
     }
 }
 
-bool Renderer::drawFrame(Swapchain& swapchain, RenderPass& renderPass, ShaderPipeline& pipeline) {
+bool Renderer::drawFrame(Swapchain& swapchain, RenderPass& renderPass, ShaderPipeline& pipeline,
+                         const Mesh& mesh) {
     const VkDevice device = m_context.device();
     const uint64_t noTimeout = std::numeric_limits<uint64_t>::max();
 
@@ -201,7 +204,7 @@ bool Renderer::drawFrame(Swapchain& swapchain, RenderPass& renderPass, ShaderPip
     vkResetFences(device, 1, &m_inFlight[frame]);
 
     vkResetCommandBuffer(cmd, 0);
-    recordCommandBuffer(cmd, imageIndex, swapchain, renderPass, pipeline);
+    recordCommandBuffer(cmd, imageIndex, swapchain, renderPass, pipeline, mesh);
 
     // Submit the recorded work to the graphics queue. It waits on imageAvailable
     // at the colour-output stage (so vertex work can start earlier) and signals

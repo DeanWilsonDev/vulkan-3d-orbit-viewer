@@ -103,6 +103,7 @@ VulkanContext::VulkanContext(SDL_Window* window, bool enableValidation)
     createSurface(window);
     pickPhysicalDevice();
     createLogicalDevice();
+    createUploadPool();
 }
 
 VulkanContext::~VulkanContext() {
@@ -112,6 +113,9 @@ VulkanContext::~VulkanContext() {
     // instance-children. The physical device and queues are not destroyed —
     // they are owned by the instance and device respectively.
     // See Glossary: LOGICAL_DEVICE
+    if (m_uploadPool != VK_NULL_HANDLE) {
+        vkDestroyCommandPool(m_device, m_uploadPool, nullptr);
+    }
     if (m_device != VK_NULL_HANDLE) {
         vkDestroyDevice(m_device, nullptr);
     }
@@ -372,4 +376,96 @@ void VulkanContext::createLogicalDevice() {
     vkGetDeviceQueue(m_device, *m_queueFamilies.present, 0, &m_presentQueue);
 
     std::cout << "[vulkan] logical device and queues created\n";
+}
+
+void VulkanContext::createUploadPool() {
+    // A small command pool for the one-time copies that move data into
+    // device-local memory. TRANSIENT hints that its buffers are short-lived.
+    // See Glossary: COMMAND_POOL, STAGING_BUFFER
+    VkCommandPoolCreateInfo poolInfo{};
+    poolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
+    poolInfo.flags = VK_COMMAND_POOL_CREATE_TRANSIENT_BIT;
+    poolInfo.queueFamilyIndex = *m_queueFamilies.graphics;
+    if (vkCreateCommandPool(m_device, &poolInfo, nullptr, &m_uploadPool) != VK_SUCCESS) {
+        throw std::runtime_error("vkCreateCommandPool (upload) failed");
+    }
+}
+
+uint32_t VulkanContext::findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties) const {
+    // The GPU exposes a set of memory types, each with a combination of property
+    // flags (device-local, host-visible, …). We pick the first that the resource
+    // allows (typeFilter) and that has every property we asked for.
+    // See Glossary: MEMORY_TYPES, GPU_MEMORY
+    VkPhysicalDeviceMemoryProperties memProps{};
+    vkGetPhysicalDeviceMemoryProperties(m_physicalDevice, &memProps);
+    for (uint32_t i = 0; i < memProps.memoryTypeCount; ++i) {
+        const bool typeAllowed = typeFilter & (1u << i);
+        const bool hasProps = (memProps.memoryTypes[i].propertyFlags & properties) == properties;
+        if (typeAllowed && hasProps) return i;
+    }
+    throw std::runtime_error("no suitable memory type found");
+}
+
+void VulkanContext::createBuffer(VkDeviceSize size, VkBufferUsageFlags usage,
+                                 VkMemoryPropertyFlags properties,
+                                 VkBuffer& buffer, VkDeviceMemory& memory) const {
+    // Describe and create the buffer (just a sized, typed region — no memory yet).
+    // See Glossary: VERTEX_BUFFER
+    VkBufferCreateInfo bufferInfo{};
+    bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+    bufferInfo.size = size;
+    bufferInfo.usage = usage;                       // how the buffer will be used (vertex/index/transfer)
+    bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;  // only the graphics family touches it
+    if (vkCreateBuffer(m_device, &bufferInfo, nullptr, &buffer) != VK_SUCCESS) {
+        throw std::runtime_error("vkCreateBuffer failed");
+    }
+
+    // Allocate memory matching the buffer's requirements + requested properties,
+    // then bind it. See Glossary: GPU_MEMORY, MEMORY_TYPES
+    VkMemoryRequirements memReq{};
+    vkGetBufferMemoryRequirements(m_device, buffer, &memReq);
+
+    VkMemoryAllocateInfo alloc{};
+    alloc.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+    alloc.allocationSize = memReq.size;
+    alloc.memoryTypeIndex = findMemoryType(memReq.memoryTypeBits, properties);
+    if (vkAllocateMemory(m_device, &alloc, nullptr, &memory) != VK_SUCCESS) {
+        throw std::runtime_error("vkAllocateMemory (buffer) failed");
+    }
+    vkBindBufferMemory(m_device, buffer, memory, 0);
+}
+
+void VulkanContext::copyBuffer(VkBuffer src, VkBuffer dst, VkDeviceSize size) const {
+    // Record a single copy command into a throwaway command buffer, submit it,
+    // and wait for it to finish. This is the transfer half of the staging
+    // pattern. See Glossary: STAGING_BUFFER, COMMAND_BUFFER
+    VkCommandBufferAllocateInfo allocInfo{};
+    allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+    allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+    allocInfo.commandPool = m_uploadPool;
+    allocInfo.commandBufferCount = 1;
+    VkCommandBuffer cmd = VK_NULL_HANDLE;
+    vkAllocateCommandBuffers(m_device, &allocInfo, &cmd);
+
+    VkCommandBufferBeginInfo begin{};
+    begin.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+    begin.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;  // used once then discarded
+    vkBeginCommandBuffer(cmd, &begin);
+
+    VkBufferCopy region{};
+    region.size = size;
+    vkCmdCopyBuffer(cmd, src, dst, 1, &region);
+
+    vkEndCommandBuffer(cmd);
+
+    // Submit and block until done — uploads are one-off setup work, not per-frame,
+    // so a simple wait is fine. See Glossary: SUBMISSION_QUEUE
+    VkSubmitInfo submit{};
+    submit.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+    submit.commandBufferCount = 1;
+    submit.pCommandBuffers = &cmd;
+    vkQueueSubmit(m_graphicsQueue, 1, &submit, VK_NULL_HANDLE);
+    vkQueueWaitIdle(m_graphicsQueue);
+
+    vkFreeCommandBuffers(m_device, m_uploadPool, 1, &cmd);
 }

@@ -1,5 +1,6 @@
 #include "shader_pipeline.h"
 
+#include "mesh.h"            // Vertex binding/attribute descriptions
 #include "vulkan_context.h"
 
 #include <fstream>
@@ -78,11 +79,18 @@ ShaderPipeline::ShaderPipeline(VulkanContext& context, VkRenderPass renderPass)
 
     const VkPipelineShaderStageCreateInfo stages[] = {vertStage, fragStage};
 
-    // Vertex input: empty. The triangle's positions are hardcoded in the shader,
-    // so no vertex buffers or attributes are declared. This is filled in Chunk 7.
-    // See Glossary: VERTEX_SHADER
+    // Vertex input: describe how the pipeline pulls vertices out of the bound
+    // vertex buffer — the binding (stride / input rate) and each attribute's
+    // location, format, and offset, taken from the Vertex struct.
+    // See Glossary: VERTEX_BUFFER, VERTEX_ATTRIBUTES
+    const VkVertexInputBindingDescription bindingDesc = Vertex::bindingDescription();
+    const auto attributeDescs = Vertex::attributeDescriptions();
     VkPipelineVertexInputStateCreateInfo vertexInput{};
     vertexInput.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
+    vertexInput.vertexBindingDescriptionCount = 1;
+    vertexInput.pVertexBindingDescriptions = &bindingDesc;
+    vertexInput.vertexAttributeDescriptionCount = static_cast<uint32_t>(attributeDescs.size());
+    vertexInput.pVertexAttributeDescriptions = attributeDescs.data();
 
     // Input assembly: how vertices are grouped into primitives. A triangle list
     // makes every 3 vertices one triangle. See Glossary: RASTERISATION
@@ -104,8 +112,13 @@ ShaderPipeline::ShaderPipeline(VulkanContext& context, VkRenderPass renderPass)
     VkPipelineRasterizationStateCreateInfo rasteriser{};
     rasteriser.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
     rasteriser.polygonMode = VK_POLYGON_MODE_FILL;
-    rasteriser.cullMode = VK_CULL_MODE_NONE;          // back-face culling comes in Chunk 7
-    rasteriser.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
+    // Cull back faces: triangles facing away from the camera are skipped, roughly
+    // halving fragment work for a closed mesh. Our cube's faces are wound
+    // counter-clockwise when seen from outside; with no viewport Y-flip yet,
+    // Vulkan sees that as clockwise on screen, so CLOCKWISE marks the front
+    // faces. See Glossary: BACK_FACE_CULLING, WINDING_ORDER
+    rasteriser.cullMode = VK_CULL_MODE_BACK_BIT;
+    rasteriser.frontFace = VK_FRONT_FACE_CLOCKWISE;
     rasteriser.lineWidth = 1.0f;
 
     // Multisampling: disabled (one sample per pixel). See Glossary: RASTERISATION

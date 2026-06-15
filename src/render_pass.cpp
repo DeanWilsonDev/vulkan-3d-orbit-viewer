@@ -33,21 +33,6 @@ bool hasStencil(VkFormat format) {
     return format == VK_FORMAT_D32_SFLOAT_S8_UINT || format == VK_FORMAT_D24_UNORM_S8_UINT;
 }
 
-// Find a memory type index that matches the image's requirements and has the
-// requested properties (here, device-local). A full treatment of Vulkan memory
-// types lives in Chunk 7; this is the minimum the depth image needs.
-uint32_t findMemoryType(VkPhysicalDevice physicalDevice, uint32_t typeFilter,
-                        VkMemoryPropertyFlags properties) {
-    VkPhysicalDeviceMemoryProperties memProps{};
-    vkGetPhysicalDeviceMemoryProperties(physicalDevice, &memProps);
-    for (uint32_t i = 0; i < memProps.memoryTypeCount; ++i) {
-        const bool typeAllowed = typeFilter & (1u << i);
-        const bool hasProps = (memProps.memoryTypes[i].propertyFlags & properties) == properties;
-        if (typeAllowed && hasProps) return i;
-    }
-    throw std::runtime_error("no suitable memory type for the depth buffer");
-}
-
 } // namespace
 
 RenderPass::RenderPass(VulkanContext& context, Swapchain& swapchain)
@@ -196,8 +181,8 @@ void RenderPass::createDepthResources() {
     VkMemoryAllocateInfo alloc{};
     alloc.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
     alloc.allocationSize = memReq.size;
-    alloc.memoryTypeIndex = findMemoryType(m_context.physicalDevice(), memReq.memoryTypeBits,
-                                           VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+    alloc.memoryTypeIndex = m_context.findMemoryType(memReq.memoryTypeBits,
+                                                     VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
     if (vkAllocateMemory(m_context.device(), &alloc, nullptr, &m_depthMemory) != VK_SUCCESS) {
         throw std::runtime_error("vkAllocateMemory (depth) failed");
     }

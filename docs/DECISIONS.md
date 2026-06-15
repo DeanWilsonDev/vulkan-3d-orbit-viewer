@@ -10,7 +10,7 @@ Decisions inherited directly from `SPEC.md` ("Confirmed Decisions" table —
 C++, SDL3, Vulkan, MoltenVK, GLM, OBJ, layered files) are not repeated here
 unless the implementation added nuance to them.
 
-Status as of writing: Chunks 1–6 complete.
+Status as of writing: Chunks 1–7 complete.
 
 ______________________________________________________________________
 
@@ -245,14 +245,51 @@ ______________________________________________________________________
   counter: steady ~119 fps on this 120 Hz (ProMotion) display, i.e. capped at the
   v-synced refresh rate (FIFO), which is the expected best case. Counter reverted.
 
+## Chunk 7 — Vertex and index buffers
+
+- **`Vertex` = position + normal + uv** (in `mesh.h`). Normal is unused until
+  Chunk 11 and uv is never sampled (no textures in scope), but both are defined
+  now so the buffer layout and attribute descriptions are stable from the start.
+- **Buffer helpers added to `VulkanContext`** (`createBuffer`, `copyBuffer`,
+  `findMemoryType`) plus a dedicated `m_uploadPool` (TRANSIENT) for one-time
+  transfer commands. This matches the spec's "Chunk 7 touches vulkan_context".
+- **`findMemoryType` moved** from the local static in `render_pass.cpp` to
+  `VulkanContext` (resolving the open item); the depth buffer now calls it too.
+- **Staging-buffer pattern** in `Mesh::uploadDeviceLocal`: host-visible staging →
+  `memcpy` → device-local destination via `copyBuffer`. Used for both the vertex
+  and index buffers. Note: on the M2's unified memory, host-visible and
+  device-local may be the same physical RAM, but the pattern is kept because it is
+  correct and portable to discrete GPUs.
+- **`copyBuffer` submits and `vkQueueWaitIdle`s** — fine because uploads are
+  one-off setup, not per-frame work.
+- **Cube built in clip space directly** (`Mesh::cube`): centred at z = 0.5 with
+  z ∈ [0.2, 0.8] so the whole cube is inside Vulkan's clip volume (NDC z is 0..1),
+  x/y ∈ ±0.4. 24 vertices (4 per face) so each face carries its own flat normal;
+  36 indices. With no transforms it renders as a centred square (the front face) —
+  the spec's "may look like a hexagon" caveat; a straight-on axis-aligned cube is a
+  square, which is correct.
+- **Back-face culling enabled** (`CULL_MODE_BACK`). Cube wound CCW-from-outside;
+  with no viewport Y-flip yet, Vulkan reads that as CW on screen, so
+  `frontFace = CLOCKWISE`. **This will need revisiting in Chunk 8**: the standard
+  Vulkan projection flips Y (`proj[1][1] *= -1`), which inverts apparent winding,
+  so `frontFace` will likely switch to `COUNTER_CLOCKWISE` then. Verified visually
+  this chunk via screenshot (solid square, no culled-through gaps).
+- **Necessary changes outside the spec's Chunk 7 file list:** the vertex shader
+  (`mesh.vert`) now reads the position attribute instead of a hardcoded array, and
+  `ShaderPipeline` now wires the vertex input state and enables culling. Both are
+  unavoidable to render from a vertex buffer; noted here.
+- **Draw path:** `Renderer::recordCommandBuffer` now calls `mesh.bindAndDraw`
+  (bind vertex+index buffers, `vkCmdDrawIndexed`) instead of `vkCmdDraw(3,…)`;
+  `drawFrame` gained a `const Mesh&` parameter.
+
 ______________________________________________________________________
 
 ## Open items / things deferred deliberately
 
 - **`Renderer` lives in its own file**, where the spec attributed command buffers
   to `vulkan_context`. Settled: keeping it separate; noted as a deviation.
-- **`findMemoryType` location**: still a local static in `render_pass.cpp`; may
-  move to `VulkanContext` in Chunk 7 when buffers need the same logic.
+- **`frontFace` winding** is `CLOCKWISE` for Chunk 7's transform-free cube; expect
+  to flip to `COUNTER_CLOCKWISE` in Chunk 8 once the projection matrix flips Y.
 - **Swapchain `recreate()`** currently destroys before recreating (no
   `oldSwapchain`); could be upgraded for smoother resize-while-rendering.
 - **Startup double swapchain-create log**: left in place; trivial to suppress

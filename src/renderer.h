@@ -21,6 +21,7 @@ class VulkanContext;
 class Swapchain;
 class RenderPass;
 class ShaderPipeline;
+class Mesh;
 
 class Renderer {
 public:
@@ -30,10 +31,11 @@ public:
     Renderer(const Renderer&) = delete;
     Renderer& operator=(const Renderer&) = delete;
 
-    // Draw and present one frame. Returns true if the swapchain is out of date /
-    // suboptimal and the caller should recreate it (and call onSwapchainRecreated).
-    // See Glossary: FRAME_LOOP
-    bool drawFrame(Swapchain& swapchain, RenderPass& renderPass, ShaderPipeline& pipeline);
+    // Draw and present one frame, rendering the given mesh. Returns true if the
+    // swapchain is out of date / suboptimal and the caller should recreate it
+    // (and call onSwapchainRecreated). See Glossary: FRAME_LOOP
+    bool drawFrame(Swapchain& swapchain, RenderPass& renderPass, ShaderPipeline& pipeline,
+                   const Mesh& mesh);
 
     // Rebuild the per-image synchronisation after the swapchain was recreated
     // (the image count could change). See Glossary: SEMAPHORE
@@ -50,7 +52,7 @@ private:
     void destroySyncObjects();
     void recordCommandBuffer(VkCommandBuffer cmd, uint32_t imageIndex,
                              Swapchain& swapchain, RenderPass& renderPass,
-                             ShaderPipeline& pipeline);
+                             ShaderPipeline& pipeline, const Mesh& mesh);
 
     VulkanContext& m_context;
 
