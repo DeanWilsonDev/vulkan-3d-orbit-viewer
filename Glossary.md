@@ -588,3 +588,226 @@ sRGB format. The pair is passed to `vkCreateSwapchainKHR` as `imageFormat` and
 **Further reading**
 - [sRGB (Wikipedia)](https://en.wikipedia.org/wiki/SRGB)
 - [Vulkan Spec — Color Spaces](https://docs.vulkan.org/spec/latest/chapters/VK_KHR_surface/wsi.html#VkColorSpaceKHR)
+
+______________________________________________________________________
+
+## Chunk 4 — Render Pass and Framebuffers
+
+## RENDER_PASS
+
+**What it is**
+A `VkRenderPass` — a *description* of a rendering operation, not the act of
+rendering. It declares which attachments (colour, depth, …) are involved, what
+format and sample count each has, what happens to each at the start (load) and
+end (store) of the pass, and how the rendering is divided into subpasses. It
+holds no images itself.
+
+**Why it matters**
+Vulkan asks you to describe the whole structure of a render up front so the
+driver — especially on tile-based mobile GPUs — can schedule memory and bandwidth
+optimally: it knows in advance that depth will be cleared and discarded, that
+colour will be kept to present, and when layout transitions must happen. It is
+the classic Vulkan trade: more declaration from you, fewer surprises (and more
+speed) for the driver. The render pass depends only on formats, so it outlives
+window resizes.
+
+**How it appears in this project**
+`RenderPass::createRenderPass` in `src/render_pass.cpp` builds it from a colour
+attachment (the swapchain format, cleared then stored for presentation) and a
+depth attachment, one subpass, and one external dependency. The handle lives in
+`m_renderPass` and is created once for the program's lifetime.
+
+**Further reading**
+- [Vulkan Tutorial — Render passes](https://vulkan-tutorial.com/Drawing_a_triangle/Graphics_pipeline_basics/Render_passes)
+- [Vulkan Guide — Render passes](https://docs.vulkan.org/guide/latest/render_passes.html)
+
+______________________________________________________________________
+
+## ATTACHMENT
+
+**What it is**
+One image slot that a render pass reads from or writes to — typically a colour
+attachment (the picture being drawn) or a depth/stencil attachment (the depth
+buffer). Each attachment is declared with a format, a sample count, and *load*
+and *store* operations: what to do with its contents at the start and end of the
+pass (clear, preserve, or discard).
+
+**Why it matters**
+Load/store ops are a surprisingly important performance lever. `LOAD_OP_CLEAR`
+lets the GPU wipe the attachment cheaply instead of reading old contents;
+`STORE_OP_DONT_CARE` lets it throw a result away rather than writing it back to
+memory (which is exactly right for a depth buffer you never reuse). Declaring
+attachments up front is what makes the render pass description complete.
+
+**How it appears in this project**
+The two `VkAttachmentDescription`s in `RenderPass::createRenderPass`: colour
+(`LOAD_OP_CLEAR` → `STORE_OP_STORE`, ending in `PRESENT_SRC_KHR`) and depth
+(`LOAD_OP_CLEAR` → `STORE_OP_DONT_CARE`). The values written by the clear ops are
+`m_clearValues` (dark blue-grey for colour, 1.0 for depth).
+
+**Further reading**
+- [Vulkan Spec — Render Pass attachments](https://docs.vulkan.org/spec/latest/chapters/renderpass.html)
+- [Khronos — Load/store ops and tile-based GPUs](https://developer.samsung.com/galaxy-gamedev/resources/articles/renderpasses.html)
+
+______________________________________________________________________
+
+## FRAMEBUFFER
+
+**What it is**
+A `VkFramebuffer` — the concrete binding between a render pass's attachment slots
+and actual image views. The render pass says "slot 0 is a colour attachment of
+this format"; the framebuffer says "slot 0 *is this specific image view*". It is
+created for a particular render pass and a particular size.
+
+**Why it matters**
+Separating the description (render pass) from the concrete images (framebuffer)
+means one render pass can be reused with many framebuffers. That is exactly what
+the swapchain needs: the same render pass, but a different framebuffer per
+swapchain image, since you draw into a different image each frame. Because a
+framebuffer is tied to image size and to specific images, it must be rebuilt
+whenever the swapchain is.
+
+**How it appears in this project**
+`RenderPass::createFramebuffers` makes one `VkFramebuffer` per swapchain image,
+each binding that image's colour view plus the shared depth view. They are
+rebuilt in `recreate()` after a resize, and stored in `m_framebuffers`.
+
+**Further reading**
+- [Vulkan Tutorial — Framebuffers](https://vulkan-tutorial.com/Drawing_a_triangle/Drawing/Framebuffers)
+- [Vulkan Spec — Framebuffers](https://docs.vulkan.org/spec/latest/chapters/renderpass.html#_framebuffers)
+
+______________________________________________________________________
+
+## SUBPASS
+
+**What it is**
+A phase within a render pass that reads and writes some subset of the pass's
+attachments. Every render pass has at least one subpass; it can have several that
+run in sequence, where a later subpass can read what an earlier one wrote at the
+same pixel. Subpass *dependencies* declare the ordering and memory visibility
+between them (and with work outside the pass).
+
+**Why it matters**
+Multi-subpass passes let tile-based GPUs keep intermediate results in fast
+on-chip tile memory instead of writing them out to main memory and reading them
+back — the basis of efficient deferred shading on mobile. Even with a single
+subpass, the dependency mechanism is how the render pass expresses when layout
+transitions and clears are allowed to happen relative to other work.
+
+**How it appears in this project**
+`RenderPass::createRenderPass` defines exactly one `VkSubpassDescription` (one
+colour + one depth attachment) and one `VkSubpassDependency` from
+`VK_SUBPASS_EXTERNAL` that orders the colour/depth writes correctly. The project
+never needs more than one subpass.
+
+**Further reading**
+- [Vulkan Spec — Subpasses](https://docs.vulkan.org/spec/latest/chapters/renderpass.html)
+- [Vulkan Guide — Subpasses](https://docs.vulkan.org/guide/latest/render_passes.html)
+
+______________________________________________________________________
+
+## DEPTH_BUFFER
+
+**What it is**
+An off-screen image, the same size as the colour target, that stores a depth
+value (distance from the camera) for each pixel. As triangles are rasterised, the
+GPU compares each incoming fragment's depth against the stored value and keeps the
+nearer one. It is never shown on screen.
+
+**Why it matters**
+It solves the *hidden surface problem*: how to draw overlapping 3D geometry so
+that nearer surfaces correctly cover farther ones, regardless of the order the
+triangles are submitted. Without it you would have to sort everything back-to-
+front yourself (the painter's algorithm) and still get it wrong for intersecting
+shapes. The depth buffer makes correct occlusion automatic and per-pixel.
+See Glossary: DEPTH_TESTING, PAINTERS_ALGORITHM
+
+**How it appears in this project**
+`RenderPass::createDepthResources` creates the depth `VkImage` (device-local,
+`DEPTH_STENCIL_ATTACHMENT` usage), allocates and binds its memory, and makes a
+depth `VkImageView`. The format is chosen by `chooseDepthFormat` (prefers
+`D32_SFLOAT`). It is attached to every framebuffer and cleared to 1.0 each pass.
+
+**Further reading**
+- [Vulkan Tutorial — Depth buffering](https://vulkan-tutorial.com/Depth_buffering)
+- [Z-buffering (Wikipedia)](https://en.wikipedia.org/wiki/Z-buffering)
+
+______________________________________________________________________
+
+## DEPTH_TESTING
+
+**What it is**
+The per-fragment test the GPU performs using the depth buffer: for each fragment
+a triangle produces, compare its depth to the value already stored at that pixel;
+if the fragment is nearer (passes the comparison, usually "less than"), shade it
+and update the stored depth, otherwise discard it.
+
+**Why it matters**
+Depth testing is what actually *uses* the depth buffer to resolve occlusion. It
+runs in hardware, per fragment, for free relative to doing it yourself, and it is
+order-independent for opaque geometry. The comparison direction and the clear
+value must agree: this project clears depth to 1.0 (far) and keeps nearer
+fragments, so closer surfaces win.
+
+**How it appears in this project**
+The depth attachment and clear value are set up here in `src/render_pass.cpp`;
+the pipeline that actually enables the depth test (`VkPipelineDepthStencilStateCreateInfo`)
+is configured in Chunk 5. Conceptually the two halves meet at the depth buffer.
+
+**Further reading**
+- [Vulkan Spec — Depth test](https://docs.vulkan.org/spec/latest/chapters/fragops.html#fragops-depth)
+- [LearnOpenGL — Depth testing](https://learnopengl.com/Advanced-OpenGL/Depth-testing)
+
+______________________________________________________________________
+
+## PAINTERS_ALGORITHM
+
+**What it is**
+A way to render overlapping objects by sorting them back-to-front and drawing them
+in that order, so nearer objects paint over farther ones — like a painter laying
+down the background before the foreground.
+
+**Why it matters**
+It is the conceptual predecessor to the depth buffer, and understanding its
+failures explains why depth buffers exist. It needs a global sort every frame
+(expensive as scenes grow) and it simply cannot handle mutually overlapping or
+intersecting geometry — there is no correct order for two triangles that pierce
+each other. The depth buffer replaces it with a cheap per-pixel test. (It is not
+obsolete, though: transparent objects, which a depth buffer alone cannot order,
+are still commonly drawn back-to-front.)
+
+**How it appears in this project**
+Not used in code — the project relies entirely on the depth buffer. It is
+documented as the contrast that motivates DEPTH_BUFFER and DEPTH_TESTING.
+
+**Further reading**
+- [Painter's algorithm (Wikipedia)](https://en.wikipedia.org/wiki/Painter%27s_algorithm)
+- [Hidden-surface determination (Wikipedia)](https://en.wikipedia.org/wiki/Hidden-surface_determination)
+
+______________________________________________________________________
+
+## Z_FIGHTING
+
+**What it is**
+A flickering, shimmering artefact where two surfaces are at almost the same depth
+and the depth buffer cannot reliably decide which is in front. From frame to frame
+(or pixel to pixel) the winner flips, producing a noisy stipple along the
+coincident surfaces.
+
+**Why it matters**
+It is the most common depth-buffer artefact, and its cause teaches how depth
+precision works: depth values are stored with finite precision that is unevenly
+distributed — with a perspective projection, most precision sits near the camera
+and very little far away. Pulling the near plane too close or pushing the far
+plane too far stretches precision thin and triggers z-fighting in the distance.
+Mitigations include a tighter near/far range, a float depth buffer, or a reversed-
+Z depth setup.
+
+**How it appears in this project**
+Not directly visible yet (nothing is drawn), but the choices that fight it are
+made here and in Chunk 8: a 32-bit float depth format (`chooseDepthFormat`) and,
+later, a sensible near/far range in the perspective projection.
+
+**Further reading**
+- [Z-fighting (Wikipedia)](https://en.wikipedia.org/wiki/Z-fighting)
+- [NVIDIA — Depth precision visualized](https://developer.nvidia.com/content/depth-precision-visualized)

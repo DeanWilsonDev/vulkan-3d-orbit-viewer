@@ -7,14 +7,17 @@
 //
 // Chunk 1 built the first beat: a resizable window driven by an event loop.
 // Chunk 2 brought Vulkan up — instance, device, queues, and the surface tying
-// Vulkan to the window. Chunk 3 adds the swapchain: the chain of images the
-// renderer will present to the screen, rebuilt whenever the window resizes.
-// Still nothing is drawn. See Glossary: WINDOWING_SYSTEM, EVENT_LOOP,
-// VULKAN_INSTANCE, SWAPCHAIN
+// Vulkan to the window. Chunk 3 added the swapchain. Chunk 4 adds the render
+// pass, a depth buffer, and one framebuffer per swapchain image — the "stage"
+// the renderer will draw onto, with the clear colour configured. Drawing and
+// presenting that clear colour to screen waits until Chunk 6 (command buffers
+// and synchronisation). See Glossary: WINDOWING_SYSTEM, EVENT_LOOP,
+// VULKAN_INSTANCE, SWAPCHAIN, RENDER_PASS
 
 #include "sdl_context.h"
 #include "vulkan_context.h"
 #include "swapchain.h"
+#include "render_pass.h"
 
 #include <cstdlib>
 #include <exception>
@@ -52,6 +55,13 @@ int main() {
         // See Glossary: SWAPCHAIN
         Swapchain swapchain(vulkan, sdl.window());
 
+        // --- Chapter 4: render pass and framebuffers -------------------------
+        // Describe the rendering operation (colour + depth attachments) and bind
+        // it to concrete images (depth buffer + per-image framebuffers). These
+        // are the targets the renderer will draw onto. See Glossary: RENDER_PASS,
+        // FRAMEBUFFER, DEPTH_BUFFER
+        RenderPass renderPass(vulkan, swapchain);
+
         // --- The main loop ---------------------------------------------------
         // A real-time application is a loop, and each iteration is one frame.
         // For now the loop handles input and reacts to resizes; in later chunks
@@ -65,10 +75,12 @@ int main() {
             running = sdl.processEvents();
 
             // If the window changed size, the swapchain images no longer match
-            // it and must be rebuilt before the next frame would be drawn.
-            // See Glossary: SWAPCHAIN
+            // it and must be rebuilt — and with them the depth buffer and
+            // framebuffers that are sized to the swapchain.
+            // See Glossary: SWAPCHAIN, FRAMEBUFFER
             if (sdl.takeResized()) {
                 swapchain.recreate();
+                renderPass.recreate();
             }
         }
     } catch (const std::exception& e) {

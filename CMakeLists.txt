@@ -65,6 +65,7 @@ add_executable(vulkan-orbit-viewer
     src/sdl_context.cpp
     src/vulkan_context.cpp
     src/swapchain.cpp
+    src/render_pass.cpp
 )
 
 # Let the sources include each other by bare filename ("sdl_context.h").
