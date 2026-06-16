@@ -42,8 +42,12 @@ constexpr bool kEnableValidation = false;
 constexpr bool kEnableValidation = true;
 #endif
 
-int main() {
+int main(int argc, char** argv) {
     try {
+        // An optional command-line argument selects the model to load; with none we
+        // fall back to the bundled sample. e.g. `vulkan-orbit-viewer assets/torus.obj`.
+        const char* modelPath = (argc > 1) ? argv[1] : ASSET_DIR "/mesh.obj";
+
         // --- Chapter 1: the window -------------------------------------------
         // Open the operating-system window. Everything the user sees lives
         // inside it, and everything Vulkan eventually draws will be presented
@@ -96,9 +100,9 @@ int main() {
         // --- Chapter 7: the mesh ---------------------------------------------
         // Geometry loaded from an OBJ file on disk (Chunk 9), replacing Chunk 7's
         // hardcoded cube. tinyobjloader parses it and Mesh deduplicates the
-        // vertices into GPU buffers. See Glossary: MESH, OBJ_FORMAT, VERTEX_BUFFER,
-        // INDEX_BUFFER
-        Mesh model = Mesh::fromObjFile(vulkan, ASSET_DIR "/mesh.obj");
+        // vertices into GPU buffers. The path comes from the command line (or the
+        // bundled default). See Glossary: MESH, OBJ_FORMAT, VERTEX_BUFFER, INDEX_BUFFER
+        Mesh model = Mesh::fromObjFile(vulkan, modelPath);
 
         // --- Chapter 8: the orbit camera -------------------------------------
         // The viewpoint: an orbit camera circling the model. We frame it on the

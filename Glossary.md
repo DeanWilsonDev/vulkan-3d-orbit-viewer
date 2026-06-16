@@ -2970,3 +2970,62 @@ as what that term gestures at. See Glossary: AMBIENT_LIGHT, LIGHTING_MODEL
 **Further reading**
 - [Global illumination (Wikipedia)](https://en.wikipedia.org/wiki/Global_illumination)
 - [Scratchapixel — Global illumination](https://www.scratchapixel.com/lessons/3d-basic-rendering/global-illumination-path-tracing.html)
+
+______________________________________________________________________
+
+## Chunk 12 — Polish and Completeness
+
+## RESOURCE_LIFETIME
+
+**What it is**
+The span between when a resource is created and when it is destroyed, and the rules
+governing it. In graphics programming this especially means GPU resources (buffers,
+images, pipelines, descriptor pools) and the constraints on when they may be freed —
+notably, never while the GPU might still be using them.
+
+**Why it matters**
+Vulkan does almost no lifetime management for you: every object you create you must
+destroy, exactly once, at a safe time. Free a resource too early (while a frame still
+references it) and you get a crash or corruption; free it too late or not at all and
+you leak. Disciplined lifetime management — RAII plus synchronising with the GPU
+before destruction — is what keeps an explicit API like Vulkan correct.
+
+**How it appears in this project**
+Every Vulkan-owning class follows RAII: it creates its objects in the constructor and
+destroys them in the destructor, and is non-copyable so ownership is unique. The GPU
+is brought idle (`vkDeviceWaitIdle`) before teardown — in `Renderer`'s destructor and
+in `main` after the loop — so nothing is freed mid-flight. See Glossary:
+VULKAN_TEARDOWN_ORDER, GPU_CPU_SYNC
+
+**Further reading**
+- [RAII (cppreference)](https://en.cppreference.com/w/cpp/language/raii)
+- [Vulkan Spec — Object lifetime](https://docs.vulkan.org/spec/latest/chapters/fundamentals.html#fundamentals-objectmodel-lifetime)
+
+______________________________________________________________________
+
+## VULKAN_TEARDOWN_ORDER
+
+**What it is**
+The requirement that Vulkan objects be destroyed in the reverse of the order they
+depend on each other: a parent object must outlive its children. The device outlives
+everything made from it; the swapchain's image views outlive the framebuffers built
+on them; the instance outlives the surface and the device; the window outlives the
+surface.
+
+**Why it matters**
+Destroying a parent while a child still references it is undefined behaviour — a
+likely crash or a validation error. Because the dependency graph is strict and
+one-directional, getting the destruction order right is not optional. It is the single
+most common source of teardown bugs in Vulkan programs.
+
+**How it appears in this project**
+Encoded structurally rather than by hand: the RAII objects in `main` are declared in
+dependency order (`SdlContext` → `VulkanContext` → `Swapchain` → `RenderPass` →
+`UniformBuffers` → `ShaderPipeline` → `Renderer` → `Mesh`), so C++ destroys them in
+exact reverse. `VulkanContext`'s own destructor mirrors the discipline internally
+(device, then surface, then debug messenger, then instance). See Glossary:
+RESOURCE_LIFETIME, LOGICAL_DEVICE
+
+**Further reading**
+- [Vulkan Spec — Object lifetime](https://docs.vulkan.org/spec/latest/chapters/fundamentals.html#fundamentals-objectmodel-lifetime)
+- [Vulkan Tutorial — Cleanup](https://vulkan-tutorial.com/Drawing_a_triangle/Setup/Base_code)

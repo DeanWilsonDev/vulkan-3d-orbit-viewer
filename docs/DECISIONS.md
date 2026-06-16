@@ -462,6 +462,41 @@ ______________________________________________________________________
 
 ______________________________________________________________________
 
+## Chunk 12 — Polish and completeness
+
+- **Glossary audit passed.** A scripted check extracts every `See Glossary:` token
+  from `src/` and `shaders/` (95 unique) and confirms each resolves to a real `##`
+  entry in `Glossary.md`. No dangling references. The two spec-required entries
+  (`RESOURCE_LIFETIME`, `VULKAN_TEARDOWN_ORDER`) were added and tied to a reference in
+  `VulkanContext`'s destructor; no other gaps were found, so no other entries needed
+  adding. Total entries: 116.
+- **Teardown order verified, not changed.** It is already correct and enforced
+  structurally by the RAII declaration order in `main` (destruction is the exact
+  reverse: framebuffers before image views, all Vk children before the device, surface
+  before the window). Documented in the destructor comment + the two new glossary
+  entries rather than altered.
+- **Validation clean.** Running with layers on (debug build) produces no validation
+  output on `stderr` at startup, steady state, or during the startup swapchain
+  recreate. Verified on macOS / MoltenVK (the only platform available here); the code
+  is written portably but Linux/Windows were not run — noted honestly in the README.
+- **Command-line model argument.** `main(argc, argv)` takes an optional OBJ path
+  (`argv[1]`), defaulting to the bundled `assets/mesh.obj`. The camera's bounds-based
+  auto-framing (Chunk 9) means any model frames correctly with no per-model tuning.
+- **Second sample model added: `assets/torus.obj`.** Generated procedurally (64×32
+  segment torus, R=1.0/r=0.35, with normals + UVs) rather than downloaded, keeping the
+  repo self-contained. It is a deliberately different scale (~2.7 units vs the switch's
+  ~0.05) to exercise auto-framing; verified loading via the CLI arg (dedup 12288→2048).
+- **README written** covering what the project is, prerequisites (Vulkan SDK is the
+  one non-fetched dependency), per-platform build, controls, and the model argument.
+- **Reviewed open items, intentionally left as-is:** the benign startup
+  double-swapchain-create (a duplicate log line, not a warning) and the minimised-window
+  busy-wait `continue`. Neither crashes nor warns, so both are kept simple for this POC
+  rather than adding guards in the polish pass. The `oldSwapchain`-less recreate is
+  robust (it waits for device idle first); the smoother-resize optimisation remains a
+  noted nicety, not a fix.
+
+______________________________________________________________________
+
 ## Open items / things deferred deliberately
 
 - **`Renderer` lives in its own file**, where the spec attributed command buffers

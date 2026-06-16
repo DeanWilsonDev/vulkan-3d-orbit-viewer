@@ -111,8 +111,11 @@ VulkanContext::~VulkanContext() {
     // device is destroyed before the instance; the surface (owned by the
     // instance) before the instance; the debug messenger last among
     // instance-children. The physical device and queues are not destroyed —
-    // they are owned by the instance and device respectively.
-    // See Glossary: LOGICAL_DEVICE
+    // they are owned by the instance and device respectively. Across the whole
+    // program this same discipline is enforced by the declaration order of the
+    // RAII objects in main(): they are destroyed in reverse, so every Vulkan
+    // object outlives its children. See Glossary: LOGICAL_DEVICE,
+    // VULKAN_TEARDOWN_ORDER, RESOURCE_LIFETIME
     if (m_uploadPool != VK_NULL_HANDLE) {
         vkDestroyCommandPool(m_device, m_uploadPool, nullptr);
     }
