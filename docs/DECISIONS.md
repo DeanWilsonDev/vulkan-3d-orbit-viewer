@@ -427,6 +427,41 @@ ______________________________________________________________________
 
 ______________________________________________________________________
 
+## Chunk 11 — Diffuse lighting
+
+- **One directional light, fixed in world space.** Direction + colour + a constant
+  ambient term, all in the UBO. World-space (not view-space) lighting means orbiting
+  the camera leaves the light put, which is the checkpoint requirement. Direction
+  points *toward* the light so `dot(N, L)` is positive on lit faces.
+- **Per-fragment (Phong) shading, not per-vertex.** `mesh.vert` outputs the
+  world-space normal; `mesh.frag` renormalises and evaluates `ambient + max(dot(N,L),
+  0)·lightColour`, modulating the existing orange as the albedo. The model's smooth
+  OBJ normals therefore shade smoothly. Per-vertex/Gouraud documented as the contrast.
+- **Lighting math lives in `Renderer::drawFrame`, not `main.cpp`.** The spec lists
+  `main.cpp` for Chunk 11, but in this codebase the UBO is assembled in the renderer
+  (the Chunk 8 deviation), so the normal matrix and the light constants are set there.
+  `main.cpp` is unchanged this chunk. The light is hardcoded (not user-tweakable),
+  which is why it did not need to surface in `main`.
+- **Normal matrix = `transpose(inverse(mat3(model)))`, uploaded as a `mat4`.** Built
+  every frame even though the model is currently identity (so it is also identity),
+  so the correct construction is already in place for when the model gains rotation or
+  non-uniform scale. Stored as a `mat4` and read as `mat3` in the shader to sidestep
+  std140's per-column `mat3` padding.
+- **Lighting vectors are `vec4`, not `vec3`, in the UBO.** std140 gives `vec3` a
+  16-byte alignment with awkward trailing-padding rules; using `vec4` (w unused) makes
+  the C++ struct and the GLSL block layouts trivially identical. Documented in
+  `uniform_buffer.h`.
+- **Descriptor set layout stage flags widened to `VERTEX | FRAGMENT`.** The single
+  UBO is now read by both stages (matrices/normal in the vertex shader, light in the
+  fragment shader), so the one descriptor binding is made visible to both.
+- **Verification:** the static screenshot shows clear diffuse shading (bright
+  light-facing faces, dark-but-not-black shadow faces, the model's form and kickstand
+  now readable), replacing the flat orange — confirming the lighting. "Light stays
+  fixed while orbiting" is true by construction (world-space constant, no camera term)
+  but not headlessly drag-tested.
+
+______________________________________________________________________
+
 ## Open items / things deferred deliberately
 
 - **`Renderer` lives in its own file**, where the spec attributed command buffers

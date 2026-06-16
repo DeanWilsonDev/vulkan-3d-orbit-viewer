@@ -32,14 +32,16 @@ UniformBuffers::~UniformBuffers() {
 }
 
 void UniformBuffers::createDescriptorSetLayout() {
-    // One binding: a single uniform buffer at binding 0, read by the vertex shader
-    // (that is where the MVP transform happens). descriptorCount is 1 because the
-    // shader declares one block, not an array. See Glossary: DESCRIPTOR_SET_LAYOUT, DESCRIPTOR
+    // One binding: a single uniform buffer at binding 0, read by both the vertex
+    // shader (MVP transform, normal to world space) and — as of Chunk 11 — the
+    // fragment shader (the light parameters for shading). descriptorCount is 1
+    // because the shader declares one block, not an array.
+    // See Glossary: DESCRIPTOR_SET_LAYOUT, DESCRIPTOR
     VkDescriptorSetLayoutBinding binding{};
     binding.binding = 0;
     binding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
     binding.descriptorCount = 1;
-    binding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+    binding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
 
     VkDescriptorSetLayoutCreateInfo info{};
     info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;

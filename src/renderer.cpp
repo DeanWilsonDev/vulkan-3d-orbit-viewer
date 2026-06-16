@@ -214,17 +214,33 @@ bool Renderer::drawFrame(Swapchain& swapchain, RenderPass& renderPass, ShaderPip
     // re-signal it; resetting earlier would deadlock if we returned above.
     vkResetFences(device, 1, &m_inFlight[frame]);
 
-    // Update this frame's MVP matrices and upload them to its uniform buffer
-    // before recording the draw that reads them. The model matrix is identity for
-    // now (the cube sits where its vertices put it — no rotation yet); the camera
-    // supplies view and projection, the latter using the current aspect ratio so
-    // the cube never stretches when the window resizes. See Glossary: MVP_MATRIX
+    // Update this frame's uniforms and upload them before recording the draw that
+    // reads them. The model matrix is identity (the mesh sits where its vertices put
+    // it — no rotation); the camera supplies view and projection, the latter using
+    // the current aspect ratio so the mesh never stretches on resize.
+    // See Glossary: MVP_MATRIX
     const VkExtent2D extent = swapchain.extent();
     const float aspect = static_cast<float>(extent.width) / static_cast<float>(extent.height);
     UniformBufferObject ubo{};
     ubo.model = glm::mat4(1.0f);
     ubo.view = camera.viewMatrix();
     ubo.proj = camera.projectionMatrix(aspect);
+
+    // The normal matrix — transpose(inverse(model)) in 3×3 — keeps normals
+    // perpendicular to the surface even under non-uniform scale. With an identity
+    // model it is also identity, but the correct construction is in place for when
+    // the model gains rotation/scale. Stored as a mat4 for the std140 UBO.
+    // See Glossary: NORMAL_MATRIX, SURFACE_NORMAL
+    ubo.normalMatrix = glm::mat4(glm::transpose(glm::inverse(glm::mat3(ubo.model))));
+
+    // A single directional light, fixed in world space (so orbiting the camera does
+    // not move it). direction points toward the light; a gentle warm white at full
+    // strength, plus a dim ambient fill so shadowed faces stay visible.
+    // See Glossary: DIRECTIONAL_LIGHT, AMBIENT_LIGHT
+    ubo.lightDirection = glm::vec4(glm::normalize(glm::vec3(0.5f, 1.0f, 0.3f)), 0.0f);
+    ubo.lightColour = glm::vec4(1.0f, 0.97f, 0.92f, 0.0f);
+    ubo.ambientColour = glm::vec4(0.12f, 0.12f, 0.14f, 0.0f);
+
     uniforms.update(frame, ubo);
 
     vkResetCommandBuffer(cmd, 0);

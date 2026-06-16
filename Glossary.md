@@ -2629,3 +2629,344 @@ rate. See Glossary: DELTA_TIME, ORBIT_CAMERA
 **Further reading**
 - [Fix Your Timestep! (Gaffer On Games)](https://gafferongames.com/post/fix_your_timestep/)
 - [Exponential smoothing (Wikipedia)](https://en.wikipedia.org/wiki/Exponential_smoothing)
+
+______________________________________________________________________
+
+## Chunk 11 — Diffuse Lighting
+
+## SURFACE_NORMAL
+
+**What it is**
+A unit vector that points straight out from a surface, perpendicular to it — the
+direction the surface "faces" at a given point. For a mesh it is stored per vertex
+and interpolated across each triangle.
+
+**Why it matters**
+Lighting is fundamentally about the angle between a surface and the light, and the
+normal is what encodes that facing. Almost every lighting calculation starts from the
+normal; without it a surface has no notion of toward or away from a light. Whether
+normals are shared (smooth) or per-face (flat) decides how the surface shades.
+
+**How it appears in this project**
+`Vertex::normal`, loaded from the OBJ in Chunk 9, transformed to world space in
+`mesh.vert` and used by `mesh.frag` for the Lambert term. See Glossary: NORMAL_MATRIX,
+LAMBERT_DIFFUSE, SMOOTH_NORMALS
+
+**Further reading**
+- [Normal (geometry) (Wikipedia)](https://en.wikipedia.org/wiki/Normal_(geometry))
+- [LearnOpenGL — Basic lighting](https://learnopengl.com/Lighting/Basic-Lighting)
+
+______________________________________________________________________
+
+## NORMAL_MATRIX
+
+**What it is**
+The matrix used to transform normals from object space to world space: the transpose
+of the inverse of the model matrix's 3×3 part. It is generally *not* the same as the
+model matrix.
+
+**Why it matters**
+Transforming a normal with the model matrix works only when that matrix has no
+non-uniform scale; with non-uniform scale, the model matrix tilts normals so they are
+no longer perpendicular to the surface, breaking lighting. The transpose-inverse
+construction cancels the scale's effect on direction, keeping normals true. It is a
+classic subtle bug to use the wrong matrix.
+
+**How it appears in this project**
+`UniformBufferObject::normalMatrix`, built in `Renderer::drawFrame` as
+`transpose(inverse(mat3(model)))` and applied in `mesh.vert`. With the current
+identity model it equals identity, but the correct form is in place for future
+transforms. Stored as a `mat4` to avoid std140 `mat3` padding. See Glossary:
+SURFACE_NORMAL, MODEL_MATRIX
+
+**Further reading**
+- [LearnOpenGL — Basic lighting (the normal matrix)](https://learnopengl.com/Lighting/Basic-Lighting)
+- [Normal matrix (scratchapixel / general)](https://www.scratchapixel.com/lessons/mathematics-physics-for-computer-graphics/geometry/transforming-normals.html)
+
+______________________________________________________________________
+
+## LIGHTING_MODEL
+
+**What it is**
+A set of equations that approximate how light interacts with a surface to produce its
+final colour. Real light transport is enormously complex; a lighting model trades
+physical accuracy for a cheap, plausible result that runs in real time.
+
+**Why it matters**
+It is the bridge between geometry and appearance — the reason a surface looks like
+matte plastic, shiny metal, or chalk. Understanding that real-time shading is a chosen
+approximation (not ground truth) frames every later technique as "a better model",
+from Phong to physically based rendering.
+
+**How it appears in this project**
+The shading in `mesh.frag` — ambient + Lambert diffuse from one directional light — is
+a minimal lighting model. The structure (sum of light terms, modulated by surface
+colour) is the seed the rest build on. See Glossary: LAMBERT_DIFFUSE, AMBIENT_LIGHT,
+PHONG_LIGHTING
+
+**Further reading**
+- [Shading (Wikipedia)](https://en.wikipedia.org/wiki/Shading)
+- [LearnOpenGL — Lighting](https://learnopengl.com/Lighting/Colors)
+
+______________________________________________________________________
+
+## LAMBERT_DIFFUSE
+
+**What it is**
+A model of the matte component of reflection: light hitting a surface scatters equally
+in all directions, so its brightness depends only on the angle between the surface
+normal and the light, not on the viewer's position. The brightness is `max(dot(N, L),
+0)` for unit normal N and light direction L.
+
+**Why it matters**
+It captures the dominant look of most non-shiny surfaces (paper, chalk, unpolished
+wood) and is the workhorse term of real-time lighting. The cosine falloff — surfaces
+facing the light squarely are brightest, grazing angles dim — is what gives 3D objects
+their readable, rounded shading.
+
+**How it appears in this project**
+`float diffuse = max(dot(N, L), 0.0)` in `mesh.frag`, modulating the orange albedo by
+the light colour. The `max(…, 0)` discards light from behind the surface. See
+Glossary: DOT_PRODUCT_GEOMETRY, SURFACE_NORMAL, DIRECTIONAL_LIGHT
+
+**Further reading**
+- [Lambertian reflectance (Wikipedia)](https://en.wikipedia.org/wiki/Lambertian_reflectance)
+- [LearnOpenGL — Basic lighting (diffuse)](https://learnopengl.com/Lighting/Basic-Lighting)
+
+______________________________________________________________________
+
+## AMBIENT_LIGHT
+
+**What it is**
+A constant, uniform amount of light added to every surface regardless of orientation.
+It is a crude stand-in for indirect light — the glow bouncing around a scene that
+fills in shadows even where no direct light reaches.
+
+**Why it matters**
+With diffuse light alone, surfaces facing away from the light go pure black, which
+looks harsh and unreal — real shadows are dim, not void, because light bounces. A
+small ambient term restores that, cheaply. Its crudeness (it ignores geometry
+entirely) is exactly what global illumination later improves on.
+
+**How it appears in this project**
+`ubo.ambientColour` (a dim blue-grey), added to the diffuse term in `mesh.frag` so the
+model's shadow side stays visible — the checkpoint's "dark but not black". See
+Glossary: GLOBAL_ILLUMINATION, LIGHTING_MODEL
+
+**Further reading**
+- [Shading — ambient lighting (Wikipedia)](https://en.wikipedia.org/wiki/Shading#Ambient_lighting)
+- [LearnOpenGL — Basic lighting (ambient)](https://learnopengl.com/Lighting/Basic-Lighting)
+
+______________________________________________________________________
+
+## DIRECTIONAL_LIGHT
+
+**What it is**
+A light defined purely by a direction, with no position — its rays are parallel and
+its intensity does not fall off with distance, as if the source were infinitely far
+away. The sun is the canonical example.
+
+**Why it matters**
+It is the simplest and cheapest light: every surface sees the same light direction, so
+shading needs only the normal and that one constant vector. It is the natural first
+light to implement and the right model for sunlight or any distant source.
+
+**How it appears in this project**
+`ubo.lightDirection`, a fixed world-space vector set in `Renderer::drawFrame`. Because
+it lives in world space and never references the camera, orbiting leaves the lighting
+put — the checkpoint's "light fixed in world space". See Glossary: POINT_LIGHT,
+SPOT_LIGHT, LAMBERT_DIFFUSE
+
+**Further reading**
+- [LearnOpenGL — Light casters (directional)](https://learnopengl.com/Lighting/Light-casters)
+- [Directional light (general CG)](https://en.wikipedia.org/wiki/Shading#Directional_lighting)
+
+______________________________________________________________________
+
+## POINT_LIGHT
+
+**What it is**
+A light that emits from a single position in all directions, with intensity that falls
+off with distance (attenuation). A bare lightbulb is the everyday example. (Documented
+for contrast; not implemented here.)
+
+**Why it matters**
+It is the next light up from directional: it adds a position, a per-surface light
+direction (toward the bulb), and distance attenuation. Knowing how it differs from a
+directional light clarifies what "no position, parallel rays" actually buys in
+simplicity.
+
+**How it appears in this project**
+Not implemented — the project uses one directional light. It is documented so the
+directional light's simplifications are understood by contrast. See Glossary:
+DIRECTIONAL_LIGHT, SPOT_LIGHT
+
+**Further reading**
+- [LearnOpenGL — Light casters (point light)](https://learnopengl.com/Lighting/Light-casters)
+- [Light attenuation (Wikipedia)](https://en.wikipedia.org/wiki/Attenuation)
+
+______________________________________________________________________
+
+## SPOT_LIGHT
+
+**What it is**
+A point light restricted to a cone: it has a position, a direction, and a cone angle,
+lighting only surfaces inside the cone (often with a soft edge). A torch or stage
+spotlight is the model. (Documented for contrast; not implemented here.)
+
+**Why it matters**
+It is the most constrained of the three standard lights, layering a cone test on top of
+a point light. Seeing the progression directional → point → spot shows lighting as
+composable pieces (direction, position, attenuation, cone) rather than unrelated
+special cases.
+
+**How it appears in this project**
+Not implemented. Documented to complete the directional/point/spot trio the spec asks
+for. See Glossary: DIRECTIONAL_LIGHT, POINT_LIGHT
+
+**Further reading**
+- [LearnOpenGL — Light casters (spotlight)](https://learnopengl.com/Lighting/Light-casters)
+- [Spotlight (CG concept)](https://en.wikipedia.org/wiki/Shading#Spotlight)
+
+______________________________________________________________________
+
+## PHONG_LIGHTING
+
+**What it is**
+A classic lighting model that sums three terms: ambient (constant fill), diffuse
+(matte, view-independent), and specular (a shiny highlight that depends on the viewer's
+angle). Together they approximate a lit, slightly glossy surface.
+
+**Why it matters**
+It was the standard real-time lighting model for decades and remains the textbook
+mental model for shading. This project implements its ambient + diffuse parts;
+recognising that it is "Phong minus specular" places the work on a well-known map and
+points to the obvious next step.
+
+**How it appears in this project**
+`mesh.frag` computes ambient + diffuse — two of Phong's three terms. Specular is
+deliberately omitted (documented below). See Glossary: SPECULAR_LIGHT, LAMBERT_DIFFUSE,
+AMBIENT_LIGHT
+
+**Further reading**
+- [Phong reflection model (Wikipedia)](https://en.wikipedia.org/wiki/Phong_reflection_model)
+- [LearnOpenGL — Basic lighting](https://learnopengl.com/Lighting/Basic-Lighting)
+
+______________________________________________________________________
+
+## SPECULAR_LIGHT
+
+**What it is**
+The shiny highlight a surface reflects toward the viewer — bright where the reflected
+light direction lines up with the eye, fading quickly away from it. Unlike diffuse, it
+depends on the viewer's position, and its tightness sets how glossy the surface looks.
+(Documented for completeness; not implemented here.)
+
+**Why it matters**
+It is what distinguishes a polished or wet surface from a matte one, and the one Phong
+term that needs the view direction. Understanding it explains why diffuse-only shading
+looks chalky, and why adding it would require feeding the camera position into the
+fragment shader.
+
+**How it appears in this project**
+Not implemented — shading stops at ambient + diffuse, giving a matte look. Documented
+as the missing Phong term. See Glossary: PHONG_LIGHTING, LAMBERT_DIFFUSE
+
+**Further reading**
+- [Specular highlight (Wikipedia)](https://en.wikipedia.org/wiki/Specular_highlight)
+- [LearnOpenGL — Basic lighting (specular)](https://learnopengl.com/Lighting/Basic-Lighting)
+
+______________________________________________________________________
+
+## DOT_PRODUCT_GEOMETRY
+
+**What it is**
+The geometric meaning of the dot product of two vectors: for unit vectors it equals the
+cosine of the angle between them. It is +1 when they point the same way, 0 when
+perpendicular, −1 when opposite — a single number measuring alignment.
+
+**Why it matters**
+It is the mathematical heart of diffuse lighting: "how much does this surface face the
+light" is exactly `dot(normal, lightDir)` for unit vectors. The same operation answers
+countless CG questions (backface tests, field-of-view checks, projections), so its
+geometric reading is one of the most reused tools in graphics.
+
+**How it appears in this project**
+`dot(N, L)` in `mesh.frag` gives the Lambert diffuse factor directly — both vectors are
+normalised, so it is the cosine of the surface-to-light angle. See Glossary:
+LAMBERT_DIFFUSE, SURFACE_NORMAL
+
+**Further reading**
+- [Dot product (Wikipedia)](https://en.wikipedia.org/wiki/Dot_product)
+- [Scratchapixel — Geometry (dot product)](https://www.scratchapixel.com/lessons/mathematics-physics-for-computer-graphics/geometry/math-operations-on-points-and-vectors.html)
+
+______________________________________________________________________
+
+## PER_VERTEX_LIGHTING
+
+**What it is**
+Computing the lighting equation once per vertex in the vertex shader, then
+interpolating the resulting *colour* across the triangle. Also called Gouraud shading.
+Cheaper, but highlights and curvature between vertices are lost to linear interpolation.
+
+**Why it matters**
+It is the cheaper of the two shading granularities and was standard on older hardware.
+Comparing it with per-fragment lighting explains a whole class of artefacts (banded or
+washed-out highlights on coarse meshes) and the cost/quality trade-off that still
+guides shader design.
+
+**How it appears in this project**
+Not used — the project lights per fragment. It is documented as the contrasting
+approach. See Glossary: PER_FRAGMENT_LIGHTING, SMOOTH_NORMALS
+
+**Further reading**
+- [Gouraud shading (Wikipedia)](https://en.wikipedia.org/wiki/Gouraud_shading)
+- [LearnOpenGL — Advanced lighting (Gouraud vs Phong)](https://learnopengl.com/Advanced-Lighting/Advanced-Lighting)
+
+______________________________________________________________________
+
+## PER_FRAGMENT_LIGHTING
+
+**What it is**
+Computing the lighting equation once per fragment in the fragment shader, using the
+interpolated *normal* rather than an interpolated colour. Also called Phong shading
+(distinct from the Phong lighting model). Smoother and more accurate, at higher cost.
+
+**Why it matters**
+Interpolating normals and lighting each pixel gives smooth, correctly curved shading
+and crisp highlights even on coarse geometry — the visible quality jump over per-vertex
+lighting. It is the standard approach on modern hardware and the natural home for
+richer per-pixel effects.
+
+**How it appears in this project**
+`mesh.vert` outputs the world-space normal; `mesh.frag` renormalises it and evaluates
+the Lambert term per fragment — so the smooth-normalled model shades smoothly. See
+Glossary: PER_VERTEX_LIGHTING, SURFACE_NORMAL
+
+**Further reading**
+- [Phong shading (Wikipedia)](https://en.wikipedia.org/wiki/Phong_shading)
+- [LearnOpenGL — Basic lighting](https://learnopengl.com/Lighting/Basic-Lighting)
+
+______________________________________________________________________
+
+## GLOBAL_ILLUMINATION
+
+**What it is**
+Lighting that accounts for light bouncing between surfaces — indirect light — not just
+the direct path from source to surface. It captures effects like colour bleeding,
+soft shadows, and the fill light in shadowed areas. It is expensive and usually
+approximated. (Conceptual here; not implemented.)
+
+**Why it matters**
+It is what the crude constant ambient term stands in for. Knowing that ambient is a
+flat fake for a rich, geometry-dependent phenomenon explains both why simple shading
+looks slightly off and what the high end of rendering (path tracing, baked GI, probes)
+is actually solving.
+
+**How it appears in this project**
+Not implemented; approximated by the constant ambient term in `mesh.frag`. Documented
+as what that term gestures at. See Glossary: AMBIENT_LIGHT, LIGHTING_MODEL
+
+**Further reading**
+- [Global illumination (Wikipedia)](https://en.wikipedia.org/wiki/Global_illumination)
+- [Scratchapixel — Global illumination](https://www.scratchapixel.com/lessons/3d-basic-rendering/global-illumination-path-tracing.html)

@@ -23,14 +23,29 @@
 
 class VulkanContext;
 
-// The data the vertex shader reads once per draw. The field order and types must
-// match the `uniform` block in mesh.vert exactly. Each mat4 is 64 bytes and
-// 16-byte aligned, so the three pack back-to-back with no std140 padding needed.
-// See Glossary: UNIFORM_BUFFER, MVP_MATRIX, MODEL_MATRIX, VIEW_MATRIX, PROJECTION_MATRIX
+// The data the shaders read once per draw. The field order and types must match the
+// `uniform` block in mesh.vert / mesh.frag exactly, under std140 layout rules.
+// mat4 is 64 bytes / 16-byte aligned and vec4 is 16 / 16, so everything packs
+// back-to-back with no padding. The lighting vectors are vec4 (not vec3) precisely
+// to dodge std140's awkward vec3 alignment; their w components are unused.
+// See Glossary: UNIFORM_BUFFER, MVP_MATRIX, NORMAL_MATRIX, DIRECTIONAL_LIGHT
 struct UniformBufferObject {
-    glm::mat4 model;   // object space → world space
-    glm::mat4 view;    // world space → view (camera) space
-    glm::mat4 proj;    // view space → clip space
+    glm::mat4 model;          // object space → world space
+    glm::mat4 view;           // world space → view (camera) space
+    glm::mat4 proj;           // view space → clip space
+
+    // The normal matrix: transpose(inverse(mat3(model))), stored as a mat4 to avoid
+    // std140's per-column mat3 padding. The shader takes its mat3. It transforms
+    // normals correctly even under non-uniform scale. See Glossary: NORMAL_MATRIX
+    glm::mat4 normalMatrix;
+
+    // A single directional light, fixed in world space. direction points *toward*
+    // the light (so dot(normal, direction) is positive on lit faces); colour is its
+    // intensity; ambient is a constant fill so shadowed faces are not pure black.
+    // See Glossary: DIRECTIONAL_LIGHT, AMBIENT_LIGHT
+    glm::vec4 lightDirection; // xyz = direction toward the light (normalised); w unused
+    glm::vec4 lightColour;    // rgb = light colour/intensity;                   w unused
+    glm::vec4 ambientColour;  // rgb = ambient fill;                             w unused
 };
 
 class UniformBuffers {
