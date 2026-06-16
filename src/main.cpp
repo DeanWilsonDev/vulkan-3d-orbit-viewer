@@ -20,6 +20,8 @@
 #include "shader_pipeline.h"
 #include "renderer.h"
 #include "mesh.h"
+#include "uniform_buffer.h"
+#include "camera.h"
 
 #include <SDL3/SDL_video.h>   // SDL_GetWindowSizeInPixels (minimised-window check)
 
@@ -66,11 +68,20 @@ int main() {
         // FRAMEBUFFER, DEPTH_BUFFER
         RenderPass renderPass(vulkan, swapchain);
 
-        // --- Chapter 5: the graphics pipeline --------------------------------
+        // --- Chapter 5a: uniform buffers and descriptors ---------------------
+        // The per-frame MVP uniform buffers, plus the descriptor set layout / pool
+        // / sets that let the vertex shader read them. Created before the pipeline
+        // because the pipeline layout is built against this descriptor set layout.
+        // One buffer + set per frame in flight. See Glossary: UNIFORM_BUFFER,
+        // DESCRIPTOR_SET, DESCRIPTOR_SET_LAYOUT, DESCRIPTOR_POOL
+        UniformBuffers uniforms(vulkan, Renderer::kMaxFramesInFlight);
+
+        // --- Chapter 5b: the graphics pipeline -------------------------------
         // Compiled shaders plus all the fixed-function state, baked into one
-        // immutable pipeline object built for the render pass above.
+        // immutable pipeline object built for the render pass above. It references
+        // the uniform descriptor set layout so the MVP buffer can be bound.
         // See Glossary: GRAPHICS_PIPELINE
-        ShaderPipeline pipeline(vulkan, renderPass.handle());
+        ShaderPipeline pipeline(vulkan, renderPass.handle(), uniforms.layout());
 
         // --- Chapter 6: command buffers and synchronisation ------------------
         // Command buffers + the semaphores/fences that drive each frame, with two
@@ -79,11 +90,18 @@ int main() {
         Renderer renderer(vulkan, swapchain);
 
         // --- Chapter 7: the mesh ---------------------------------------------
-        // A hardcoded cube uploaded to GPU buffers. With no transforms yet it
-        // sits directly in clip space, so it will look like a flat square/odd
-        // polygon — perspective arrives in Chunk 8. See Glossary: MESH,
-        // VERTEX_BUFFER, INDEX_BUFFER
+        // A hardcoded cube uploaded to GPU buffers. As of Chunk 8 the MVP
+        // transform (below) projects it into perspective, so it finally looks like
+        // a 3D cube rather than a flat square. See Glossary: MESH, VERTEX_BUFFER,
+        // INDEX_BUFFER
         Mesh cube = Mesh::cube(vulkan);
+
+        // --- Chapter 8: the camera -------------------------------------------
+        // The viewpoint: where we look from, what we look at, and the perspective
+        // lens. It is static for now (positioned off to one side so three faces of
+        // the cube are visible); Chunk 10 will drive it from the mouse to orbit.
+        // See Glossary: VIEW_MATRIX, PROJECTION_MATRIX, PERSPECTIVE_PROJECTION
+        Camera camera;
 
         // --- The main loop ---------------------------------------------------
         // Each iteration is one frame: handle input, then draw and present. The
@@ -108,7 +126,8 @@ int main() {
             // must be rebuilt before the next frame. See Glossary: SWAPCHAIN
             bool needsRecreate = sdl.takeResized();
             if (!needsRecreate) {
-                needsRecreate = renderer.drawFrame(swapchain, renderPass, pipeline, cube);
+                needsRecreate = renderer.drawFrame(swapchain, renderPass, pipeline, cube,
+                                                   camera, uniforms);
             }
             if (needsRecreate) {
                 vulkan.waitIdle();          // ensure nothing is using the old resources

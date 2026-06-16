@@ -1,10 +1,14 @@
 #include "renderer.h"
 
+#include "camera.h"
 #include "mesh.h"
 #include "render_pass.h"
 #include "shader_pipeline.h"
 #include "swapchain.h"
+#include "uniform_buffer.h"
 #include "vulkan_context.h"
+
+#include <glm/glm.hpp>
 
 #include <array>
 #include <cstdint>
@@ -112,7 +116,8 @@ void Renderer::onSwapchainRecreated(const Swapchain& swapchain) {
 
 void Renderer::recordCommandBuffer(VkCommandBuffer cmd, uint32_t imageIndex,
                                    Swapchain& swapchain, RenderPass& renderPass,
-                                   ShaderPipeline& pipeline, const Mesh& mesh) {
+                                   ShaderPipeline& pipeline, const Mesh& mesh,
+                                   VkDescriptorSet descriptorSet) {
     // Recording starts here: every vkCmd* call below appends a command to be run
     // later on the GPU, rather than executing now. See Glossary: COMMAND_BUFFER
     VkCommandBufferBeginInfo begin{};
@@ -157,6 +162,12 @@ void Renderer::recordCommandBuffer(VkCommandBuffer cmd, uint32_t imageIndex,
     scissor.extent = extent;
     vkCmdSetScissor(cmd, 0, 1, &scissor);
 
+    // Bind this frame's descriptor set (the MVP uniform buffer) to set 0, so the
+    // vertex shader can read the matrices. It must use the same pipeline layout the
+    // pipeline was built with. See Glossary: DESCRIPTOR_SET, PIPELINE_LAYOUT
+    vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.layout(),
+                            0, 1, &descriptorSet, 0, nullptr);
+
     // Bind the mesh's vertex + index buffers and draw it (indexed). The
     // hardcoded triangle of Chunk 5 is gone; geometry now comes from GPU buffers.
     // See Glossary: VERTEX_BUFFER, INDEX_BUFFER, MESH
@@ -169,7 +180,7 @@ void Renderer::recordCommandBuffer(VkCommandBuffer cmd, uint32_t imageIndex,
 }
 
 bool Renderer::drawFrame(Swapchain& swapchain, RenderPass& renderPass, ShaderPipeline& pipeline,
-                         const Mesh& mesh) {
+                         const Mesh& mesh, const Camera& camera, UniformBuffers& uniforms) {
     const VkDevice device = m_context.device();
     const uint64_t noTimeout = std::numeric_limits<uint64_t>::max();
 
@@ -203,8 +214,22 @@ bool Renderer::drawFrame(Swapchain& swapchain, RenderPass& renderPass, ShaderPip
     // re-signal it; resetting earlier would deadlock if we returned above.
     vkResetFences(device, 1, &m_inFlight[frame]);
 
+    // Update this frame's MVP matrices and upload them to its uniform buffer
+    // before recording the draw that reads them. The model matrix is identity for
+    // now (the cube sits where its vertices put it — no rotation yet); the camera
+    // supplies view and projection, the latter using the current aspect ratio so
+    // the cube never stretches when the window resizes. See Glossary: MVP_MATRIX
+    const VkExtent2D extent = swapchain.extent();
+    const float aspect = static_cast<float>(extent.width) / static_cast<float>(extent.height);
+    UniformBufferObject ubo{};
+    ubo.model = glm::mat4(1.0f);
+    ubo.view = camera.viewMatrix();
+    ubo.proj = camera.projectionMatrix(aspect);
+    uniforms.update(frame, ubo);
+
     vkResetCommandBuffer(cmd, 0);
-    recordCommandBuffer(cmd, imageIndex, swapchain, renderPass, pipeline, mesh);
+    recordCommandBuffer(cmd, imageIndex, swapchain, renderPass, pipeline, mesh,
+                        uniforms.descriptorSet(frame));
 
     // Submit the recorded work to the graphics queue. It waits on imageAvailable
     // at the colour-output stage (so vertex work can start earlier) and signals

@@ -53,7 +53,8 @@ VkShaderModule createShaderModule(VkDevice device, const std::vector<char>& code
 
 } // namespace
 
-ShaderPipeline::ShaderPipeline(VulkanContext& context, VkRenderPass renderPass)
+ShaderPipeline::ShaderPipeline(VulkanContext& context, VkRenderPass renderPass,
+                               VkDescriptorSetLayout descriptorSetLayout)
     : m_context(context) {
     const VkDevice device = m_context.device();
 
@@ -114,11 +115,13 @@ ShaderPipeline::ShaderPipeline(VulkanContext& context, VkRenderPass renderPass)
     rasteriser.polygonMode = VK_POLYGON_MODE_FILL;
     // Cull back faces: triangles facing away from the camera are skipped, roughly
     // halving fragment work for a closed mesh. Our cube's faces are wound
-    // counter-clockwise when seen from outside; with no viewport Y-flip yet,
-    // Vulkan sees that as clockwise on screen, so CLOCKWISE marks the front
-    // faces. See Glossary: BACK_FACE_CULLING, WINDING_ORDER
+    // counter-clockwise when seen from outside, and the projection matrix's Y-flip
+    // (camera.cpp) preserves that winding on screen — so COUNTER_CLOCKWISE marks
+    // the front faces. (Chunk 7 used CLOCKWISE because there was no projection and
+    // thus no Y-flip; adding the MVP in Chunk 8 inverted it.)
+    // See Glossary: BACK_FACE_CULLING, WINDING_ORDER
     rasteriser.cullMode = VK_CULL_MODE_BACK_BIT;
-    rasteriser.frontFace = VK_FRONT_FACE_CLOCKWISE;
+    rasteriser.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
     rasteriser.lineWidth = 1.0f;
 
     // Multisampling: disabled (one sample per pixel). See Glossary: RASTERISATION
@@ -155,10 +158,14 @@ ShaderPipeline::ShaderPipeline(VulkanContext& context, VkRenderPass renderPass)
     dynamicState.dynamicStateCount = 2;
     dynamicState.pDynamicStates = dynamicStates;
 
-    // The pipeline layout: empty (no descriptor sets, no push constants) because
-    // nothing external is read yet. See Glossary: PIPELINE_LAYOUT
+    // The pipeline layout: references the one descriptor set layout (the per-frame
+    // MVP uniform buffer at set 0). Still no push constants. This is the contract
+    // that lets vkCmdBindDescriptorSets attach matching sets at draw time.
+    // See Glossary: PIPELINE_LAYOUT, DESCRIPTOR_SET_LAYOUT
     VkPipelineLayoutCreateInfo layoutInfo{};
     layoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+    layoutInfo.setLayoutCount = 1;
+    layoutInfo.pSetLayouts = &descriptorSetLayout;
     if (vkCreatePipelineLayout(device, &layoutInfo, nullptr, &m_layout) != VK_SUCCESS) {
         throw std::runtime_error("vkCreatePipelineLayout failed");
     }

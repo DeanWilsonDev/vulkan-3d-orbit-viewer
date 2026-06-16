@@ -284,12 +284,64 @@ ______________________________________________________________________
 
 ______________________________________________________________________
 
+## Chunk 8 — Uniform buffers and MVP transforms
+
+- **`frontFace` flipped to `COUNTER_CLOCKWISE`** as predicted in Chunk 7. The
+  projection matrix negates Y (`proj[1][1] *= -1`), which restores the cube's
+  CCW-from-outside winding on screen, so the Chunk 7 `CLOCKWISE` setting would now
+  cull the visible faces. Verified by screenshot: solid 3-face cube, not inside-out.
+- **GLM configured for Vulkan globally** via two compile definitions in
+  `CMakeLists.txt`: `GLM_FORCE_DEPTH_ZERO_TO_ONE` (Vulkan clip depth is [0, 1], not
+  OpenGL's [−1, 1]) and `GLM_FORCE_RADIANS`. Set as target defs (not per-file
+  `#define`s) so every translation unit that includes GLM agrees — `mesh.h` already
+  pulls GLM in transitively, so a header-order `#define` would be fragile.
+- **`Camera` is plain maths, owns no GPU objects** (`camera.h/.cpp`): position /
+  target / up + fov / near / far, producing `viewMatrix()` (`glm::lookAt`) and
+  `projectionMatrix(aspect)` (`glm::perspective` + the Y-flip). Aspect is a
+  parameter (recomputed per-frame from the swapchain extent), not a stored field, so
+  resize never stretches the cube.
+- **Camera is static and positioned off-axis** (eye ≈ (1.2, 0.9, −1.0), target =
+  the cube's centre (0, 0, 0.5)) so three faces are visible and foreshortening
+  reads clearly — satisfying the "looks like a 3D cube, not a flat hexagon"
+  checkpoint. Mouse-driven orbit is Chunk 10.
+- **Cube geometry left untouched** (`mesh.cpp` not in the Chunk 8 file list): the
+  model matrix is identity and the camera simply targets the cube's existing centre
+  at z = 0.5, rather than recentring the mesh at the origin. Keeps the change inside
+  the spec's stated file set.
+- **`UniformBuffers` owns the whole descriptor stack** (`uniform_buffer.h/.cpp`):
+  the per-frame uniform buffers *and* the descriptor set layout / pool / sets. The
+  spec lists `uniform_buffer.*` and not a separate descriptor file, so they live
+  together. `UniformBufferObject` = model, view, proj (three `mat4`, no std140
+  padding needed).
+- **One uniform buffer + descriptor set per frame in flight** (count =
+  `Renderer::kMaxFramesInFlight` = 2), *not* per swapchain image — they track CPU
+  frame pacing, not the presentation image, so the CPU can write next frame's
+  matrices without racing the GPU. Passed as a constructor arg to avoid a
+  `uniform_buffer → renderer` header dependency.
+- **Uniform buffers are host-visible + coherent and persistently mapped** — mapped
+  once at construction, updated by a plain `memcpy` each frame in
+  `Renderer::drawFrame`. The mesh's staging→device-local dance would be pure
+  overhead for tiny, every-frame data.
+- **`ShaderPipeline` gained a `VkDescriptorSetLayout` constructor parameter**; the
+  pipeline layout now references one set layout (was empty). The layout object is
+  owned by `UniformBuffers` and only borrowed by the pipeline, so creation order in
+  `main` is: `UniformBuffers` → `ShaderPipeline`.
+- **MVP applied in `mesh.vert`**: added the `set = 0, binding = 0` uniform block and
+  `gl_Position = proj * view * model * vec4(inPosition, 1.0)`.
+- **`drawFrame` signature grew** by `const Camera&` and `UniformBuffers&`. The
+  Renderer builds the UBO (identity model + camera view/proj at the current aspect),
+  uploads it for the current frame slot, and binds that frame's descriptor set in
+  `recordCommandBuffer`. Keeping the frame-index logic inside the Renderer (where it
+  already lives) is why the Renderer, not `main`, assembles the UBO.
+
+______________________________________________________________________
+
 ## Open items / things deferred deliberately
 
 - **`Renderer` lives in its own file**, where the spec attributed command buffers
   to `vulkan_context`. Settled: keeping it separate; noted as a deviation.
-- **`frontFace` winding** is `CLOCKWISE` for Chunk 7's transform-free cube; expect
-  to flip to `COUNTER_CLOCKWISE` in Chunk 8 once the projection matrix flips Y.
+- **`frontFace` winding**: resolved in Chunk 8 — flipped to `COUNTER_CLOCKWISE`
+  once the projection matrix's Y-flip went in, as anticipated.
 - **Swapchain `recreate()`** currently destroys before recreating (no
   `oldSwapchain`); could be upgraded for smoother resize-while-rendering.
 - **Startup double swapchain-create log**: left in place; trivial to suppress

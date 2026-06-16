@@ -1762,9 +1762,12 @@ faces vanish and you see its back interior. Vulkan's +Y-down NDC flips apparent
 winding relative to OpenGL, a classic gotcha.
 
 **How it appears in this project**
-The cube in `Mesh::cube` is wound counter-clockwise as seen from outside. Because
-Chunk 7 uses no viewport Y-flip, Vulkan sees that as clockwise on screen, so the
-pipeline sets `frontFace = VK_FRONT_FACE_CLOCKWISE`. See Glossary: BACK_FACE_CULLING
+The cube in `Mesh::cube` is wound counter-clockwise as seen from outside. Chunk 7
+had no projection (and so no Y-flip), so Vulkan saw that winding as clockwise on
+screen and the pipeline set `frontFace = VK_FRONT_FACE_CLOCKWISE`. Chunk 8's
+projection matrix negates Y (`camera.cpp`), which restores the counter-clockwise
+appearance, so the pipeline now uses `VK_FRONT_FACE_COUNTER_CLOCKWISE`.
+See Glossary: BACK_FACE_CULLING
 
 **Further reading**
 - [Back-face culling & winding (Wikipedia)](https://en.wikipedia.org/wiki/Back-face_culling)
@@ -1794,3 +1797,454 @@ is turned on. See Glossary: WINDING_ORDER
 **Further reading**
 - [Back-face culling (Wikipedia)](https://en.wikipedia.org/wiki/Back-face_culling)
 - [Vulkan Spec — Basic polygon rasterization (facing)](https://docs.vulkan.org/spec/latest/chapters/primsrast.html#primsrast-polygons-basic)
+
+______________________________________________________________________
+
+## Chunk 8 — Uniform Buffers and MVP Transforms
+
+## UNIFORM_BUFFER
+
+**What it is**
+A small buffer of read-only data that a shader reads, where the same values are
+shared by every invocation of a draw call — every vertex, every fragment. Typical
+contents are transforms, camera parameters, lighting constants: things that are
+constant across the geometry but change from frame to frame.
+
+**Why it matters**
+Vertex attributes vary per vertex; uniforms are the complementary channel for data
+that is *uniform* across the draw. Without them you would have to bake constants
+into the shader (needing a recompile to change) or duplicate them into every
+vertex. They are the standard way to feed per-frame state like the MVP matrices to
+the GPU.
+
+**How it appears in this project**
+`UniformBuffers` (`src/uniform_buffer.h` / `.cpp`) creates one host-visible,
+persistently-mapped buffer per frame in flight holding a `UniformBufferObject`
+(model, view, proj). `Renderer::drawFrame` writes the current frame's matrices and
+the vertex shader reads them through its `uniform` block. See Glossary: DESCRIPTOR,
+MVP_MATRIX
+
+**Further reading**
+- [Vulkan Tutorial — Uniform buffers](https://vulkan-tutorial.com/Uniform_buffers/Descriptor_layout_and_buffer)
+- [Vulkan Spec — Descriptor types (uniform buffer)](https://docs.vulkan.org/spec/latest/chapters/descriptorsets.html#descriptorsets-uniformbuffer)
+
+______________________________________________________________________
+
+## DESCRIPTOR
+
+**What it is**
+A small handle that points a shader at one external resource — a uniform buffer, a
+texture, a sampler. It is the indirection that says "this shader binding refers to
+*that* GPU resource", without the resource being named in the shader itself.
+
+**Why it matters**
+Shaders cannot hold raw GPU pointers; they declare abstract bindings (set/binding
+numbers) and the descriptor is what wires a concrete resource to each binding at
+draw time. This indirection is what lets the same pipeline draw with different
+buffers or textures by binding different descriptors.
+
+**How it appears in this project**
+Each frame's `UniformBufferObject` buffer is referenced by a uniform-buffer
+descriptor, written into a descriptor set in `UniformBuffers::createDescriptorSets`
+via `vkUpdateDescriptorSets`. The vertex shader's `layout(set = 0, binding = 0)
+uniform` block is the binding it satisfies. See Glossary: DESCRIPTOR_SET,
+UNIFORM_BUFFER
+
+**Further reading**
+- [Vulkan Spec — Resource descriptors](https://docs.vulkan.org/spec/latest/chapters/descriptorsets.html)
+- [Vulkan Tutorial — Descriptor layout and buffer](https://vulkan-tutorial.com/Uniform_buffers/Descriptor_layout_and_buffer)
+
+______________________________________________________________________
+
+## DESCRIPTOR_SET
+
+**What it is**
+A bound collection of descriptors — a group of resource references the shader can
+read as a unit. Shaders address resources as `set N, binding M`: the set is this
+collection, the binding is one slot within it.
+
+**Why it matters**
+Sets are the granularity at which resources are bound to a pipeline
+(`vkCmdBindDescriptorSets`). Grouping resources that change at the same rate into
+one set (e.g. per-frame data in set 0, per-material data in set 1) keeps binding
+cheap. A set is allocated against a layout and filled with writes before use.
+
+**How it appears in this project**
+`UniformBuffers` allocates one descriptor set per frame in flight from its pool,
+each pointing at that frame's uniform buffer. `Renderer::recordCommandBuffer` binds
+the current frame's set to set 0 with `vkCmdBindDescriptorSets` before the draw.
+See Glossary: DESCRIPTOR, DESCRIPTOR_POOL
+
+**Further reading**
+- [Vulkan Tutorial — Descriptor pool and sets](https://vulkan-tutorial.com/Uniform_buffers/Descriptor_pool_and_sets)
+- [Vulkan Spec — Descriptor sets](https://docs.vulkan.org/spec/latest/chapters/descriptorsets.html#descriptorsets-sets)
+
+______________________________________________________________________
+
+## DESCRIPTOR_SET_LAYOUT
+
+**What it is**
+The blueprint that declares what a descriptor set contains: for each binding, its
+number, descriptor type, count, and which shader stages can read it. It describes
+the *shape* of a set without referring to any actual resource.
+
+**Why it matters**
+Both sides need to agree on the contract: the pipeline is built against a set
+layout (it becomes part of the pipeline layout), and descriptor sets are allocated
+from it. It is what lets Vulkan validate, at pipeline-creation time, that the
+resources a shader expects match what will be bound.
+
+**How it appears in this project**
+`UniformBuffers::createDescriptorSetLayout` declares one binding: a uniform buffer
+at binding 0, visible to the vertex stage. The layout is handed to `ShaderPipeline`
+so the pipeline layout references it, and to the allocator for the sets.
+See Glossary: PIPELINE_LAYOUT, DESCRIPTOR_SET
+
+**Further reading**
+- [Vulkan Spec — Descriptor set layouts](https://docs.vulkan.org/spec/latest/chapters/descriptorsets.html#descriptorsets-setlayout)
+- [Vulkan Tutorial — Descriptor layout](https://vulkan-tutorial.com/Uniform_buffers/Descriptor_layout_and_buffer)
+
+______________________________________________________________________
+
+## DESCRIPTOR_POOL
+
+**What it is**
+The allocator that descriptor sets are carved out of. It is created with a budget —
+how many sets, and how many descriptors of each type — and hands out sets until
+that budget is exhausted.
+
+**Why it matters**
+Like command buffers from a command pool, descriptor sets are not created
+individually; they come from a pool so the driver can manage their memory in bulk.
+Sizing the pool correctly (enough sets and descriptors for everything you will
+allocate) is a common setup step, and freeing the pool frees all its sets at once.
+
+**How it appears in this project**
+`UniformBuffers::createDescriptorPool` sizes a pool for one uniform-buffer
+descriptor per frame in flight and `maxSets` equal to the frame count. The
+destructor destroys the pool, which implicitly frees the sets. See Glossary:
+DESCRIPTOR_SET
+
+**Further reading**
+- [Vulkan Spec — Descriptor pools](https://docs.vulkan.org/spec/latest/chapters/descriptorsets.html#descriptorsets-allocation)
+- [Vulkan Tutorial — Descriptor pool and sets](https://vulkan-tutorial.com/Uniform_buffers/Descriptor_pool_and_sets)
+
+______________________________________________________________________
+
+## MVP_MATRIX
+
+**What it is**
+The chain of three matrices that takes a vertex from its own local space all the
+way to the screen: **M**odel (object → world), **V**iew (world → camera), and
+**P**rojection (camera → clip space). Multiplied together (P · V · M) and applied
+to a vertex position, they produce the clip-space coordinate the GPU needs.
+
+**Why it matters**
+It is the backbone of all 3D rendering: nearly every vertex shader's first job is
+the MVP transform. Splitting it into three stages keeps each concern separate — you
+can move the object (M), move the camera (V), or change the lens (P) independently —
+and each stage maps to one well-understood coordinate space.
+
+**How it appears in this project**
+`UniformBufferObject` carries the three matrices; `mesh.vert` computes
+`gl_Position = proj * view * model * vec4(inPosition, 1.0)`. Model is identity for
+now, view and projection come from `Camera`. See Glossary: MODEL_MATRIX,
+VIEW_MATRIX, PROJECTION_MATRIX, COORDINATE_SPACES
+
+**Further reading**
+- [LearnOpenGL — Coordinate systems](https://learnopengl.com/Getting-started/Coordinate-Systems)
+- [Songho — OpenGL transformation](https://www.songho.ca/opengl/gl_transform.html)
+
+______________________________________________________________________
+
+## MODEL_MATRIX
+
+**What it is**
+The matrix that places an object in the world: it transforms vertices from the
+object's own local (object) space into shared world space, encoding the object's
+translation, rotation, and scale.
+
+**Why it matters**
+It is what lets the same mesh appear at different positions, orientations, and sizes
+without changing its vertex data — a cube modelled once around its own origin can be
+dropped anywhere in the scene by varying its model matrix. Animation and instancing
+are just model matrices changing over time or per object.
+
+**How it appears in this project**
+`UniformBufferObject::model`, set to the identity matrix in `Renderer::drawFrame`
+(the cube sits where its vertices place it; no rotation yet — the spec defers that
+to later chunks). See Glossary: MVP_MATRIX, OBJECT_SPACE, WORLD_SPACE
+
+**Further reading**
+- [LearnOpenGL — Transformations](https://learnopengl.com/Getting-started/Transformations)
+- [Songho — OpenGL transformation (model)](https://www.songho.ca/opengl/gl_transform.html)
+
+______________________________________________________________________
+
+## VIEW_MATRIX
+
+**What it is**
+The matrix that transforms world space into view (camera) space: it repositions the
+whole world so the camera ends up at the origin looking down a fixed axis. It is
+the inverse of the camera's own world transform.
+
+**Why it matters**
+The GPU has no notion of "a camera"; rendering always happens as if the viewer were
+at the origin. The view matrix is the trick that realises a movable camera — moving
+the camera right is the same as moving the world left. It is usually built from an
+eye position, a target, and an up vector.
+
+**How it appears in this project**
+`Camera::viewMatrix` returns `glm::lookAt(position, target, up)`. The camera is
+positioned off to one side so three faces of the cube are visible. Chunk 10 will
+update these from mouse input to orbit. See Glossary: VIEW_SPACE, WORLD_SPACE
+
+**Further reading**
+- [LearnOpenGL — Camera](https://learnopengl.com/Getting-started/Camera)
+- [Songho — OpenGL camera / lookAt](https://www.songho.ca/opengl/gl_camera.html)
+
+______________________________________________________________________
+
+## PROJECTION_MATRIX
+
+**What it is**
+The matrix that transforms view space into clip space, defining how the 3D scene is
+mapped onto a 2D image — including the field of view, aspect ratio, and the near/far
+depth range. It is what makes the perspective divide (done by the GPU after the
+vertex shader) produce foreshortening.
+
+**Why it matters**
+It encodes the "lens": a perspective projection makes distant things smaller, an
+orthographic one keeps sizes constant. It also defines the visible frustum, so
+anything outside the near/far planes or the field of view is clipped. Getting its
+conventions right (depth range, Y direction) is essential under Vulkan.
+
+**How it appears in this project**
+`Camera::projectionMatrix(aspect)` returns `glm::perspective(...)` with `proj[1][1]
+*= -1` to flip Y for Vulkan, and the build defines `GLM_FORCE_DEPTH_ZERO_TO_ONE`
+for Vulkan's [0, 1] depth. Aspect is recomputed each frame from the swapchain
+extent. See Glossary: PERSPECTIVE_PROJECTION, CLIP_SPACE, FIELD_OF_VIEW
+
+**Further reading**
+- [Songho — OpenGL projection matrix](https://www.songho.ca/opengl/gl_projectionmatrix.html)
+- [Vulkan: setting up a proper projection matrix (Sascha Willems)](https://www.saschawillems.de/blog/2019/03/29/flipping-the-vulkan-viewport/)
+
+______________________________________________________________________
+
+## PERSPECTIVE_PROJECTION
+
+**What it is**
+A projection in which objects farther from the camera appear smaller and parallel
+lines appear to converge toward vanishing points — the way human vision and cameras
+work. Its viewing volume is a frustum (a pyramid with the tip cut off).
+
+**Why it matters**
+It is what makes a rendered scene look three-dimensional and gives depth cues:
+without it, a cube viewed straight-on is indistinguishable from a flat square. The
+convergence and size falloff come from the perspective divide by the w component
+that the projection matrix sets up.
+
+**How it appears in this project**
+`Camera::projectionMatrix` uses `glm::perspective`. The Chunk 8 checkpoint is
+exactly this effect made visible: the cube shows foreshortening — near edges larger
+than far edges — instead of looking flat. See Glossary: PROJECTION_MATRIX,
+ORTHOGRAPHIC_PROJECTION, HOMOGENEOUS_COORDINATES
+
+**Further reading**
+- [Perspective projection (Wikipedia)](https://en.wikipedia.org/wiki/3D_projection#Perspective_projection)
+- [Scratchapixel — The perspective projection matrix](https://www.scratchapixel.com/lessons/3d-basic-rendering/perspective-and-orthographic-projection-matrix/opengl-perspective-projection-matrix.html)
+
+______________________________________________________________________
+
+## ORTHOGRAPHIC_PROJECTION
+
+**What it is**
+A projection with no perspective: the viewing volume is a box, not a frustum, so
+objects keep the same on-screen size regardless of distance and parallel lines stay
+parallel. Depth still exists (for occlusion) but does not affect apparent size.
+
+**Why it matters**
+It is the right choice when measurements must be preserved — CAD, 2D/UI rendering,
+isometric games, shadow maps. Contrasting it with perspective clarifies what the
+perspective divide actually does: orthographic projection simply omits it.
+
+**How it appears in this project**
+Not used — the viewer wants a realistic 3D look, so it uses perspective. It is
+documented here as the conceptual contrast the spec calls for; GLM offers it as
+`glm::ortho` should a future mode want it. See Glossary: PERSPECTIVE_PROJECTION,
+PROJECTION_MATRIX
+
+**Further reading**
+- [Orthographic projection (Wikipedia)](https://en.wikipedia.org/wiki/Orthographic_projection)
+- [LearnOpenGL — Coordinate systems (orthographic vs perspective)](https://learnopengl.com/Getting-started/Coordinate-Systems)
+
+______________________________________________________________________
+
+## HOMOGENEOUS_COORDINATES
+
+**What it is**
+A coordinate system that adds one extra component (w) to a position, so a 3D point
+becomes a 4D vector (x, y, z, w). A point with w = 1 is an ordinary position;
+dividing all components by w recovers the 3D point. This extra dimension lets a
+single 4×4 matrix express translation and perspective, which a 3×3 matrix cannot.
+
+**Why it matters**
+It is the mathematical machinery behind the whole transform pipeline: translations
+become matrix multiplications (not just rotations/scales), and perspective is just a
+matrix that puts a depth-dependent value into w, so the later divide-by-w shrinks
+distant points. This is why shader positions are `vec4`, not `vec3`.
+
+**How it appears in this project**
+`mesh.vert` builds `vec4(inPosition, 1.0)` before multiplying by the MVP chain, and
+`gl_Position` is a `vec4` in clip space; the GPU performs the perspective divide by
+w to reach NDC. See Glossary: MVP_MATRIX, CLIP_SPACE, NDC_SPACE
+
+**Further reading**
+- [Homogeneous coordinates (Wikipedia)](https://en.wikipedia.org/wiki/Homogeneous_coordinates)
+- [Scratchapixel — Homogeneous coordinates](https://www.scratchapixel.com/lessons/mathematics-physics-for-computer-graphics/geometry/homogeneous-coordinates.html)
+
+______________________________________________________________________
+
+## COORDINATE_SPACES
+
+**What it is**
+The sequence of reference frames a vertex passes through on its way to the screen:
+object space → world space → view space → clip space → NDC space → screen space.
+Each transform in the pipeline moves the vertex from one space to the next.
+
+**Why it matters**
+Knowing which space you are in is the key to reasoning about 3D rendering: lighting
+is often done in world or view space, culling in clip space, and a bug usually means
+a value is in the wrong space. The MVP chain is precisely the first three hops; the
+GPU does the rest (perspective divide, viewport transform).
+
+**How it appears in this project**
+`mesh.vert` walks object → world (model) → view (view) → clip (proj); the GPU then
+divides by w (→ NDC) and applies the dynamic viewport (→ screen). Each space has its
+own glossary entry. See Glossary: OBJECT_SPACE, WORLD_SPACE, VIEW_SPACE, CLIP_SPACE,
+NDC_SPACE, SCREEN_SPACE
+
+**Further reading**
+- [LearnOpenGL — Coordinate systems](https://learnopengl.com/Getting-started/Coordinate-Systems)
+- [Songho — OpenGL transformation](https://www.songho.ca/opengl/gl_transform.html)
+
+______________________________________________________________________
+
+## OBJECT_SPACE
+
+**What it is**
+The local coordinate frame in which a mesh's vertices are defined, centred on the
+object's own origin and independent of where the object sits in the scene. Also
+called model space or local space.
+
+**Why it matters**
+Modelling in a local frame is what makes a mesh reusable: the artist (or generator)
+positions vertices once relative to the object's own origin, and the model matrix
+later places copies anywhere. Every mesh's vertex buffer holds object-space
+positions.
+
+**How it appears in this project**
+The cube's vertices in `Mesh::cube` are object-space positions; `inPosition` in
+`mesh.vert` is object space until the model matrix is applied. See Glossary:
+MODEL_MATRIX, WORLD_SPACE, COORDINATE_SPACES
+
+**Further reading**
+- [LearnOpenGL — Coordinate systems (local space)](https://learnopengl.com/Getting-started/Coordinate-Systems)
+- [Songho — OpenGL transformation](https://www.songho.ca/opengl/gl_transform.html)
+
+______________________________________________________________________
+
+## WORLD_SPACE
+
+**What it is**
+The single shared coordinate frame the whole scene lives in. The model matrix
+transforms each object's vertices from its own object space into this common space,
+so all objects, lights, and the camera can be reasoned about together.
+
+**Why it matters**
+It is the common ground that makes a scene a scene: positions only become
+comparable (distances, lighting, camera placement) once everything is in the same
+world frame. The camera's position and target are world-space quantities.
+
+**How it appears in this project**
+After `model` is applied in `mesh.vert`, the vertex is in world space. The cube
+spans roughly x,y ∈ [−0.4, 0.4] and z ∈ [0.2, 0.8] there, and `Camera::position` /
+`target` are world-space points. See Glossary: MODEL_MATRIX, VIEW_MATRIX,
+COORDINATE_SPACES
+
+**Further reading**
+- [LearnOpenGL — Coordinate systems (world space)](https://learnopengl.com/Getting-started/Coordinate-Systems)
+- [Songho — OpenGL transformation](https://www.songho.ca/opengl/gl_transform.html)
+
+______________________________________________________________________
+
+## VIEW_SPACE
+
+**What it is**
+The coordinate frame relative to the camera: the camera sits at the origin looking
+down a fixed axis (−Z in GLM's convention), and everything is expressed relative to
+it. Also called eye space or camera space. The view matrix transforms world space
+into it.
+
+**Why it matters**
+Many operations are simplest here because the camera is at a known, fixed place —
+view-space depth is just the (negated) z coordinate, and view-space lighting avoids
+needing the camera position separately. It is the bridge between the movable world
+and the fixed-viewer assumption the projection makes.
+
+**How it appears in this project**
+The product `view * model * position` in `mesh.vert` is a view-space coordinate,
+produced by `Camera::viewMatrix` (`glm::lookAt`). See Glossary: VIEW_MATRIX,
+PROJECTION_MATRIX, COORDINATE_SPACES
+
+**Further reading**
+- [LearnOpenGL — Coordinate systems (view space)](https://learnopengl.com/Getting-started/Coordinate-Systems)
+- [Songho — OpenGL camera](https://www.songho.ca/opengl/gl_camera.html)
+
+______________________________________________________________________
+
+## SCREEN_SPACE
+
+**What it is**
+The final 2D coordinate frame in actual pixels of the framebuffer: x and y address
+a pixel, with an associated depth value. NDC is mapped into it by the viewport
+transform (and the scissor restricts which part is written).
+
+**Why it matters**
+It is where rasterisation happens — triangles are filled pixel by pixel in screen
+space — and where the rendered image ultimately lives. The mapping from NDC depends
+on the viewport, which is why a resize that changes the viewport changes how NDC
+lands on pixels without touching any earlier space.
+
+**How it appears in this project**
+The dynamic viewport/scissor set in `Renderer::recordCommandBuffer` (sized to the
+swapchain extent) define the NDC → screen mapping; the rasteriser then produces
+fragments in screen space. See Glossary: NDC_SPACE, VIEWPORT, SCISSOR,
+COORDINATE_SPACES
+
+**Further reading**
+- [LearnOpenGL — Coordinate systems (screen space)](https://learnopengl.com/Getting-started/Coordinate-Systems)
+- [Vulkan Spec — Controlling the viewport](https://docs.vulkan.org/spec/latest/chapters/vertexpostproc.html#vertexpostproc-viewport)
+
+______________________________________________________________________
+
+## FIELD_OF_VIEW
+
+**What it is**
+The angular extent of the scene the camera takes in, usually given as a vertical
+angle (FOV-Y). A wide field of view captures more of the scene but exaggerates
+perspective; a narrow one captures less and flattens it (a telephoto look).
+
+**Why it matters**
+It is the main expressive control of a perspective camera — it sets the "zoom" and
+strongly affects the feel of a scene. Together with the aspect ratio it determines
+the shape of the view frustum, so it is a direct input to the projection matrix.
+
+**How it appears in this project**
+`Camera::fovYRadians` defaults to 45°, passed to `glm::perspective` in
+`Camera::projectionMatrix`. Combined with the swapchain's aspect ratio it defines
+the frustum. See Glossary: PERSPECTIVE_PROJECTION, PROJECTION_MATRIX
+
+**Further reading**
+- [Field of view in video games (Wikipedia)](https://en.wikipedia.org/wiki/Field_of_view_in_video_games)
+- [LearnOpenGL — Coordinate systems (projection / FoV)](https://learnopengl.com/Getting-started/Coordinate-Systems)

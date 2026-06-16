@@ -69,6 +69,8 @@ add_executable(vulkan-orbit-viewer
     src/shader_pipeline.cpp
     src/renderer.cpp
     src/mesh.cpp
+    src/uniform_buffer.cpp
+    src/camera.cpp
 )
 
 # Let the sources include each other by bare filename ("sdl_context.h").
@@ -78,6 +80,15 @@ target_include_directories(vulkan-orbit-viewer PRIVATE src)
 # a header-only interface target that just adds GLM's include path;
 # Vulkan::Vulkan adds the Vulkan headers and links the loader.
 target_link_libraries(vulkan-orbit-viewer PRIVATE SDL3::SDL3 glm::glm Vulkan::Vulkan)
+
+# GLM defaults to OpenGL conventions; two must change for Vulkan (used from Chunk
+# 8's MVP maths). DEPTH_ZERO_TO_ONE makes projection matrices map depth to Vulkan's
+# [0, 1] clip range (OpenGL uses [-1, 1]); FORCE_RADIANS makes all angle arguments
+# radians. Set globally so every translation unit that includes GLM agrees.
+# See Glossary: PROJECTION_MATRIX, CLIP_SPACE
+target_compile_definitions(vulkan-orbit-viewer PRIVATE
+    GLM_FORCE_DEPTH_ZERO_TO_ONE
+    GLM_FORCE_RADIANS)
 
 # --- Shader compilation ------------------------------------------------------
 # GLSL shaders are compiled to SPIR-V at build time with glslc (shipped in the

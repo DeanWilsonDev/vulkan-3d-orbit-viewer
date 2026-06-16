@@ -15,9 +15,13 @@ class VulkanContext;
 
 class ShaderPipeline {
 public:
-    // Build the pipeline for the given render pass. Throws std::runtime_error if
-    // the shaders cannot be loaded or the pipeline cannot be created.
-    ShaderPipeline(VulkanContext& context, VkRenderPass renderPass);
+    // Build the pipeline for the given render pass. descriptorSetLayout is the
+    // layout the shaders' uniforms are declared against (set 0); it becomes part
+    // of the pipeline layout so descriptor sets can be bound at draw time. Throws
+    // std::runtime_error if the shaders cannot be loaded or the pipeline cannot be
+    // created.
+    ShaderPipeline(VulkanContext& context, VkRenderPass renderPass,
+                   VkDescriptorSetLayout descriptorSetLayout);
 
     // Destroy the pipeline and its layout.
     ~ShaderPipeline();
@@ -32,8 +36,9 @@ private:
     VulkanContext& m_context;
 
     // The pipeline layout declares what external resources (descriptor sets,
-    // push constants) the shaders read. Empty for now — the hardcoded triangle
-    // needs nothing. Uniforms are added in Chunk 8. See Glossary: PIPELINE_LAYOUT
+    // push constants) the shaders read. As of Chunk 8 it references one descriptor
+    // set layout — the per-frame MVP uniform buffer. The layout object itself is
+    // owned by UniformBuffers; the pipeline only borrows it. See Glossary: PIPELINE_LAYOUT
     VkPipelineLayout m_layout = VK_NULL_HANDLE;
 
     // The compiled, immutable graphics pipeline. See Glossary: GRAPHICS_PIPELINE
