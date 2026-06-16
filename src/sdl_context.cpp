@@ -64,9 +64,32 @@ bool SdlContext::processEvents() {
                 m_resized = true;
                 break;
 
+            // Mouse motion: accumulate the relative movement (xrel/yrel are deltas
+            // in pixels since the last motion event). Summing them means a frame
+            // sees the total movement even if several motion events arrived.
+            // See Glossary: ORBIT_CAMERA
+            case SDL_EVENT_MOUSE_MOTION:
+                m_mouseDX += event.motion.xrel;
+                m_mouseDY += event.motion.yrel;
+                break;
+
+            // Mouse buttons: track left/right as live up/down state, which the
+            // camera reads to decide whether a drag is an orbit or a pan.
+            case SDL_EVENT_MOUSE_BUTTON_DOWN:
+            case SDL_EVENT_MOUSE_BUTTON_UP: {
+                const bool down = (event.type == SDL_EVENT_MOUSE_BUTTON_DOWN);
+                if (event.button.button == SDL_BUTTON_LEFT) m_leftDown = down;
+                else if (event.button.button == SDL_BUTTON_RIGHT) m_rightDown = down;
+                break;
+            }
+
+            // Wheel: accumulate vertical ticks for zoom.
+            case SDL_EVENT_MOUSE_WHEEL:
+                m_scrollY += event.wheel.y;
+                break;
+
             default:
-                // Every other event is ignored for now. Mouse and keyboard
-                // events get handled in Chunk 10 when the orbit camera arrives.
+                // Every other event is ignored.
                 break;
         }
     }
@@ -80,4 +103,19 @@ bool SdlContext::takeResized() {
     bool was = m_resized;
     m_resized = false;
     return was;
+}
+
+SdlContext::MouseInput SdlContext::takeMouseInput() {
+    MouseInput input;
+    input.dx = m_mouseDX;
+    input.dy = m_mouseDY;
+    input.scroll = m_scrollY;
+    input.leftDown = m_leftDown;
+    input.rightDown = m_rightDown;
+    // Consume the per-frame deltas so each movement is applied exactly once; the
+    // button states are levels, not events, so they persist across frames.
+    m_mouseDX = 0.0f;
+    m_mouseDY = 0.0f;
+    m_scrollY = 0.0f;
+    return input;
 }

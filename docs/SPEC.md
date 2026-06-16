@@ -10,7 +10,7 @@ This is the foundation Umbra needs before Swoop Racer and before a 3D viewport c
 be embedded in Dawn. You work through the finished project as a course, not in
 parallel with its construction.
 
-______________________________________________________________________
+---
 
 ## Confirmed Decisions
 
@@ -27,7 +27,7 @@ ______________________________________________________________________
 | Glossary | Open and living — any graphics or Vulkan concept gets an entry | Lightweight computer graphics course companion |
 | Build order | Earliest visible output first | Claude Code can verify correctness incrementally |
 
-______________________________________________________________________
+---
 
 ## Project Structure
 
@@ -58,7 +58,7 @@ vulkan-orbit-viewer/
 gives you the shape of the whole system. Diving into any file gives you the internals
 of that chapter without the noise of everything else.
 
-______________________________________________________________________
+---
 
 ## Build System
 
@@ -68,18 +68,18 @@ CMake with FetchContent for dependencies:
 - **SDL3** — fetched via FetchContent
 - **GLM** — fetched via FetchContent
 - **tinyobjloader** — fetched via FetchContent (single-header OBJ parser)
+- **stb_image** — fetched via FetchContent (single-header image loader, added in Chunk 13)
 
 CMake also invokes `glslc` (part of the Vulkan SDK) to compile GLSL shaders to
 SPIR-V as part of the build. Shader compilation is not a manual step.
 
 **Platform notes:**
-
 - Linux: Vulkan runs natively. SDL3 handles X11/Wayland transparently.
 - Mac: MoltenVK is bundled with the Vulkan SDK macOS installer. No extra steps
   beyond installing the SDK.
 - Windows: Vulkan SDK installer handles driver-level setup.
 
-______________________________________________________________________
+---
 
 ## Comment Convention
 
@@ -93,15 +93,14 @@ VkRenderPassCreateInfo renderPassInfo{};
 ```
 
 The comment states:
-
 1. What this thing is (plain English)
-1. Why it exists / the problem it solves
-1. A Glossary reference if it is a graphics, Vulkan, or GPU concept
+2. Why it exists / the problem it solves
+3. A Glossary reference if it is a graphics, Vulkan, or GPU concept
 
 Comments do not re-state what the code already makes obvious. They explain intent
 and concepts, not mechanics.
 
-______________________________________________________________________
+---
 
 ## Glossary Convention
 
@@ -147,7 +146,7 @@ when following a `See Glossary: TERM` reference in the code.
 The second field is labelled **Why it matters** rather than **Why Vulkan needs it**
 because many entries will be general graphics concepts that predate Vulkan.
 
-______________________________________________________________________
+---
 
 ## Build Order for Claude Code
 
@@ -160,14 +159,13 @@ Each chunk has a **verification checkpoint** — a plain statement of what Claud
 should confirm before moving to the next chunk. These are internal quality gates,
 not steps you need to follow.
 
-______________________________________________________________________
+---
 
 ### Chunk 1 — Project Scaffold and Window
 
 **Files touched:** `CMakeLists.txt`, `main.cpp`, `sdl_context.h/.cpp`
 
 **What gets built:**
-
 - CMake project configured for Linux, Mac, and Windows
 - FetchContent pulling SDL3 and GLM
 - SDL3 window opens with a title
@@ -175,7 +173,6 @@ ______________________________________________________________________
 - No Vulkan yet
 
 **Concepts to document:**
-
 - What SDL3 is and what it provides (window, input, Vulkan surface bridge)
 - Why window management is separated from rendering
 - What an event loop is and how it drives a real-time application
@@ -185,14 +182,13 @@ ______________________________________________________________________
 A window opens. The title bar shows the project name. Closing the window exits
 the program cleanly without a crash or leak reported by the OS.
 
-______________________________________________________________________
+---
 
 ### Chunk 2 — Vulkan Instance and Device
 
 **Files touched:** `vulkan_context.h/.cpp`, `main.cpp`
 
 **What gets built:**
-
 - Vulkan instance created with validation layers enabled in debug builds
 - Physical device selected (GPU enumerated and chosen)
 - Logical device created with graphics and presentation queues
@@ -200,7 +196,6 @@ ______________________________________________________________________
 - Validation layer output visible in terminal on errors
 
 **Concepts to document:**
-
 - What a Vulkan instance is and why it exists
 - Physical device vs logical device — what the distinction means
 - What a queue family is and why graphics and presentation queues can be separate
@@ -215,20 +210,18 @@ The window opens. The terminal confirms Vulkan initialised successfully.
 Intentionally triggering a validation error (e.g. a bad parameter) produces
 a descriptive message. The program exits cleanly. Nothing is rendered yet.
 
-______________________________________________________________________
+---
 
 ### Chunk 3 — Swapchain
 
 **Files touched:** `swapchain.h/.cpp`, `vulkan_context.h/.cpp`, `main.cpp`
 
 **What gets built:**
-
 - Swapchain created: the queue of images Vulkan renders into and presents to screen
 - Swapchain images and image views created
 - Swapchain recreation on window resize handled
 
 **Concepts to document:**
-
 - What a swapchain is and why it exists
 - What tearing is and how the swapchain prevents it
 - Double buffering vs triple buffering — the tradeoffs
@@ -244,21 +237,19 @@ Window opens, Vulkan initialises, swapchain created without validation errors.
 Terminal confirms swapchain image count and chosen format. Resizing the window
 recreates the swapchain without crashing. Nothing is rendered yet.
 
-______________________________________________________________________
+---
 
 ### Chunk 4 — Render Pass and Framebuffers
 
 **Files touched:** `render_pass.h/.cpp`, `main.cpp`
 
 **What gets built:**
-
 - Render pass created: declares colour attachment and depth attachment
 - Depth buffer image and image view created
 - Framebuffers created: one per swapchain image
 - Clear colour set to a visible non-black colour (dark grey or deep blue)
 
 **Concepts to document:**
-
 - What a render pass is — a description of rendering structure, not the act of rendering
 - What an attachment is (colour, depth) and why they are declared up front
 - What load and store operations are on attachments
@@ -274,7 +265,7 @@ The window opens and displays a solid clear colour — not black, not garbage da
 This is the first frame actually presented to screen. Validation layers report
 no errors. Resizing still works.
 
-______________________________________________________________________
+---
 
 ### Chunk 5 — Shaders and Graphics Pipeline
 
@@ -282,7 +273,6 @@ ______________________________________________________________________
 `shaders/mesh.frag`, `CMakeLists.txt`, `main.cpp`
 
 **What gets built:**
-
 - GLSL vertex shader: accepts position, outputs `gl_Position`
 - GLSL fragment shader: outputs a hardcoded solid colour
 - CMake build step compiles both shaders to SPIR-V via `glslc`
@@ -293,7 +283,6 @@ ______________________________________________________________________
 - A hardcoded triangle rendered using the pipeline
 
 **Concepts to document:**
-
 - What a shader is and where it runs (on the GPU, not the CPU)
 - The programmable vs fixed-function stages of the graphics pipeline
 - What the vertex shader does and when it runs
@@ -319,14 +308,13 @@ A hardcoded triangle appears on screen in a solid colour against the clear colou
 background. Resizing, minimising, and closing all work cleanly. Validation layers
 report no errors.
 
-______________________________________________________________________
+---
 
 ### Chunk 6 — Command Buffers and Synchronisation
 
 **Files touched:** `vulkan_context.h/.cpp`, `main.cpp`
 
 **What gets built:**
-
 - Command pool created
 - Command buffers allocated: one per frame in flight
 - Draw commands recorded into command buffers each frame
@@ -335,7 +323,6 @@ ______________________________________________________________________
 - Frames in flight capped at 2
 
 **Concepts to document:**
-
 - What a command buffer is — why Vulkan requires pre-recorded work rather than
   immediate submission
 - What a command pool is and why command buffers are allocated from one
@@ -357,14 +344,13 @@ The triangle renders at full frame rate. Resizing recreates the swapchain withou
 crashing or producing validation errors. The terminal is clean. CPU and GPU are
 not stalling each other unnecessarily.
 
-______________________________________________________________________
+---
 
 ### Chunk 7 — Vertex Buffers and Index Buffers
 
 **Files touched:** `mesh.h/.cpp`, `vulkan_context.h/.cpp`, `main.cpp`
 
 **What gets built:**
-
 - Vertex struct defined: position (vec3), normal (vec3), UV (vec2)
 - Hardcoded cube vertex and index data defined in code
 - Staging buffer pattern implemented: CPU-side buffer copies to GPU-local buffer
@@ -373,7 +359,6 @@ ______________________________________________________________________
 - Cube renders instead of triangle
 
 **Concepts to document:**
-
 - What a vertex is and what attributes a vertex can carry
 - What a vertex buffer is and how vertex data is described to the pipeline
   (vertex binding descriptions, attribute descriptions)
@@ -395,7 +380,7 @@ A hardcoded cube is visible on screen as a flat-shaded solid. It may appear as
 a hexagon at this stage because there are no transforms yet — the cube occupies
 clip space directly. This is expected and correct.
 
-______________________________________________________________________
+---
 
 ### Chunk 8 — Uniform Buffers and MVP Transforms
 
@@ -403,7 +388,6 @@ ______________________________________________________________________
 `shader_pipeline.h/.cpp`, `shaders/mesh.vert`, `main.cpp`
 
 **What gets built:**
-
 - Uniform buffer created per frame in flight
 - UBO struct defined: model matrix, view matrix, projection matrix
 - Descriptor set layout created
@@ -416,7 +400,6 @@ ______________________________________________________________________
 - Cube appears as a cube in perspective
 
 **Concepts to document:**
-
 - What a uniform buffer is — data uploaded once per draw that all vertices share
 - What a descriptor is — how a shader declares that it needs external data
 - What a descriptor set layout is — the blueprint declaring what a shader expects
@@ -446,14 +429,13 @@ The cube is visible in perspective — it looks like a 3D cube, not a flat hexag
 Perspective foreshortening is visible (near edges larger than far edges).
 The shape is static. No interaction yet.
 
-______________________________________________________________________
+---
 
 ### Chunk 9 — OBJ Loading
 
 **Files touched:** `mesh.h/.cpp`, `main.cpp`, `assets/mesh.obj`
 
 **What gets built:**
-
 - tinyobjloader integrated via FetchContent
 - OBJ file parsed: positions, normals, UVs extracted
 - Vertex deduplication performed (OBJ indexes positions/normals/UVs separately,
@@ -463,7 +445,6 @@ ______________________________________________________________________
 - A sample OBJ file (Stanford bunny or equivalent) shipped in `assets/`
 
 **Concepts to document:**
-
 - What the OBJ format is and how it stores mesh data
 - What face data in OBJ means and why it differs from a GPU index buffer
 - What vertex deduplication is and why it matters for GPU memory
@@ -479,14 +460,13 @@ ______________________________________________________________________
 The loaded OBJ mesh renders in perspective in place of the cube. It is static
 and flat-shaded. The shape is recognisable as the loaded asset.
 
-______________________________________________________________________
+---
 
 ### Chunk 10 — Orbit Camera and Input
 
 **Files touched:** `camera.h/.cpp`, `sdl_context.h/.cpp`, `main.cpp`
 
 **What gets built:**
-
 - Orbit camera implemented with GLM
   - Left mouse drag: rotate around target (azimuth and elevation angles)
   - Right mouse drag: pan (translate target in camera-relative XY plane)
@@ -497,7 +477,6 @@ ______________________________________________________________________
 - Elevation angle clamped (cannot flip over the poles)
 
 **Concepts to document:**
-
 - What an orbit camera is — spherical coordinates around a focal point
 - What azimuth and elevation are in spherical coordinates
 - What spherical coordinates are and how they relate to Cartesian coordinates
@@ -514,7 +493,7 @@ The mesh is fully interactive. Left drag rotates around it, right drag pans,
 scroll zooms. The camera never clips through the mesh. Movement feels
 continuous and clean with no jitter at any frame rate.
 
-______________________________________________________________________
+---
 
 ### Chunk 11 — Diffuse Lighting
 
@@ -522,7 +501,6 @@ ______________________________________________________________________
 `uniform_buffer.h/.cpp`, `main.cpp`
 
 **What gets built:**
-
 - Directional light direction and colour added to UBO
 - Normal matrix computed and uploaded
 - Vertex shader transforms normals to world space
@@ -531,7 +509,6 @@ ______________________________________________________________________
 - Flat solid colour replaced with lit shading
 
 **Concepts to document:**
-
 - What a surface normal is and why it drives lighting calculations
 - Why normals cannot use the same transform matrix as positions (and what the
   normal matrix is)
@@ -557,14 +534,13 @@ The mesh is lit. Faces pointing toward the light are bright, faces pointing
 away are dark but not black. Orbiting the mesh keeps the light fixed in world
 space — it does not follow the camera.
 
-______________________________________________________________________
+---
 
 ### Chunk 12 — Polish and Completeness
 
 **Files touched:** all
 
 **What gets built:**
-
 - Cleanup pass: all validation layer warnings resolved
 - Proper Vulkan teardown order verified (destruction is reverse of creation)
 - Window resize handled robustly across all three platforms
@@ -576,7 +552,6 @@ ______________________________________________________________________
 - A second sample OBJ loadable via command-line argument
 
 **Concepts to document:**
-
 - Why Vulkan teardown order matters — parent objects must outlive their children
 - What resource lifetime management means in graphics programming
 - Any remaining concepts surfaced during the audit
@@ -589,7 +564,65 @@ validation errors. The README is sufficient for someone starting from scratch.
 Every `See Glossary:` reference resolves. Resizing the window at any point
 during runtime does not crash or produce validation warnings.
 
-______________________________________________________________________
+### Chunk 13 — Diffuse Texture Support
+
+**Files touched:** `mesh.h/.cpp`, `shader_pipeline.h/.cpp`,
+`uniform_buffer.h/.cpp`, `shaders/mesh.frag`, `main.cpp`, `CMakeLists.txt`
+
+**What gets built:**
+- `stb_image` integrated via FetchContent (single-header image loader)
+- Image loaded from disk into CPU memory via `stb_image`
+- Vulkan image created and pixel data uploaded via staging buffer (same
+  staging pattern as vertex buffers)
+- Image view created for the texture
+- Sampler created: controls how the GPU reads between texel samples
+- Descriptor set layout updated to include a combined image sampler binding
+- Descriptor sets updated to bind the texture
+- Fragment shader updated to sample the diffuse texture and multiply by the
+  Lambert diffuse light value
+- MTL file parsing via tinyobjloader: diffuse texture path extracted and loaded
+- Scope limited to diffuse/albedo texture only — normal maps, roughness,
+  metallic and other PBR maps are explicitly out of scope for this chunk
+
+**Concepts to document:**
+- What a texture is in graphics programming
+- What a texel is (a texture pixel) vs a screen pixel (fragment)
+- What UV coordinates are in practice — how a 2D image maps onto 3D geometry
+- What texture sampling is — how the GPU reads a colour value from a texture
+  given a UV coordinate
+- What a sampler is in Vulkan — the object that describes filtering and
+  wrapping behaviour, separate from the image itself
+- What texture filtering is: nearest neighbour vs bilinear vs trilinear —
+  what each looks like and the performance tradeoff
+- What mipmaps are, why they exist (aliasing at distance), and how the sampler
+  uses them
+- What texture wrapping modes are (repeat, clamp to edge, mirrored repeat)
+  and when each is appropriate
+- What a combined image sampler descriptor is in Vulkan and why image and
+  sampler are often paired
+- What the MTL file format is and how it relates to OBJ
+- What a diffuse map is vs other texture map types (normal map, roughness,
+  metallic, AO) — document all types briefly for context even though only
+  diffuse is implemented
+- What PBR (physically based rendering) is at a high level — document as a
+  concept for orientation even though this project uses a simpler lighting model
+- What sRGB colour space means for textures and why it matters for correct
+  colour reproduction
+- Glossary entries: `TEXTURE`, `TEXEL`, `TEXTURE_SAMPLING`, `SAMPLER`,
+  `TEXTURE_FILTERING`, `NEAREST_NEIGHBOUR_FILTERING`, `BILINEAR_FILTERING`,
+  `TRILINEAR_FILTERING`, `MIPMAPS`, `TEXTURE_WRAPPING`, `UV_COORDINATES`
+  (extended from Chunk 9), `COMBINED_IMAGE_SAMPLER`, `MTL_FORMAT`,
+  `DIFFUSE_MAP`, `NORMAL_MAP`, `ROUGHNESS_MAP`, `METALLIC_MAP`,
+  `AMBIENT_OCCLUSION_MAP`, `PBR`, `SRGB_COLOUR_SPACE`
+
+**Verification checkpoint:**
+A textured OBJ asset from Sketchfab (exported as OBJ + MTL + diffuse texture)
+loads and renders with its diffuse texture applied. The texture is lit by the
+Lambert diffuse model — surfaces facing the light show the texture at full
+brightness, surfaces facing away are darkened. UV seams are not visible at
+normal viewing distances. Validation layers report no errors.
+
+---
 
 ## Handing to Claude Code
 

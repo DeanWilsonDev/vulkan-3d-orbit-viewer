@@ -41,6 +41,20 @@ public:
     // swapchain. See Glossary: SWAPCHAIN
     bool takeResized();
 
+    // One frame's worth of mouse input, as gathered by processEvents().
+    struct MouseInput {
+        float dx = 0.0f;          // relative motion since last frame, in pixels
+        float dy = 0.0f;
+        float scroll = 0.0f;      // accumulated wheel ticks since last frame
+        bool leftDown = false;    // current button states (level, not edge)
+        bool rightDown = false;
+    };
+
+    // Hand the caller this frame's accumulated mouse motion + wheel and the current
+    // button states, then clear the per-frame deltas (button states persist). The
+    // orbit camera consumes this each frame. See Glossary: EVENT_POLLING
+    MouseInput takeMouseInput();
+
     // The raw SDL window handle. From Chunk 2 we hand this to SDL so it can
     // create a Vulkan surface for the window. Exposed read-only.
     SDL_Window* window() const { return m_window; }
@@ -48,4 +62,12 @@ public:
 private:
     SDL_Window* m_window = nullptr;   // The OS window; owned and destroyed by this object.
     bool m_resized = false;           // Set when a resize event arrives, cleared by takeResized().
+
+    // Mouse input accumulated across a frame. Motion/scroll are summed and cleared
+    // each frame by takeMouseInput(); the button flags track the live up/down state.
+    float m_mouseDX = 0.0f;
+    float m_mouseDY = 0.0f;
+    float m_scrollY = 0.0f;
+    bool  m_leftDown = false;
+    bool  m_rightDown = false;
 };

@@ -27,7 +27,7 @@
 
 #include <glm/glm.hpp>        // camera-framing maths on the model's bounds
 
-#include <algorithm>
+#include <chrono>             // per-frame delta time for the orbit camera
 #include <cmath>
 #include <cstdlib>
 #include <exception>
@@ -100,37 +100,53 @@ int main() {
         // INDEX_BUFFER
         Mesh model = Mesh::fromObjFile(vulkan, ASSET_DIR "/mesh.obj");
 
-        // --- Chapter 8: the camera -------------------------------------------
-        // The viewpoint: where we look from, what we look at, and the perspective
-        // lens. We frame it on the loaded model's bounding box so any asset — at any
-        // scale or origin — fills the view, looked at from a fixed diagonal so its
-        // form reads in 3D. Chunk 10 will drive it from the mouse to orbit.
-        // See Glossary: VIEW_MATRIX, PROJECTION_MATRIX, PERSPECTIVE_PROJECTION
+        // --- Chapter 8: the orbit camera -------------------------------------
+        // The viewpoint: an orbit camera circling the model. We frame it on the
+        // loaded model's bounding box so any asset — at any scale or origin — fills
+        // the view, then snap() settles it so the first frame is already in place.
+        // The main loop drives it from the mouse (orbit/pan/zoom) below.
+        // See Glossary: ORBIT_CAMERA, VIEW_MATRIX, PROJECTION_MATRIX
         Camera camera;
         const glm::vec3 modelCenter = model.boundsCenter();
         const float modelRadius = model.boundsRadius();
         // Distance at which a sphere of modelRadius just fits the vertical field of
         // view (d = r / sin(fov/2)), with a margin so it does not touch the edges.
         const float fitDistance = modelRadius / std::sin(camera.fovYRadians * 0.5f) * 1.3f;
-        const glm::vec3 viewDir = glm::normalize(glm::vec3(1.0f, 0.7f, -1.2f));
         camera.target = modelCenter;
-        camera.position = modelCenter + viewDir * fitDistance;
-        // Near/far must track the model's scale (the sample model is only ~0.05
-        // units across, so the default 0.1 near plane would clip it entirely).
-        camera.nearPlane = std::max(0.001f, fitDistance - modelRadius * 1.5f);
-        camera.farPlane = fitDistance + modelRadius * 4.0f;
+        camera.distance = fitDistance;
+        camera.sceneRadius = modelRadius;          // sizes the near/far planes each frame
+        camera.minDistance = modelRadius * 1.1f;   // closest zoom: just outside the mesh
+        camera.maxDistance = fitDistance * 8.0f;   // farthest zoom
+        camera.snap();                             // jump the displayed state to this framing
 
         // --- The main loop ---------------------------------------------------
-        // Each iteration is one frame: handle input, then draw and present. The
-        // swapchain and its size-dependent resources are rebuilt whenever the
-        // window resizes or the swapchain reports itself out of date.
-        // See Glossary: EVENT_LOOP, FRAME_LOOP
+        // Each iteration is one frame: measure elapsed time, handle input, move the
+        // camera, then draw and present. The swapchain and its size-dependent
+        // resources are rebuilt whenever the window resizes or the swapchain reports
+        // itself out of date. See Glossary: EVENT_LOOP, FRAME_LOOP
         bool running = true;
+        auto previousTime = std::chrono::steady_clock::now();
         while (running) {
+            // Delta time: how long the previous frame took, in seconds. The camera
+            // uses it to move at a rate independent of frame rate.
+            // See Glossary: DELTA_TIME, FRAME_RATE_INDEPENDENCE
+            const auto now = std::chrono::steady_clock::now();
+            const float dt = std::chrono::duration<float>(now - previousTime).count();
+            previousTime = now;
+
             // Handle every input event that arrived since the previous frame.
             // See Glossary: EVENT_POLLING
             running = sdl.processEvents();
             if (!running) break;
+
+            // Feed this frame's mouse input to the camera: left-drag orbits,
+            // right-drag pans, the wheel zooms. update() then eases the camera
+            // toward the new goal. See Glossary: ORBIT_CAMERA
+            const SdlContext::MouseInput input = sdl.takeMouseInput();
+            if (input.leftDown)  camera.orbit(input.dx, input.dy);
+            if (input.rightDown) camera.pan(input.dx, input.dy);
+            if (input.scroll != 0.0f) camera.zoom(input.scroll);
+            camera.update(dt);
 
             // While the window is minimised its drawable size is zero, which is
             // an invalid render target — skip drawing until it is restored.

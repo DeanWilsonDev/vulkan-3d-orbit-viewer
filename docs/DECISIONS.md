@@ -383,6 +383,50 @@ ______________________________________________________________________
 
 ______________________________________________________________________
 
+## Chunk 10 — Orbit camera and input
+
+- **`Camera` refactored from free position → spherical orbit state.** It now stores
+  `target` + `distance` + `azimuthRadians` + `elevationRadians` instead of a raw
+  `position`; `position()` is derived. This is the natural model for an orbit camera
+  and matches the spec's spherical-coordinates framing. Consequence: the public
+  `nearPlane`/`farPlane` fields became private (`m_nearPlane`/`m_farPlane`), now
+  recomputed each frame from the distance — so `main`'s Chunk 9 framing was updated
+  to set `distance`/`sceneRadius`/`minDistance`/`maxDistance` and call `snap()`
+  instead of setting `position`/`nearPlane`/`farPlane`.
+- **Orbit & pan are displacement-based; zoom is multiplicative.** Orbit/pan are driven
+  by mouse-pixel deltas (so total motion = total drag, inherently frame-rate
+  independent); zoom multiplies distance by a constant per wheel tick (even feel at
+  any scale). Sensitivities are constants in `camera.cpp`.
+- **Delta time used for easing, not for drag.** The camera keeps a *displayed* state
+  that eases toward the *goal* state each frame via `alpha = 1 − e^(−k·dt)` — the
+  frame-rate-independent exponential-smoothing form. This is where `dt` is genuinely
+  needed and gives the checkpoint's "continuous and clean, no jitter at any frame
+  rate". Drag itself does **not** multiply by `dt` (that would make it frame-rate
+  *dependent*); the code comments call this out. `snap()` settles the displayed state
+  to the goal once after framing so the first frame is already in place.
+- **Gimbal lock handled by clamping, not quaternions.** Elevation is clamped to ±89°
+  so the view direction never aligns with the up vector (which would degenerate
+  `glm::lookAt`). The spec explicitly prefers clamping at this stage; quaternions are
+  noted as the heavier alternative.
+- **Zoom clamped to keep the camera outside the mesh.** `minDistance = modelRadius *
+  1.1` (just outside the bounding sphere) and `maxDistance = fitDistance * 8`. Near/far
+  planes track the displayed distance (`distance − 1.5·radius` … `distance + 3·radius`,
+  near floored positive), so the model never clips at any zoom.
+- **Pan scaled by distance, not pixel-exact.** `worldPerPixel = distance · k`; simple
+  and feels consistent across zoom. A fully screen-accurate pan would also divide by
+  the viewport height in pixels — deferred as unnecessary for the checkpoint.
+- **Input gathered in `SdlContext`, applied in `main`.** `SdlContext` accumulates
+  mouse motion (`xrel`/`yrel`), wheel ticks, and live button states from the SDL
+  event loop, exposed via `takeMouseInput()` (a `MouseInput` struct) which clears the
+  per-frame deltas but keeps button levels. `main` applies them to the camera each
+  frame, then calls `camera.update(dt)`. Keeps all SDL specifics behind `SdlContext`.
+- **Verification limit:** interactive drag/zoom cannot be injected headlessly (per the
+  project's GUI-checkpoint approach), so Chunk 10 was verified by a clean build, a
+  correctly-framed static render (screenshot), zero validation errors, and code review
+  of the input→camera→matrix path — not by a recorded drag.
+
+______________________________________________________________________
+
 ## Open items / things deferred deliberately
 
 - **`Renderer` lives in its own file**, where the spec attributed command buffers

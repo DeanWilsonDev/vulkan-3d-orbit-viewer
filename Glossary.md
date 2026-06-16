@@ -2429,3 +2429,203 @@ load steps). See Glossary: OBJ_FORMAT, VERTEX_DEDUPLICATION
 **Further reading**
 - [Asset pipeline overview (Game Programming Patterns / general)](https://en.wikipedia.org/wiki/Digital_asset_management)
 - [glTF — runtime 3D asset delivery](https://www.khronos.org/gltf/)
+
+______________________________________________________________________
+
+## Chunk 10 — Orbit Camera and Input
+
+## ORBIT_CAMERA
+
+**What it is**
+A camera control scheme where the camera moves on the surface of an imaginary sphere
+centred on a focal point, always looking inward at that point. The user spins it
+around the subject (orbit), slides the focal point (pan), and changes the sphere's
+radius (zoom), rather than flying the camera freely.
+
+**Why it matters**
+It is the natural way to inspect a single object — model viewers, CAD, 3D editors all
+use it — because the subject stays centred and you cannot get lost. It maps cleanly
+onto three intuitive mouse gestures and, expressed in spherical coordinates, is
+simple and robust to implement.
+
+**How it appears in this project**
+The whole of `Camera` (`src/camera.h` / `.cpp`): `orbit`/`pan`/`zoom` driven by mouse
+input gathered in `SdlContext`, applied each frame in `main`. This is the chunk that
+makes the viewer interactive. See Glossary: SPHERICAL_COORDINATES, CAMERA_TARGET
+
+**Further reading**
+- [Arcball / orbit camera (Wikipedia)](https://en.wikipedia.org/wiki/Virtual_trackball)
+- [Learn OpenGL — Camera](https://learnopengl.com/Getting-started/Camera)
+
+______________________________________________________________________
+
+## SPHERICAL_COORDINATES
+
+**What it is**
+A way to specify a point by a distance from an origin (radius) and two angles, rather
+than by x/y/z. Here: distance from the target, an azimuth angle around the vertical
+axis, and an elevation angle above the horizontal plane. A direction-and-distance
+description instead of a Cartesian one.
+
+**Why it matters**
+They are the natural language of an orbit camera: "spin around" is just changing the
+azimuth, "look from higher" is changing the elevation, "move closer" is changing the
+radius — each gesture maps to one number. Converting to Cartesian (x/y/z) when needed
+is a short, standard formula.
+
+**How it appears in this project**
+`Camera::distance`, `azimuthRadians`, `elevationRadians` hold the state;
+`sphericalDirection()` in `camera.cpp` converts an (azimuth, elevation) pair to a unit
+Cartesian direction, and `Camera::position()` scales it by distance and adds the
+target. See Glossary: AZIMUTH, ELEVATION, ORBIT_CAMERA
+
+**Further reading**
+- [Spherical coordinate system (Wikipedia)](https://en.wikipedia.org/wiki/Spherical_coordinate_system)
+- [Scratchapixel — Spherical coordinates](https://www.scratchapixel.com/lessons/mathematics-physics-for-computer-graphics/geometry/spherical-coordinates-and-trigonometric-functions.html)
+
+______________________________________________________________________
+
+## AZIMUTH
+
+**What it is**
+The horizontal angle of the orbit: how far the camera has swung around the vertical
+(Y) axis, like a compass bearing. Increasing it walks the camera around the subject
+while keeping the same height and distance.
+
+**Why it matters**
+It is one of the two angles that pin down the orbit camera's direction. Driving it
+from horizontal mouse movement gives the familiar "drag left/right to turn around the
+object" gesture. Unlike elevation it has no poles, so it can wrap freely without any
+clamp.
+
+**How it appears in this project**
+`Camera::azimuthRadians`, changed by the horizontal component of a left-drag in
+`Camera::orbit`. See Glossary: ELEVATION, SPHERICAL_COORDINATES
+
+**Further reading**
+- [Azimuth (Wikipedia)](https://en.wikipedia.org/wiki/Azimuth)
+- [Spherical coordinate system (Wikipedia)](https://en.wikipedia.org/wiki/Spherical_coordinate_system)
+
+______________________________________________________________________
+
+## ELEVATION
+
+**What it is**
+The vertical angle of the orbit: how far above (or below) the horizontal plane the
+camera sits, measured from the target. Zero looks at the subject side-on; approaching
++90° looks down from directly overhead.
+
+**Why it matters**
+It is the second of the two orbit angles, driven by vertical mouse movement for the
+"drag up/down to look over or under" gesture. Crucially it must be *clamped* short of
+the poles: at exactly ±90° the view direction aligns with the up vector and the
+camera maths degenerates (gimbal lock).
+
+**How it appears in this project**
+`Camera::elevationRadians`, changed by the vertical component of a left-drag in
+`Camera::orbit` and clamped there to ±89° (`kMaxElevation`). See Glossary: AZIMUTH,
+GIMBAL_LOCK
+
+**Further reading**
+- [Horizontal coordinate system — altitude (Wikipedia)](https://en.wikipedia.org/wiki/Horizontal_coordinate_system)
+- [Spherical coordinate system (Wikipedia)](https://en.wikipedia.org/wiki/Spherical_coordinate_system)
+
+______________________________________________________________________
+
+## CAMERA_TARGET
+
+**What it is**
+The point in world space the camera looks at and orbits around — the centre of the
+orbit sphere. The view matrix is built to aim the camera straight at it, and orbiting
+keeps it fixed while panning slides it.
+
+**Why it matters**
+It is the anchor of an orbit camera: orbit and zoom are defined relative to it, and
+panning *is* moving it. Choosing a good initial target (the model's centre) is what
+keeps the subject framed; moving it is how the user re-centres on a detail.
+
+**How it appears in this project**
+`Camera::target`, initialised to the model's bounding-box centre in `main` and slid by
+`Camera::pan`. It is the look-at point passed to `glm::lookAt` in `viewMatrix`.
+See Glossary: ORBIT_CAMERA, VIEW_MATRIX
+
+**Further reading**
+- [glm::lookAt — target/eye/up](https://glm.g-truc.net/0.9.9/api/a00247.html)
+- [Learn OpenGL — Camera (look at)](https://learnopengl.com/Getting-started/Camera)
+
+______________________________________________________________________
+
+## GIMBAL_LOCK
+
+**What it is**
+The loss of a degree of rotational freedom that happens when two rotation axes line
+up. For a camera built from azimuth + elevation it strikes at the poles: looking
+straight up or down, the "spin around" axis collapses onto the view direction and the
+orientation becomes ambiguous, often snapping or flipping.
+
+**Why it matters**
+It is the classic failure mode of Euler-angle orientation. A viewer that flips over
+when you drag past vertical feels broken. There are heavier fixes (quaternions), but
+for an orbit camera the simplest, sufficient defence is to clamp elevation so it never
+reaches the pole.
+
+**How it appears in this project**
+Avoided by clamping `elevationRadians` to ±89° in `Camera::orbit`, so the view
+direction never aligns with the up vector and `glm::lookAt` never degenerates. The
+deliberate choice of clamping over quaternions is documented in `docs/DECISIONS.md`.
+See Glossary: ELEVATION
+
+**Further reading**
+- [Gimbal lock (Wikipedia)](https://en.wikipedia.org/wiki/Gimbal_lock)
+- [Euler angles (Wikipedia)](https://en.wikipedia.org/wiki/Euler_angles)
+
+______________________________________________________________________
+
+## DELTA_TIME
+
+**What it is**
+The elapsed wall-clock time of the previous frame, in seconds — the gap between one
+frame and the next. It is measured each iteration of the loop and fed into any
+time-based update so motion is expressed as "per second" rather than "per frame".
+
+**Why it matters**
+Frame rate varies (30, 60, 144 fps; stalls during a resize). Anything that moves a
+fixed amount *per frame* would then run at different speeds on different machines.
+Multiplying rates by delta time decouples motion from frame rate — the foundation of
+consistent real-time behaviour. See Glossary: FRAME_RATE_INDEPENDENCE
+
+**How it appears in this project**
+Measured in `main`'s loop with `std::chrono::steady_clock` and passed to
+`Camera::update(dt)`, which uses it for the exponential easing of the camera toward
+its goal. See Glossary: FRAME_RATE_INDEPENDENCE, ORBIT_CAMERA
+
+**Further reading**
+- [Fix Your Timestep! (Gaffer On Games)](https://gafferongames.com/post/fix_your_timestep/)
+- [Delta timing (Wikipedia)](https://en.wikipedia.org/wiki/Delta_timing)
+
+______________________________________________________________________
+
+## FRAME_RATE_INDEPENDENCE
+
+**What it is**
+The property that an animation or control behaves identically regardless of the frame
+rate it runs at — the same input or elapsed time produces the same motion at 30 fps as
+at 144 fps. Achieved by driving motion from elapsed time or from input displacement,
+never from a per-frame constant.
+
+**Why it matters**
+Without it, a program feels different on every machine and even moment to moment as
+the frame rate fluctuates — too fast here, sluggish there, jittery during hitches. It
+is what makes movement feel smooth and predictable, which is exactly the Chunk 10
+checkpoint ("continuous and clean with no jitter at any frame rate").
+
+**How it appears in this project**
+Two ways. Orbit and pan are *displacement-based* — driven by how many pixels the mouse
+moved — so the total motion equals the total drag whatever the frame rate. The camera's
+easing toward its goal is *time-based*, using `alpha = 1 − e^(−k·dt)` in
+`Camera::update`, which closes the same fraction of the gap per unit time at any frame
+rate. See Glossary: DELTA_TIME, ORBIT_CAMERA
+
+**Further reading**
+- [Fix Your Timestep! (Gaffer On Games)](https://gafferongames.com/post/fix_your_timestep/)
+- [Exponential smoothing (Wikipedia)](https://en.wikipedia.org/wiki/Exponential_smoothing)
