@@ -2,8 +2,28 @@
 
 #include "vulkan_context.h"
 
+#include <tiny_obj_loader.h>
+#include <glm/gtx/hash.hpp>   // hashing for glm::vec types (GLM_ENABLE_EXPERIMENTAL)
+
 #include <cstring>
+#include <iostream>
 #include <stdexcept>
+#include <unordered_map>
+
+// Hash for Vertex, so it can be a key in the deduplication map below. It combines
+// the per-attribute hashes (GLM provides std::hash for its vector types) with the
+// shift-xor recipe from the Vulkan tutorial. See Glossary: VERTEX_DEDUPLICATION
+namespace std {
+template <>
+struct hash<Vertex> {
+    size_t operator()(const Vertex& v) const {
+        size_t h1 = hash<glm::vec3>()(v.position);
+        size_t h2 = hash<glm::vec3>()(v.normal);
+        size_t h3 = hash<glm::vec2>()(v.uv);
+        return ((h1 ^ (h2 << 1)) >> 1) ^ (h3 << 1);
+    }
+};
+} // namespace std
 
 VkVertexInputBindingDescription Vertex::bindingDescription() {
     VkVertexInputBindingDescription binding{};
@@ -41,6 +61,17 @@ std::array<VkVertexInputAttributeDescription, 3> Vertex::attributeDescriptions()
 Mesh::Mesh(VulkanContext& context, const std::vector<Vertex>& vertices,
            const std::vector<uint32_t>& indices)
     : m_context(context), m_indexCount(static_cast<uint32_t>(indices.size())) {
+    // Compute the object-space bounding box so the camera can be framed on the
+    // mesh regardless of its scale or origin (the cube and a loaded OBJ differ
+    // wildly here). See Glossary: ASSET_PIPELINE
+    if (!vertices.empty()) {
+        m_boundsMin = m_boundsMax = vertices[0].position;
+        for (const Vertex& v : vertices) {
+            m_boundsMin = glm::min(m_boundsMin, v.position);
+            m_boundsMax = glm::max(m_boundsMax, v.position);
+        }
+    }
+
     // Both buffers are uploaded the same way: stage in host-visible memory, then
     // copy into device-local memory for fast GPU access. See Glossary: STAGING_BUFFER
     uploadDeviceLocal(vertices.data(), sizeof(Vertex) * vertices.size(),
@@ -145,6 +176,106 @@ Mesh Mesh::cube(VulkanContext& context) {
         indices.insert(indices.end(),
                        {base + 0, base + 1, base + 2, base + 0, base + 2, base + 3});
     }
+
+    return Mesh(context, vertices, indices);
+}
+
+Mesh Mesh::fromObjFile(VulkanContext& context, const std::string& path) {
+    // triangulate = true turns any quads or n-gons in the file into triangles,
+    // which is all the GPU draws. (The sample model is quad-based, so this matters.)
+    // See Glossary: OBJ_FORMAT
+    tinyobj::ObjReaderConfig config;
+    config.triangulate = true;
+
+    tinyobj::ObjReader reader;
+    if (!reader.ParseFromFile(path, config)) {
+        const std::string err = reader.Error();
+        throw std::runtime_error("failed to load OBJ '" + path + "': " +
+                                 (err.empty() ? "unknown error" : err));
+    }
+    // Warnings (e.g. a missing material texture we do not use) are informational
+    // here, so route them to stdout — stderr is reserved for Vulkan validation.
+    if (!reader.Warning().empty()) {
+        std::cout << "[obj] " << reader.Warning();
+    }
+
+    const tinyobj::attrib_t& attrib = reader.GetAttrib();
+    const std::vector<tinyobj::shape_t>& shapes = reader.GetShapes();
+
+    // OBJ indexes positions, normals, and UVs in three independent streams; the GPU
+    // wants one stream of fully-formed vertices addressed by a single index. We
+    // rebuild each corner's vertex and deduplicate identical ones through this map,
+    // so a shared corner is stored once. See Glossary: VERTEX_DEDUPLICATION
+    std::vector<Vertex> vertices;
+    std::vector<uint32_t> indices;
+    std::unordered_map<Vertex, uint32_t> uniqueVertices;
+
+    auto positionAt = [&](const tinyobj::index_t& idx) {
+        return glm::vec3(attrib.vertices[3 * idx.vertex_index + 0],
+                         attrib.vertices[3 * idx.vertex_index + 1],
+                         attrib.vertices[3 * idx.vertex_index + 2]);
+    };
+
+    size_t cornerCount = 0;
+    for (const tinyobj::shape_t& shape : shapes) {
+        const std::vector<tinyobj::index_t>& meshIndices = shape.mesh.indices;
+        // After triangulation every face is a triangle, so corners come in threes.
+        for (size_t i = 0; i + 2 < meshIndices.size(); i += 3) {
+            const tinyobj::index_t corners[3] = {meshIndices[i], meshIndices[i + 1],
+                                                 meshIndices[i + 2]};
+
+            // Flat-normal fallback: if the file has no normals, derive one per
+            // triangle from its winding so the mesh is still flat-shaded rather
+            // than unlit. See Glossary: FLAT_NORMALS, SMOOTH_NORMALS
+            const bool haveNormals = corners[0].normal_index >= 0 &&
+                                     corners[1].normal_index >= 0 &&
+                                     corners[2].normal_index >= 0;
+            glm::vec3 flatNormal(0.0f, 0.0f, 1.0f);
+            if (!haveNormals) {
+                const glm::vec3 p0 = positionAt(corners[0]);
+                const glm::vec3 edge1 = positionAt(corners[1]) - p0;
+                const glm::vec3 edge2 = positionAt(corners[2]) - p0;
+                const glm::vec3 n = glm::cross(edge1, edge2);
+                const float len = glm::length(n);
+                if (len > 0.0f) flatNormal = n / len;
+            }
+
+            for (const tinyobj::index_t& idx : corners) {
+                Vertex v{};
+                v.position = positionAt(idx);
+                v.normal = idx.normal_index >= 0
+                               ? glm::vec3(attrib.normals[3 * idx.normal_index + 0],
+                                           attrib.normals[3 * idx.normal_index + 1],
+                                           attrib.normals[3 * idx.normal_index + 2])
+                               : flatNormal;
+                v.uv = idx.texcoord_index >= 0
+                           ? glm::vec2(attrib.texcoords[2 * idx.texcoord_index + 0],
+                                       attrib.texcoords[2 * idx.texcoord_index + 1])
+                           : glm::vec2(0.0f);
+
+                ++cornerCount;
+                const auto it = uniqueVertices.find(v);
+                if (it != uniqueVertices.end()) {
+                    indices.push_back(it->second);
+                } else {
+                    const uint32_t newIndex = static_cast<uint32_t>(vertices.size());
+                    uniqueVertices.emplace(v, newIndex);
+                    vertices.push_back(v);
+                    indices.push_back(newIndex);
+                }
+            }
+        }
+    }
+
+    if (vertices.empty()) {
+        throw std::runtime_error("OBJ '" + path + "' contained no triangle geometry");
+    }
+
+    // Report how much deduplication saved — a closed mesh shares most corners, so
+    // the unique count should be well below the corner count.
+    std::cout << "[obj] loaded " << path << ": " << cornerCount << " corners -> "
+              << vertices.size() << " unique vertices, " << (indices.size() / 3)
+              << " triangles\n";
 
     return Mesh(context, vertices, indices);
 }

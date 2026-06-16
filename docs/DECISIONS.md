@@ -336,6 +336,53 @@ ______________________________________________________________________
 
 ______________________________________________________________________
 
+## Chunk 9 — OBJ loading
+
+- **OBJ kept; source model was FBX.** The user had the model in FBX but the project
+  is specced (and built) around OBJ. FBX would need Autodesk's proprietary SDK or a
+  heavy black-box importer (Assimp) that hides the parsing + vertex deduplication
+  this chunk exists to teach, and breaks the FetchContent / clean-checkout ethos.
+  Decision: user exports FBX → OBJ in Blender; we load OBJ. `assets/mesh.obj` (+ an
+  auto-exported `mesh.mtl`) is a triangulatable, normalled, UV'd low-poly model.
+- **tinyobjloader via FetchContent**, pinned to `v2.0.0rc13`. Its CMake builds a
+  small static `tinyobjloader` target that compiles the implementation TU, so our
+  code only `#include <tiny_obj_loader.h>` — no `TINYOBJLOADER_IMPLEMENTATION`
+  define on our side.
+- **`config.triangulate = true`.** The sample model is quad-based (`f` lines with
+  four corners); we let tinyobjloader fan-triangulate so the rest of the code can
+  assume triangles.
+- **Vertex deduplication via `std::unordered_map<Vertex, uint32_t>`.** Added
+  `Vertex::operator==` (in `mesh.h`) and a `std::hash<Vertex>` specialization (in
+  `mesh.cpp`, combining `glm/gtx/hash.hpp` hashes — hence the new
+  `GLM_ENABLE_EXPERIMENTAL` compile def). Verified live: 9072 corners → 2829 unique
+  vertices for the sample model.
+- **Flat-normal fallback.** If a face's corners lack normals (`normal_index < 0`),
+  a per-triangle normal is derived from the winding (normalized edge cross product)
+  and shared by the three corners. The sample model ships normals, so this is
+  dormant but kept for robustness and to back the FLAT_NORMALS/SMOOTH_NORMALS
+  glossary distinction.
+- **Camera framed from the mesh bounding box, not by mutating geometry.** `Mesh`
+  computes its object-space AABB at construction and exposes `boundsCenter()` /
+  `boundsRadius()`. `main` sets `camera.target` to the centre and backs the camera
+  off along a fixed diagonal at `radius / sin(fov/2) · 1.3`. This was essential:
+  the sample model is only ~0.05 units across, so the camera's default `nearPlane =
+  0.1` would have clipped it entirely — `main` now also derives near/far from the
+  fit distance. Only **public** `Camera` fields are touched; `camera.cpp` (Chunk
+  10's file) is untouched. Normalizing the mesh to a unit box was rejected as it
+  distorts the artist's data and fights Chunk 10's orbit-around-target.
+- **OBJ warnings routed to stdout, not stderr.** tinyobjloader returns warnings as
+  a string (it does not print); we print them via `std::cout` so the project's
+  "clean stderr = no validation errors" verification heuristic stays meaningful.
+- **`assets/` directory + `ASSET_DIR` compile def**, mirroring the existing
+  `SHADER_DIR` pattern, so the model loads regardless of working directory.
+- **`Mesh::cube` left in place** but no longer called — a zero-cost reference for the
+  hardcoded-geometry approach. `main`'s mesh variable renamed `cube` → `model`.
+- **Note:** the auto-generated `mesh.mtl` contains an absolute `map_Kd` path into the
+  user's Downloads. We ignore materials/textures entirely, so it is inert; left
+  as-exported rather than hand-editing the asset.
+
+______________________________________________________________________
+
 ## Open items / things deferred deliberately
 
 - **`Renderer` lives in its own file**, where the spec attributed command buffers

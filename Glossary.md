@@ -2248,3 +2248,184 @@ the frustum. See Glossary: PERSPECTIVE_PROJECTION, PROJECTION_MATRIX
 **Further reading**
 - [Field of view in video games (Wikipedia)](https://en.wikipedia.org/wiki/Field_of_view_in_video_games)
 - [LearnOpenGL — Coordinate systems (projection / FoV)](https://learnopengl.com/Getting-started/Coordinate-Systems)
+
+______________________________________________________________________
+
+## Chunk 9 — OBJ Loading
+
+## OBJ_FORMAT
+
+**What it is**
+Wavefront OBJ is a simple, human-readable text format for 3D geometry. Each line is
+one record: `v x y z` a vertex position, `vn` a normal, `vt` a texture coordinate,
+and `f` a face listing, per corner, indices into those three lists in the form
+`position/texcoord/normal`. A companion `.mtl` file can describe materials.
+
+**Why it matters**
+Its plainness is its strength for learning: you can open the file and read the exact
+numbers the GPU will draw. It is near-universally supported as an interchange format
+for static meshes, which is why it is the natural first loader. Its limitations
+(no animation, scene graph, or robust material model) are also why richer pipelines
+move to formats like glTF or FBX.
+
+**How it appears in this project**
+`Mesh::fromObjFile` (`src/mesh.cpp`) parses `assets/mesh.obj` with tinyobjloader and
+builds GPU buffers from it; the chunk's decision to use OBJ over the source FBX is
+recorded in `docs/DECISIONS.md`. See Glossary: MESH, VERTEX_DEDUPLICATION
+
+**Further reading**
+- [Wavefront .obj file (Wikipedia)](https://en.wikipedia.org/wiki/Wavefront_.obj_file)
+- [tinyobjloader](https://github.com/tinyobjloader/tinyobjloader)
+
+______________________________________________________________________
+
+## VERTEX_DEDUPLICATION
+
+**What it is**
+The process of collapsing repeated vertices into a single shared one and rebuilding
+the face list to index it. OBJ addresses position, normal, and UV through three
+independent index streams, so the same fully-specified corner recurs many times
+across adjacent faces; deduplication produces one unified vertex array plus an index
+buffer that points into it.
+
+**Why it matters**
+The GPU's indexed-draw model wants exactly one index per vertex, and a vertex cache
+that rewards reuse. Without deduplication every triangle would carry three full,
+often-duplicated vertices — wasting memory and bandwidth and defeating the cache.
+It is the bridge between OBJ's storage model and the GPU's.
+
+**How it appears in this project**
+`Mesh::fromObjFile` keys an `std::unordered_map<Vertex, uint32_t>` on each rebuilt
+corner (using `Vertex::operator==` and a `std::hash<Vertex>` specialization): a new
+corner is appended and remembered, a repeat reuses its index. For the sample model
+this collapsed 9072 corners to 2829 unique vertices. See Glossary: INDEX_BUFFER,
+OBJ_FORMAT
+
+**Further reading**
+- [Vulkan Tutorial — Loading models (vertex dedup)](https://vulkan-tutorial.com/Loading_models)
+- [Vertex cache optimisation (Wikipedia)](https://en.wikipedia.org/wiki/Triangle_strip#Vertex_cache)
+
+______________________________________________________________________
+
+## UV_COORDINATES
+
+**What it is**
+A 2D coordinate pair (conventionally named u and v) stored per vertex that addresses
+a position on a texture image, where (0, 0) and (1, 1) are opposite corners of the
+image regardless of its pixel resolution. They are the texture-space counterpart of
+a vertex's 3D position.
+
+**Why it matters**
+They are how a flat 2D image is mapped onto a 3D surface: the rasteriser interpolates
+the UVs across each triangle, and the fragment shader samples the texture at the
+interpolated coordinate. Without per-vertex UVs there is no correspondence between
+the model's surface and an image.
+
+**How it appears in this project**
+The `Vertex::uv` field is parsed from the OBJ's `vt` records and carried through to
+the GPU, but never sampled — textures are out of scope. It is kept so the vertex
+format and pipeline are complete and stable. See Glossary: UV_MAPPING,
+VERTEX_ATTRIBUTES
+
+**Further reading**
+- [UV mapping (Wikipedia)](https://en.wikipedia.org/wiki/UV_mapping)
+- [LearnOpenGL — Textures](https://learnopengl.com/Getting-started/Textures)
+
+______________________________________________________________________
+
+## UV_MAPPING
+
+**What it is**
+The process of assigning UV coordinates to a mesh's vertices — effectively unwrapping
+the 3D surface flat onto a 2D plane so a texture image can be painted onto it. The
+result is the per-vertex UVs the renderer later interpolates and samples.
+
+**Why it matters**
+It is the authoring step that makes texturing possible and is where most texture
+artefacts originate (stretching, seams, wasted texture area). Understanding that
+texturing is "unwrap, then sample" demystifies why models ship with UVs and why a
+bad unwrap looks wrong however good the texture is.
+
+**How it appears in this project**
+Not performed here — the project does no texturing. It is documented for context, as
+the reason the OBJ carries `vt` data and the `Vertex` reserves a `uv` field. See
+Glossary: UV_COORDINATES
+
+**Further reading**
+- [UV mapping (Wikipedia)](https://en.wikipedia.org/wiki/UV_mapping)
+- [Blender Manual — UV editing](https://docs.blender.org/manual/en/latest/modeling/meshes/uv/index.html)
+
+______________________________________________________________________
+
+## SMOOTH_NORMALS
+
+**What it is**
+A normal scheme where each vertex has a single normal averaged from the faces that
+share it, so the normal varies continuously across the surface. Interpolated across
+triangles, it makes a faceted mesh shade as a smooth, curved surface.
+
+**Why it matters**
+It is what lets a low-polygon mesh look rounded under lighting — a sphere of a few
+hundred faces can appear smooth. The choice between smooth and flat normals is purely
+a shading decision; the geometry is identical. OBJ encodes it by whether adjacent
+faces reference the same `vn` (smooth) or distinct ones (flat).
+
+**How it appears in this project**
+If the OBJ supplies normals, `Mesh::fromObjFile` uses them as authored — so a
+smoothly-normalled export shades smoothly once lighting arrives in Chunk 11. The
+sample model ships with normals. See Glossary: FLAT_NORMALS, VERTEX_ATTRIBUTES
+
+**Further reading**
+- [Normal (geometry) (Wikipedia)](https://en.wikipedia.org/wiki/Normal_(geometry))
+- [LearnOpenGL — Basic lighting (normals)](https://learnopengl.com/Lighting/Basic-Lighting)
+
+______________________________________________________________________
+
+## FLAT_NORMALS
+
+**What it is**
+A normal scheme where every vertex of a triangle shares that triangle's single
+face normal, so each face shades as one uniform plane and the mesh looks faceted.
+The face normal is the normalized cross product of two of the triangle's edges.
+
+**Why it matters**
+It is the right look for genuinely faceted objects (a gem, a crystal, low-poly art)
+and the natural fallback when a file has no normals at all — far better than leaving
+geometry unlit. Contrasting it with smooth normals clarifies that shading appearance
+comes from the normals, not the polygon count.
+
+**How it appears in this project**
+`Mesh::fromObjFile` computes a per-triangle flat normal from the winding and assigns
+it to all three corners *only* when the OBJ lacks normals; the sample model has its
+own, so the fallback is dormant but present for robustness. See Glossary:
+SMOOTH_NORMALS, WINDING_ORDER
+
+**Further reading**
+- [Shading — flat vs smooth (Wikipedia)](https://en.wikipedia.org/wiki/Shading#Flat_shading)
+- [Scratchapixel — Shading normals](https://www.scratchapixel.com/lessons/3d-basic-rendering/introduction-to-shading/shading-normals.html)
+
+______________________________________________________________________
+
+## ASSET_PIPELINE
+
+**What it is**
+The chain that takes content from the form an artist authors it in to the form a
+program consumes at runtime: exporting from a DCC tool, converting between formats,
+processing (triangulating, deduplicating, generating normals, compressing), and
+loading. In a full engine it is often an automated, cached build step of its own.
+
+**Why it matters**
+Authoring formats and runtime formats have different goals (editability vs fast
+loading and GPU-friendliness), so something must bridge them. Recognising loading as
+one end of a broader pipeline is the seed of understanding how real engines manage
+content at scale.
+
+**How it appears in this project**
+A minimal instance of one: the source FBX is exported to OBJ (the conversion step),
+`assets/mesh.obj` is baked findable via the `ASSET_DIR` compile definition, and
+`Mesh::fromObjFile` triangulates, deduplicates, and uploads it (the processing +
+load steps). See Glossary: OBJ_FORMAT, VERTEX_DEDUPLICATION
+
+**Further reading**
+- [Asset pipeline overview (Game Programming Patterns / general)](https://en.wikipedia.org/wiki/Digital_asset_management)
+- [glTF — runtime 3D asset delivery](https://www.khronos.org/gltf/)

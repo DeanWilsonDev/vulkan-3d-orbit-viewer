@@ -53,9 +53,22 @@ FetchContent_Declare(
     GIT_SHALLOW TRUE
 )
 
-# Download + configure both dependencies. SDL3 is built from source; glm is an
-# interface (header-only) target with nothing to compile.
-FetchContent_MakeAvailable(SDL3 glm)
+# --- tinyobjloader -----------------------------------------------------------
+# A tiny OBJ parser (used from Chunk 9 to load a mesh from disk). Its CMake builds
+# a small static library target `tinyobjloader` that compiles the implementation,
+# so our code only includes the header. OBJ is a readable text format, which keeps
+# the asset-loading chunk transparent — see docs/DECISIONS.md for why we use OBJ
+# (and not FBX) here. See Glossary: OBJ_FORMAT
+FetchContent_Declare(
+    tinyobjloader
+    GIT_REPOSITORY https://github.com/tinyobjloader/tinyobjloader.git
+    GIT_TAG v2.0.0rc13   # pinned for reproducible builds
+    GIT_SHALLOW TRUE
+)
+
+# Download + configure the dependencies. SDL3 and tinyobjloader are built from
+# source; glm is an interface (header-only) target with nothing to compile.
+FetchContent_MakeAvailable(SDL3 glm tinyobjloader)
 
 # --- The executable ----------------------------------------------------------
 # main.cpp is the narrative entry point; each other .cpp is a self-contained
@@ -79,7 +92,7 @@ target_include_directories(vulkan-orbit-viewer PRIVATE src)
 # SDL3::SDL3 pulls in the correct platform libraries transparently; glm::glm is
 # a header-only interface target that just adds GLM's include path;
 # Vulkan::Vulkan adds the Vulkan headers and links the loader.
-target_link_libraries(vulkan-orbit-viewer PRIVATE SDL3::SDL3 glm::glm Vulkan::Vulkan)
+target_link_libraries(vulkan-orbit-viewer PRIVATE SDL3::SDL3 glm::glm Vulkan::Vulkan tinyobjloader)
 
 # GLM defaults to OpenGL conventions; two must change for Vulkan (used from Chunk
 # 8's MVP maths). DEPTH_ZERO_TO_ONE makes projection matrices map depth to Vulkan's
@@ -88,7 +101,11 @@ target_link_libraries(vulkan-orbit-viewer PRIVATE SDL3::SDL3 glm::glm Vulkan::Vu
 # See Glossary: PROJECTION_MATRIX, CLIP_SPACE
 target_compile_definitions(vulkan-orbit-viewer PRIVATE
     GLM_FORCE_DEPTH_ZERO_TO_ONE
-    GLM_FORCE_RADIANS)
+    GLM_FORCE_RADIANS
+    # Chunk 9 hashes glm::vec types for vertex deduplication via glm/gtx/hash.hpp,
+    # which lives in GLM's "experimental" extensions and refuses to compile without
+    # this opt-in. See Glossary: VERTEX_DEDUPLICATION
+    GLM_ENABLE_EXPERIMENTAL)
 
 # --- Shader compilation ------------------------------------------------------
 # GLSL shaders are compiled to SPIR-V at build time with glslc (shipped in the
@@ -120,3 +137,7 @@ add_dependencies(vulkan-orbit-viewer shaders)
 # Bake the compiled-shader directory in so the program finds its SPIR-V from any
 # working directory (simple and reliable for this local course build).
 target_compile_definitions(vulkan-orbit-viewer PRIVATE SHADER_DIR="${SHADER_OUT_DIR}")
+
+# Likewise bake in the assets directory so Chunk 9's OBJ model loads regardless of
+# the working directory the program is launched from. See Glossary: ASSET_PIPELINE
+target_compile_definitions(vulkan-orbit-viewer PRIVATE ASSET_DIR="${CMAKE_CURRENT_SOURCE_DIR}/assets")

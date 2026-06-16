@@ -25,6 +25,10 @@
 
 #include <SDL3/SDL_video.h>   // SDL_GetWindowSizeInPixels (minimised-window check)
 
+#include <glm/glm.hpp>        // camera-framing maths on the model's bounds
+
+#include <algorithm>
+#include <cmath>
 #include <cstdlib>
 #include <exception>
 #include <iostream>
@@ -90,18 +94,31 @@ int main() {
         Renderer renderer(vulkan, swapchain);
 
         // --- Chapter 7: the mesh ---------------------------------------------
-        // A hardcoded cube uploaded to GPU buffers. As of Chunk 8 the MVP
-        // transform (below) projects it into perspective, so it finally looks like
-        // a 3D cube rather than a flat square. See Glossary: MESH, VERTEX_BUFFER,
+        // Geometry loaded from an OBJ file on disk (Chunk 9), replacing Chunk 7's
+        // hardcoded cube. tinyobjloader parses it and Mesh deduplicates the
+        // vertices into GPU buffers. See Glossary: MESH, OBJ_FORMAT, VERTEX_BUFFER,
         // INDEX_BUFFER
-        Mesh cube = Mesh::cube(vulkan);
+        Mesh model = Mesh::fromObjFile(vulkan, ASSET_DIR "/mesh.obj");
 
         // --- Chapter 8: the camera -------------------------------------------
         // The viewpoint: where we look from, what we look at, and the perspective
-        // lens. It is static for now (positioned off to one side so three faces of
-        // the cube are visible); Chunk 10 will drive it from the mouse to orbit.
+        // lens. We frame it on the loaded model's bounding box so any asset — at any
+        // scale or origin — fills the view, looked at from a fixed diagonal so its
+        // form reads in 3D. Chunk 10 will drive it from the mouse to orbit.
         // See Glossary: VIEW_MATRIX, PROJECTION_MATRIX, PERSPECTIVE_PROJECTION
         Camera camera;
+        const glm::vec3 modelCenter = model.boundsCenter();
+        const float modelRadius = model.boundsRadius();
+        // Distance at which a sphere of modelRadius just fits the vertical field of
+        // view (d = r / sin(fov/2)), with a margin so it does not touch the edges.
+        const float fitDistance = modelRadius / std::sin(camera.fovYRadians * 0.5f) * 1.3f;
+        const glm::vec3 viewDir = glm::normalize(glm::vec3(1.0f, 0.7f, -1.2f));
+        camera.target = modelCenter;
+        camera.position = modelCenter + viewDir * fitDistance;
+        // Near/far must track the model's scale (the sample model is only ~0.05
+        // units across, so the default 0.1 near plane would clip it entirely).
+        camera.nearPlane = std::max(0.001f, fitDistance - modelRadius * 1.5f);
+        camera.farPlane = fitDistance + modelRadius * 4.0f;
 
         // --- The main loop ---------------------------------------------------
         // Each iteration is one frame: handle input, then draw and present. The
@@ -126,7 +143,7 @@ int main() {
             // must be rebuilt before the next frame. See Glossary: SWAPCHAIN
             bool needsRecreate = sdl.takeResized();
             if (!needsRecreate) {
-                needsRecreate = renderer.drawFrame(swapchain, renderPass, pipeline, cube,
+                needsRecreate = renderer.drawFrame(swapchain, renderPass, pipeline, model,
                                                    camera, uniforms);
             }
             if (needsRecreate) {
