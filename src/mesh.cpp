@@ -5,6 +5,11 @@
 #include <tiny_obj_loader.h>
 #include <glm/gtx/hash.hpp>   // hashing for glm::vec types (GLM_ENABLE_EXPERIMENTAL)
 
+// stb_image is header-only: defining STB_IMAGE_IMPLEMENTATION in exactly one
+// translation unit (here) compiles its implementation. See Glossary: TEXTURE
+#define STB_IMAGE_IMPLEMENTATION
+#include <stb_image.h>
+
 #include <cstring>
 #include <iostream>
 #include <stdexcept>
@@ -59,8 +64,9 @@ std::array<VkVertexInputAttributeDescription, 3> Vertex::attributeDescriptions()
 }
 
 Mesh::Mesh(VulkanContext& context, const std::vector<Vertex>& vertices,
-           const std::vector<uint32_t>& indices)
-    : m_context(context), m_indexCount(static_cast<uint32_t>(indices.size())) {
+           const std::vector<uint32_t>& indices, const std::string& diffuseTexturePath)
+    : m_context(context), m_indexCount(static_cast<uint32_t>(indices.size())),
+      m_diffuseTexturePath(diffuseTexturePath) {
     // Compute the object-space bounding box so the camera can be framed on the
     // mesh regardless of its scale or origin (the cube and a loaded OBJ differ
     // wildly here). See Glossary: ASSET_PIPELINE
@@ -202,6 +208,20 @@ Mesh Mesh::fromObjFile(VulkanContext& context, const std::string& path) {
     const tinyobj::attrib_t& attrib = reader.GetAttrib();
     const std::vector<tinyobj::shape_t>& shapes = reader.GetShapes();
 
+    // The OBJ's `mtllib` is parsed too; pull the first material's diffuse map name
+    // (MTL `map_Kd`) and resolve it relative to the OBJ's own directory, since MTL
+    // paths are relative to the model. Left empty if there is no diffuse map.
+    // See Glossary: MTL_FORMAT, DIFFUSE_MAP
+    std::string diffuseTexturePath;
+    for (const tinyobj::material_t& mat : reader.GetMaterials()) {
+        if (!mat.diffuse_texname.empty()) {
+            const size_t slash = path.find_last_of("/\\");
+            const std::string dir = (slash == std::string::npos) ? "" : path.substr(0, slash + 1);
+            diffuseTexturePath = dir + mat.diffuse_texname;
+            break;
+        }
+    }
+
     // OBJ indexes positions, normals, and UVs in three independent streams; the GPU
     // wants one stream of fully-formed vertices addressed by a single index. We
     // rebuild each corner's vertex and deduplicate identical ones through this map,
@@ -248,9 +268,12 @@ Mesh Mesh::fromObjFile(VulkanContext& context, const std::string& path) {
                                            attrib.normals[3 * idx.normal_index + 1],
                                            attrib.normals[3 * idx.normal_index + 2])
                                : flatNormal;
+                // Flip V: OBJ texture coordinates put V=0 at the bottom of the image
+                // (OpenGL convention), but Vulkan samples with V=0 at the top, so the
+                // texture would appear upside-down without this. See Glossary: UV_COORDINATES
                 v.uv = idx.texcoord_index >= 0
                            ? glm::vec2(attrib.texcoords[2 * idx.texcoord_index + 0],
-                                       attrib.texcoords[2 * idx.texcoord_index + 1])
+                                       1.0f - attrib.texcoords[2 * idx.texcoord_index + 1])
                            : glm::vec2(0.0f);
 
                 ++cornerCount;
@@ -275,7 +298,125 @@ Mesh Mesh::fromObjFile(VulkanContext& context, const std::string& path) {
     // the unique count should be well below the corner count.
     std::cout << "[obj] loaded " << path << ": " << cornerCount << " corners -> "
               << vertices.size() << " unique vertices, " << (indices.size() / 3)
-              << " triangles\n";
+              << " triangles"
+              << (diffuseTexturePath.empty() ? "" : (", diffuse map " + diffuseTexturePath))
+              << "\n";
 
-    return Mesh(context, vertices, indices);
+    return Mesh(context, vertices, indices, diffuseTexturePath);
+}
+
+// ============================ Texture ====================================
+
+Texture::Texture(VulkanContext& context, const std::string& path) : m_context(context) {
+    int width = 1, height = 1, channels = 0;
+    // The fallback for a model with no diffuse map: a single white texel. Sampling
+    // it returns white, so the lit shading shows the model uncoloured rather than
+    // leaving the sampler binding empty (which is invalid). See Glossary: TEXTURE
+    stbi_uc whitePixel[4] = {255, 255, 255, 255};
+    stbi_uc* pixels = whitePixel;
+    bool loaded = false;
+
+    if (!path.empty()) {
+        // Force four channels (RGBA) so the data always matches an 8-bit RGBA format,
+        // whether or not the source image had an alpha channel. stb flips nothing;
+        // the OBJ's UVs already match the image orientation. See Glossary: TEXEL
+        pixels = stbi_load(path.c_str(), &width, &height, &channels, STBI_rgb_alpha);
+        if (pixels == nullptr) {
+            throw std::runtime_error("failed to load texture '" + path + "': " +
+                                     stbi_failure_reason());
+        }
+        loaded = true;
+        std::cout << "[texture] loaded " << path << ": " << width << "x" << height << "\n";
+    }
+
+    uploadPixels(pixels, static_cast<uint32_t>(width), static_cast<uint32_t>(height));
+    if (loaded) stbi_image_free(pixels);
+
+    createSampler();
+}
+
+Texture::~Texture() {
+    const VkDevice device = m_context.device();
+    if (m_sampler != VK_NULL_HANDLE) vkDestroySampler(device, m_sampler, nullptr);
+    if (m_view != VK_NULL_HANDLE) vkDestroyImageView(device, m_view, nullptr);
+    if (m_image != VK_NULL_HANDLE) vkDestroyImage(device, m_image, nullptr);
+    if (m_memory != VK_NULL_HANDLE) vkFreeMemory(device, m_memory, nullptr);
+}
+
+void Texture::uploadPixels(const unsigned char* pixels, uint32_t width, uint32_t height) {
+    const VkDeviceSize size = VkDeviceSize(width) * height * 4;  // 4 bytes per RGBA texel
+
+    // 1. Stage the pixels in a host-visible buffer — same pattern as vertex upload.
+    //    See Glossary: STAGING_BUFFER
+    VkBuffer staging = VK_NULL_HANDLE;
+    VkDeviceMemory stagingMemory = VK_NULL_HANDLE;
+    m_context.createBuffer(size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+                           VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+                           staging, stagingMemory);
+    void* mapped = nullptr;
+    vkMapMemory(m_context.device(), stagingMemory, 0, size, 0, &mapped);
+    std::memcpy(mapped, pixels, static_cast<size_t>(size));
+    vkUnmapMemory(m_context.device(), stagingMemory);
+
+    // 2. Device-local image in an *sRGB* format: the texture stores colour authored
+    //    in sRGB, and an sRGB format makes the GPU convert each sample to linear so
+    //    the lighting maths is done in linear space (and the sRGB swapchain converts
+    //    back on output). See Glossary: TEXTURE, SRGB_COLOUR_SPACE
+    m_context.createImage(width, height, VK_FORMAT_R8G8B8A8_SRGB,
+                          VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
+                          m_image, m_memory);
+
+    // 3. Layout dance: make it writable, copy the pixels in, then make it readable
+    //    by the fragment shader. See Glossary: IMAGE_LAYOUT_TRANSITION
+    m_context.transitionImageLayout(m_image, VK_IMAGE_LAYOUT_UNDEFINED,
+                                    VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+    m_context.copyBufferToImage(staging, m_image, width, height);
+    m_context.transitionImageLayout(m_image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+                                    VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+
+    vkDestroyBuffer(m_context.device(), staging, nullptr);
+    vkFreeMemory(m_context.device(), stagingMemory, nullptr);
+
+    // 4. An image view, the handle a descriptor/shader actually reads through.
+    //    See Glossary: IMAGE_VIEW
+    VkImageViewCreateInfo viewInfo{};
+    viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+    viewInfo.image = m_image;
+    viewInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
+    viewInfo.format = VK_FORMAT_R8G8B8A8_SRGB;
+    viewInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+    viewInfo.subresourceRange.levelCount = 1;
+    viewInfo.subresourceRange.layerCount = 1;
+    if (vkCreateImageView(m_context.device(), &viewInfo, nullptr, &m_view) != VK_SUCCESS) {
+        throw std::runtime_error("vkCreateImageView (texture) failed");
+    }
+}
+
+void Texture::createSampler() {
+    // The sampler is separate from the image: it describes *how* texels are read —
+    // the filtering between samples and the wrapping outside [0,1]. See Glossary: SAMPLER
+    VkSamplerCreateInfo info{};
+    info.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
+    // Linear (bilinear) filtering blends the four nearest texels, smoothing the image
+    // both when magnified and minified. See Glossary: TEXTURE_FILTERING, BILINEAR_FILTERING
+    info.magFilter = VK_FILTER_LINEAR;
+    info.minFilter = VK_FILTER_LINEAR;
+    // Repeat (tile) coordinates outside [0,1]. Harmless here since the model's UVs
+    // stay in range, but it is the sensible default. See Glossary: TEXTURE_WRAPPING
+    info.addressModeU = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+    info.addressModeV = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+    info.addressModeW = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+    // Anisotropic filtering is a device feature we did not enable, so leave it off.
+    info.anisotropyEnable = VK_FALSE;
+    info.maxAnisotropy = 1.0f;
+    info.borderColor = VK_BORDER_COLOR_INT_OPAQUE_BLACK;
+    info.unnormalizedCoordinates = VK_FALSE;  // UVs are normalised 0..1
+    // Single mip level — this project does not generate mipmaps, so the LOD range is
+    // pinned to 0. See Glossary: MIPMAPS, TRILINEAR_FILTERING
+    info.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
+    info.minLod = 0.0f;
+    info.maxLod = 0.0f;
+    if (vkCreateSampler(m_context.device(), &info, nullptr, &m_sampler) != VK_SUCCESS) {
+        throw std::runtime_error("vkCreateSampler failed");
+    }
 }

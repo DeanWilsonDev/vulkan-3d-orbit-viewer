@@ -78,7 +78,30 @@ public:
     // cannot write to directly. See Glossary: STAGING_BUFFER
     void copyBuffer(VkBuffer src, VkBuffer dst, VkDeviceSize size) const;
 
+    // --- Image helpers (used from Chunk 13 for textures) ---------------------
+
+    // Create a 2D VkImage and back it with device-local memory. The image starts in
+    // UNDEFINED layout; the caller transitions it as needed. See Glossary: TEXTURE, GPU_MEMORY
+    void createImage(uint32_t width, uint32_t height, VkFormat format, VkImageUsageFlags usage,
+                     VkImage& image, VkDeviceMemory& memory) const;
+
+    // Move an image between layouts with a pipeline barrier on a one-time command.
+    // Only the two transitions this project needs are supported (undefined →
+    // transfer-dst, transfer-dst → shader-read). See Glossary: IMAGE_LAYOUT_TRANSITION, PIPELINE_BARRIER
+    void transitionImageLayout(VkImage image, VkImageLayout oldLayout, VkImageLayout newLayout) const;
+
+    // Copy a whole tightly-packed buffer into a 2D image (the image must be in
+    // transfer-dst layout). The image upload counterpart of copyBuffer.
+    // See Glossary: STAGING_BUFFER, TEXEL
+    void copyBufferToImage(VkBuffer buffer, VkImage image, uint32_t width, uint32_t height) const;
+
 private:
+    // Record + submit + wait on a throwaway command buffer from the upload pool —
+    // the shared mechanism behind every one-time transfer (copyBuffer and the image
+    // helpers). See Glossary: STAGING_BUFFER, COMMAND_BUFFER
+    VkCommandBuffer beginSingleTimeCommands() const;
+    void endSingleTimeCommands(VkCommandBuffer cmd) const;
+
     // Each of these is one step of construction, kept as a named function so the
     // constructor reads like a checklist of what Vulkan startup requires.
     void createInstance(SDL_Window* window);

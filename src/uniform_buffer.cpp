@@ -5,12 +5,13 @@
 #include <cstring>
 #include <stdexcept>
 
-UniformBuffers::UniformBuffers(VulkanContext& context, uint32_t frameCount)
+UniformBuffers::UniformBuffers(VulkanContext& context, uint32_t frameCount,
+                               VkImageView textureView, VkSampler textureSampler)
     : m_context(context) {
     createDescriptorSetLayout();
     createBuffers(frameCount);
     createDescriptorPool(frameCount);
-    createDescriptorSets(frameCount);
+    createDescriptorSets(frameCount, textureView, textureSampler);
 }
 
 UniformBuffers::~UniformBuffers() {
@@ -32,21 +33,29 @@ UniformBuffers::~UniformBuffers() {
 }
 
 void UniformBuffers::createDescriptorSetLayout() {
-    // One binding: a single uniform buffer at binding 0, read by both the vertex
-    // shader (MVP transform, normal to world space) and — as of Chunk 11 — the
-    // fragment shader (the light parameters for shading). descriptorCount is 1
-    // because the shader declares one block, not an array.
+    // Binding 0: the uniform buffer, read by the vertex shader (MVP, normal) and the
+    // fragment shader (light). descriptorCount is 1 — one block, not an array.
     // See Glossary: DESCRIPTOR_SET_LAYOUT, DESCRIPTOR
-    VkDescriptorSetLayoutBinding binding{};
-    binding.binding = 0;
-    binding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-    binding.descriptorCount = 1;
-    binding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
+    VkDescriptorSetLayoutBinding uboBinding{};
+    uboBinding.binding = 0;
+    uboBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+    uboBinding.descriptorCount = 1;
+    uboBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
 
+    // Binding 1: the diffuse texture as a combined image sampler — one descriptor that
+    // packages the image view and the sampler together, read only by the fragment
+    // shader. See Glossary: COMBINED_IMAGE_SAMPLER, SAMPLER, TEXTURE
+    VkDescriptorSetLayoutBinding samplerBinding{};
+    samplerBinding.binding = 1;
+    samplerBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+    samplerBinding.descriptorCount = 1;
+    samplerBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+
+    const VkDescriptorSetLayoutBinding bindings[] = {uboBinding, samplerBinding};
     VkDescriptorSetLayoutCreateInfo info{};
     info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-    info.bindingCount = 1;
-    info.pBindings = &binding;
+    info.bindingCount = 2;
+    info.pBindings = bindings;
     if (vkCreateDescriptorSetLayout(m_context.device(), &info, nullptr, &m_layout) != VK_SUCCESS) {
         throw std::runtime_error("vkCreateDescriptorSetLayout failed");
     }
@@ -73,23 +82,27 @@ void UniformBuffers::createBuffers(uint32_t frameCount) {
 }
 
 void UniformBuffers::createDescriptorPool(uint32_t frameCount) {
-    // The pool must have room for one uniform-buffer descriptor per frame, and be
-    // able to hand out frameCount sets in total. See Glossary: DESCRIPTOR_POOL
-    VkDescriptorPoolSize poolSize{};
-    poolSize.type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-    poolSize.descriptorCount = frameCount;
+    // The pool needs room for one uniform-buffer descriptor and one combined image
+    // sampler per frame, and to hand out frameCount sets in total. Each descriptor
+    // type the sets use needs its own pool size. See Glossary: DESCRIPTOR_POOL
+    VkDescriptorPoolSize poolSizes[2]{};
+    poolSizes[0].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+    poolSizes[0].descriptorCount = frameCount;
+    poolSizes[1].type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+    poolSizes[1].descriptorCount = frameCount;
 
     VkDescriptorPoolCreateInfo info{};
     info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
-    info.poolSizeCount = 1;
-    info.pPoolSizes = &poolSize;
+    info.poolSizeCount = 2;
+    info.pPoolSizes = poolSizes;
     info.maxSets = frameCount;
     if (vkCreateDescriptorPool(m_context.device(), &info, nullptr, &m_pool) != VK_SUCCESS) {
         throw std::runtime_error("vkCreateDescriptorPool failed");
     }
 }
 
-void UniformBuffers::createDescriptorSets(uint32_t frameCount) {
+void UniformBuffers::createDescriptorSets(uint32_t frameCount, VkImageView textureView,
+                                          VkSampler textureSampler) {
     // Allocate one set per frame, every one using the same layout.
     std::vector<VkDescriptorSetLayout> layouts(frameCount, m_layout);
     VkDescriptorSetAllocateInfo allocInfo{};
@@ -103,23 +116,37 @@ void UniformBuffers::createDescriptorSets(uint32_t frameCount) {
         throw std::runtime_error("vkAllocateDescriptorSets failed");
     }
 
-    // Point each set at its frame's buffer. Allocation makes an empty set; this
-    // write is what actually binds the resource into it. See Glossary: DESCRIPTOR_SET
+    // Point each set at its frame's buffer (binding 0) and the shared texture
+    // (binding 1). Allocation makes empty sets; these writes bind the resources in.
+    // The texture is the same for every frame; only the uniform buffer differs.
+    // See Glossary: DESCRIPTOR_SET, COMBINED_IMAGE_SAMPLER
     for (uint32_t i = 0; i < frameCount; ++i) {
         VkDescriptorBufferInfo bufferInfo{};
         bufferInfo.buffer = m_buffers[i];
         bufferInfo.offset = 0;
         bufferInfo.range = sizeof(UniformBufferObject);
 
-        VkWriteDescriptorSet write{};
-        write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-        write.dstSet = m_descriptorSets[i];
-        write.dstBinding = 0;
-        write.dstArrayElement = 0;
-        write.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-        write.descriptorCount = 1;
-        write.pBufferInfo = &bufferInfo;
-        vkUpdateDescriptorSets(m_context.device(), 1, &write, 0, nullptr);
+        VkDescriptorImageInfo imageInfo{};
+        imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+        imageInfo.imageView = textureView;
+        imageInfo.sampler = textureSampler;
+
+        VkWriteDescriptorSet writes[2]{};
+        writes[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+        writes[0].dstSet = m_descriptorSets[i];
+        writes[0].dstBinding = 0;
+        writes[0].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+        writes[0].descriptorCount = 1;
+        writes[0].pBufferInfo = &bufferInfo;
+
+        writes[1].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+        writes[1].dstSet = m_descriptorSets[i];
+        writes[1].dstBinding = 1;
+        writes[1].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+        writes[1].descriptorCount = 1;
+        writes[1].pImageInfo = &imageInfo;
+
+        vkUpdateDescriptorSets(m_context.device(), 2, writes, 0, nullptr);
     }
 }
 

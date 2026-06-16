@@ -76,35 +76,43 @@ int main(int argc, char** argv) {
         // FRAMEBUFFER, DEPTH_BUFFER
         RenderPass renderPass(vulkan, swapchain);
 
-        // --- Chapter 5a: uniform buffers and descriptors ---------------------
-        // The per-frame MVP uniform buffers, plus the descriptor set layout / pool
-        // / sets that let the vertex shader read them. Created before the pipeline
-        // because the pipeline layout is built against this descriptor set layout.
-        // One buffer + set per frame in flight. See Glossary: UNIFORM_BUFFER,
-        // DESCRIPTOR_SET, DESCRIPTOR_SET_LAYOUT, DESCRIPTOR_POOL
-        UniformBuffers uniforms(vulkan, Renderer::kMaxFramesInFlight);
+        // --- Chapter 5: the mesh ---------------------------------------------
+        // Geometry loaded from an OBJ file on disk (Chunk 9), replacing Chunk 7's
+        // hardcoded cube. tinyobjloader parses it and Mesh deduplicates the
+        // vertices into GPU buffers; it also reads the MTL's diffuse texture name.
+        // The path comes from the command line (or the bundled default).
+        // See Glossary: MESH, OBJ_FORMAT, VERTEX_BUFFER, INDEX_BUFFER
+        Mesh model = Mesh::fromObjFile(vulkan, modelPath);
 
-        // --- Chapter 5b: the graphics pipeline -------------------------------
+        // --- Chapter 6: the diffuse texture ----------------------------------
+        // The model's diffuse map, loaded from the path its MTL declared (or a 1×1
+        // white fallback if it has none). Created before the descriptors so they can
+        // bind it. See Glossary: TEXTURE, DIFFUSE_MAP, SAMPLER
+        Texture texture(vulkan, model.diffuseTexturePath());
+
+        // --- Chapter 7: uniform buffers and descriptors ----------------------
+        // The per-frame MVP/light uniform buffers, plus the descriptor set layout /
+        // pool / sets that bind them (binding 0) and the diffuse texture (binding 1).
+        // Created before the pipeline because the pipeline layout is built against
+        // this descriptor set layout. See Glossary: UNIFORM_BUFFER, DESCRIPTOR_SET,
+        // DESCRIPTOR_SET_LAYOUT, DESCRIPTOR_POOL, COMBINED_IMAGE_SAMPLER
+        UniformBuffers uniforms(vulkan, Renderer::kMaxFramesInFlight,
+                                texture.view(), texture.sampler());
+
+        // --- Chapter 8: the graphics pipeline --------------------------------
         // Compiled shaders plus all the fixed-function state, baked into one
         // immutable pipeline object built for the render pass above. It references
-        // the uniform descriptor set layout so the MVP buffer can be bound.
+        // the descriptor set layout so the uniforms + texture can be bound.
         // See Glossary: GRAPHICS_PIPELINE
         ShaderPipeline pipeline(vulkan, renderPass.handle(), uniforms.layout());
 
-        // --- Chapter 6: command buffers and synchronisation ------------------
+        // --- Chapter 9: command buffers and synchronisation ------------------
         // Command buffers + the semaphores/fences that drive each frame, with two
         // frames in flight so the CPU records ahead while the GPU draws.
         // See Glossary: COMMAND_BUFFER, FRAME_LOOP, FRAMES_IN_FLIGHT, SYNCHRONISATION
         Renderer renderer(vulkan, swapchain);
 
-        // --- Chapter 7: the mesh ---------------------------------------------
-        // Geometry loaded from an OBJ file on disk (Chunk 9), replacing Chunk 7's
-        // hardcoded cube. tinyobjloader parses it and Mesh deduplicates the
-        // vertices into GPU buffers. The path comes from the command line (or the
-        // bundled default). See Glossary: MESH, OBJ_FORMAT, VERTEX_BUFFER, INDEX_BUFFER
-        Mesh model = Mesh::fromObjFile(vulkan, modelPath);
-
-        // --- Chapter 8: the orbit camera -------------------------------------
+        // --- Chapter 10: the orbit camera ------------------------------------
         // The viewpoint: an orbit camera circling the model. We frame it on the
         // loaded model's bounding box so any asset — at any scale or origin — fills
         // the view, then snap() settles it so the first frame is already in place.

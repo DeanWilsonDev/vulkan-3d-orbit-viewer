@@ -23,9 +23,11 @@ layout(location = 0) in vec3 inPosition;
 layout(location = 1) in vec3 inNormal;
 layout(location = 2) in vec2 inUV;       // carried but not sampled in this project
 
-// Passed to the fragment shader and interpolated across the triangle, so lighting is
-// evaluated per fragment rather than per vertex. See Glossary: PER_FRAGMENT_LIGHTING
+// Passed to the fragment shader and interpolated across the triangle: the world-space
+// normal (for per-fragment lighting) and the UV (for texture sampling).
+// See Glossary: PER_FRAGMENT_LIGHTING, UV_COORDINATES
 layout(location = 0) out vec3 outWorldNormal;
+layout(location = 1) out vec2 outUV;
 
 void main() {
     // The MVP chain, read right to left: place the object in the world (model),
@@ -39,4 +41,8 @@ void main() {
     // normalised again in the fragment shader after interpolation.
     // See Glossary: SURFACE_NORMAL, NORMAL_MATRIX, WORLD_SPACE
     outWorldNormal = mat3(ubo.normalMatrix) * inNormal;
+
+    // Pass the texture coordinate straight through to be interpolated and sampled.
+    // See Glossary: UV_COORDINATES, TEXTURE_SAMPLING
+    outUV = inUV;
 }

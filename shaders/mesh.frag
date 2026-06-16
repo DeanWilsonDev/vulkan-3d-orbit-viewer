@@ -15,17 +15,26 @@ layout(set = 0, binding = 0) uniform UniformBufferObject {
     vec4 ambientColour;  // rgb = ambient fill
 } ubo;
 
-// The interpolated world-space normal from the vertex shader. Interpolation does not
-// preserve unit length, so it is renormalised below. See Glossary: PER_FRAGMENT_LIGHTING
+// The diffuse texture as a combined image sampler at binding 1 — the image and the
+// sampler (filtering/wrapping) packaged in one. `texture()` reads a colour from it at
+// a UV coordinate. See Glossary: COMBINED_IMAGE_SAMPLER, SAMPLER, TEXTURE_SAMPLING
+layout(set = 0, binding = 1) uniform sampler2D diffuseTex;
+
+// Interpolated from the vertex shader: the world-space normal (renormalised below,
+// since interpolation does not preserve unit length) and the UV.
+// See Glossary: PER_FRAGMENT_LIGHTING, UV_COORDINATES
 layout(location = 0) in vec3 inWorldNormal;
+layout(location = 1) in vec2 inUV;
 
 // The single output, written to colour attachment 0 of the render pass.
 layout(location = 0) out vec4 outColour;
 
 void main() {
-    // The surface's base (unlit) colour — the warm orange used since Chunk 5, now
-    // acting as the material albedo that the light modulates.
-    const vec3 albedo = vec3(0.90, 0.55, 0.20);
+    // The surface's base colour now comes from the diffuse texture (its albedo),
+    // sampled at this fragment's UV, replacing the flat orange of earlier chunks.
+    // The sRGB image format means the sample is already converted to linear here.
+    // See Glossary: DIFFUSE_MAP, TEXTURE_SAMPLING, SRGB_COLOUR_SPACE
+    vec3 albedo = texture(diffuseTex, inUV).rgb;
 
     vec3 N = normalize(inWorldNormal);
     vec3 L = normalize(ubo.lightDirection.xyz);

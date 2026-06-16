@@ -497,6 +497,54 @@ ______________________________________________________________________
 
 ______________________________________________________________________
 
+## Chunk 13 — Diffuse texture support
+
+- **stb_image via FetchContent**, pinned to `master` (stb publishes no release tags).
+  Header-only with no CMake target, so it is only populated and `${stb_SOURCE_DIR}` is
+  added to the include path; `STB_IMAGE_IMPLEMENTATION` is defined once, in `mesh.cpp`.
+- **Image GPU helpers added to `VulkanContext`** (`createImage`,
+  `transitionImageLayout`, `copyBufferToImage`) plus a factored
+  `begin/endSingleTimeCommands` that `copyBuffer` now also uses. This mirrors the
+  existing buffer helpers and is the natural home, but is a **deviation** from the
+  spec's Chunk 13 file list (which omits `vulkan_context`). `transitionImageLayout`
+  only supports the two transitions the project needs (undefined→transfer-dst,
+  transfer-dst→shader-read) and throws otherwise.
+- **`Texture` class lives in `mesh.h/.cpp`** (per the spec file list): owns the image,
+  memory, view, and sampler; loads via stb_image (forced RGBA) and uploads with the
+  same staging pattern as geometry. An **empty path yields a 1×1 white fallback**, so a
+  model with no diffuse map (the cube, the torus) still has a valid descriptor to bind
+  and renders white-lit rather than crashing.
+- **MTL parsed for the diffuse path.** `Mesh::fromObjFile` reads the first material's
+  `diffuse_texname` and resolves it **relative to the OBJ's directory** — necessary
+  because the `map_Kd` path was scrubbed to a basename in Chunk 9. `Mesh` exposes
+  `diffuseTexturePath()`; `main` loads the `Texture` from it.
+- **Descriptor binding 1 = combined image sampler** (fragment stage), added to the
+  layout/pool/sets in `uniform_buffer.cpp`. The descriptors are written with the
+  texture's view+sampler; the same texture is bound for every frame in flight (only the
+  UBO differs per frame). This is why `main` was **reordered**: mesh → texture →
+  uniforms → pipeline, so the descriptors can be built with the texture in hand.
+- **`shader_pipeline` NOT touched** despite the spec listing it: the descriptor set
+  layout lives in `uniform_buffer` here (the Chunk 8 deviation), so adding the sampler
+  binding needed no pipeline change — it just references the updated layout. Conversely
+  **`mesh.vert` WAS touched** (not in the spec list) to pass UV through to the fragment
+  shader, which is unavoidable for sampling.
+- **sRGB texture format** (`VK_FORMAT_R8G8B8A8_SRGB`): the diffuse map holds sRGB-encoded
+  colour, so the GPU converts samples to linear for the (linear) lighting maths, and the
+  sRGB swapchain converts back on output. Correct colour pipeline end to end.
+- **V-flip on UV load** (`1 - v`): caught during verification — the texture rendered
+  upside-down at first. OBJ uses V=0 at the image bottom (OpenGL), Vulkan samples V=0 at
+  the top, so V is flipped when read in `Mesh::fromObjFile`. Verified by screenshot: the
+  "NINTENDO SWITCH" logo reads right-side-up after the fix.
+- **Bilinear filtering, REPEAT wrapping, single mip level, no anisotropy.** Mipmaps and
+  trilinear filtering are documented as concepts but **not generated** — a single level
+  is fine for inspecting one model at close range and keeps the chunk focused.
+  Anisotropy is left off because the device feature was not enabled at device creation.
+- **Verified:** the Sketchfab Switch (OBJ+MTL+JPG) renders with its diffuse texture, lit
+  by Lambert (brighter toward the light), no visible seams; the untextured torus renders
+  white-lit via the fallback; zero validation errors; clean exit.
+
+______________________________________________________________________
+
 ## Open items / things deferred deliberately
 
 - **`Renderer` lives in its own file**, where the spec attributed command buffers

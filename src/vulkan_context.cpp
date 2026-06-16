@@ -438,10 +438,9 @@ void VulkanContext::createBuffer(VkDeviceSize size, VkBufferUsageFlags usage,
     vkBindBufferMemory(m_device, buffer, memory, 0);
 }
 
-void VulkanContext::copyBuffer(VkBuffer src, VkBuffer dst, VkDeviceSize size) const {
-    // Record a single copy command into a throwaway command buffer, submit it,
-    // and wait for it to finish. This is the transfer half of the staging
-    // pattern. See Glossary: STAGING_BUFFER, COMMAND_BUFFER
+VkCommandBuffer VulkanContext::beginSingleTimeCommands() const {
+    // Allocate a throwaway primary command buffer from the upload pool and start
+    // recording, flagged as used-once. See Glossary: COMMAND_BUFFER
     VkCommandBufferAllocateInfo allocInfo{};
     allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
     allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
@@ -454,11 +453,10 @@ void VulkanContext::copyBuffer(VkBuffer src, VkBuffer dst, VkDeviceSize size) co
     begin.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
     begin.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;  // used once then discarded
     vkBeginCommandBuffer(cmd, &begin);
+    return cmd;
+}
 
-    VkBufferCopy region{};
-    region.size = size;
-    vkCmdCopyBuffer(cmd, src, dst, 1, &region);
-
+void VulkanContext::endSingleTimeCommands(VkCommandBuffer cmd) const {
     vkEndCommandBuffer(cmd);
 
     // Submit and block until done — uploads are one-off setup work, not per-frame,
@@ -471,4 +469,107 @@ void VulkanContext::copyBuffer(VkBuffer src, VkBuffer dst, VkDeviceSize size) co
     vkQueueWaitIdle(m_graphicsQueue);
 
     vkFreeCommandBuffers(m_device, m_uploadPool, 1, &cmd);
+}
+
+void VulkanContext::copyBuffer(VkBuffer src, VkBuffer dst, VkDeviceSize size) const {
+    // Record a single copy command, submit it, and wait. The transfer half of the
+    // staging pattern. See Glossary: STAGING_BUFFER, COMMAND_BUFFER
+    VkCommandBuffer cmd = beginSingleTimeCommands();
+    VkBufferCopy region{};
+    region.size = size;
+    vkCmdCopyBuffer(cmd, src, dst, 1, &region);
+    endSingleTimeCommands(cmd);
+}
+
+void VulkanContext::createImage(uint32_t width, uint32_t height, VkFormat format,
+                                VkImageUsageFlags usage, VkImage& image, VkDeviceMemory& memory) const {
+    // Describe a 2D image: its size, format, tiling, and intended usage. OPTIMAL
+    // tiling lets the driver lay texels out for fast sampling (the layout is opaque,
+    // which is why we upload via a staging buffer + copy rather than writing direct).
+    // See Glossary: TEXTURE, IMAGE_LAYOUT_TRANSITION
+    VkImageCreateInfo imageInfo{};
+    imageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
+    imageInfo.imageType = VK_IMAGE_TYPE_2D;
+    imageInfo.extent = {width, height, 1};
+    imageInfo.mipLevels = 1;
+    imageInfo.arrayLayers = 1;
+    imageInfo.format = format;
+    imageInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
+    imageInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;  // contents are undefined until uploaded
+    imageInfo.usage = usage;
+    imageInfo.samples = VK_SAMPLE_COUNT_1_BIT;
+    imageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+    if (vkCreateImage(m_device, &imageInfo, nullptr, &image) != VK_SUCCESS) {
+        throw std::runtime_error("vkCreateImage failed");
+    }
+
+    // Allocate device-local memory matching the image and bind it.
+    // See Glossary: GPU_MEMORY, DEVICE_LOCAL_MEMORY
+    VkMemoryRequirements memReq{};
+    vkGetImageMemoryRequirements(m_device, image, &memReq);
+    VkMemoryAllocateInfo alloc{};
+    alloc.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+    alloc.allocationSize = memReq.size;
+    alloc.memoryTypeIndex = findMemoryType(memReq.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+    if (vkAllocateMemory(m_device, &alloc, nullptr, &memory) != VK_SUCCESS) {
+        throw std::runtime_error("vkAllocateMemory (image) failed");
+    }
+    vkBindImageMemory(m_device, image, memory, 0);
+}
+
+void VulkanContext::transitionImageLayout(VkImage image, VkImageLayout oldLayout,
+                                          VkImageLayout newLayout) const {
+    // An image memory barrier both moves the image to a new layout and orders memory
+    // access around it. The source/destination pipeline stages + access masks tell
+    // the GPU which work must finish before, and wait until after, the transition.
+    // See Glossary: IMAGE_LAYOUT_TRANSITION, PIPELINE_BARRIER
+    VkCommandBuffer cmd = beginSingleTimeCommands();
+
+    VkImageMemoryBarrier barrier{};
+    barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+    barrier.oldLayout = oldLayout;
+    barrier.newLayout = newLayout;
+    barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+    barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+    barrier.image = image;
+    barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+    barrier.subresourceRange.levelCount = 1;
+    barrier.subresourceRange.layerCount = 1;
+
+    VkPipelineStageFlags srcStage = 0;
+    VkPipelineStageFlags dstStage = 0;
+    if (oldLayout == VK_IMAGE_LAYOUT_UNDEFINED &&
+        newLayout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL) {
+        // Before the copy: nothing to wait on, make the image writable by transfer.
+        barrier.srcAccessMask = 0;
+        barrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+        srcStage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+        dstStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
+    } else if (oldLayout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL &&
+               newLayout == VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL) {
+        // After the copy: the transfer write must finish before the fragment shader
+        // reads the texture.
+        barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+        barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+        srcStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
+        dstStage = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+    } else {
+        throw std::runtime_error("unsupported image layout transition");
+    }
+
+    vkCmdPipelineBarrier(cmd, srcStage, dstStage, 0, 0, nullptr, 0, nullptr, 1, &barrier);
+    endSingleTimeCommands(cmd);
+}
+
+void VulkanContext::copyBufferToImage(VkBuffer buffer, VkImage image,
+                                      uint32_t width, uint32_t height) const {
+    // Copy the whole staging buffer into the image's single mip level. bufferRowLength
+    // = 0 means the rows are tightly packed (no padding). See Glossary: STAGING_BUFFER
+    VkCommandBuffer cmd = beginSingleTimeCommands();
+    VkBufferImageCopy region{};
+    region.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+    region.imageSubresource.layerCount = 1;
+    region.imageExtent = {width, height, 1};
+    vkCmdCopyBufferToImage(cmd, buffer, image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
+    endSingleTimeCommands(cmd);
 }

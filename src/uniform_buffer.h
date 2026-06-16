@@ -51,9 +51,12 @@ struct UniformBufferObject {
 class UniformBuffers {
 public:
     // Allocate one buffer + descriptor set for each of `frameCount` frames in
-    // flight. The buffers are host-visible and stay mapped for the object's whole
-    // life, so updates are a plain memcpy. Throws std::runtime_error on failure.
-    UniformBuffers(VulkanContext& context, uint32_t frameCount);
+    // flight. Each set binds the per-frame uniform buffer (binding 0) and the shared
+    // diffuse texture (binding 1, via textureView + textureSampler). The buffers are
+    // host-visible and stay mapped for the object's whole life, so updates are a
+    // plain memcpy. Throws std::runtime_error on failure.
+    UniformBuffers(VulkanContext& context, uint32_t frameCount,
+                   VkImageView textureView, VkSampler textureSampler);
     ~UniformBuffers();
 
     UniformBuffers(const UniformBuffers&) = delete;
@@ -71,7 +74,7 @@ private:
     void createDescriptorSetLayout();
     void createBuffers(uint32_t frameCount);
     void createDescriptorPool(uint32_t frameCount);
-    void createDescriptorSets(uint32_t frameCount);
+    void createDescriptorSets(uint32_t frameCount, VkImageView textureView, VkSampler textureSampler);
 
     VulkanContext& m_context;
 

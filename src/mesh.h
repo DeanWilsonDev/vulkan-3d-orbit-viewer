@@ -42,11 +42,42 @@ struct Vertex {
     }
 };
 
+// Texture — a 2D image in GPU memory plus the view and sampler needed to read it in
+// a shader. Loads pixels from an image file via stb_image and uploads them with the
+// same staging pattern Mesh uses for geometry. An empty path yields a 1×1 white
+// fallback, so a model with no diffuse map still has a valid texture to bind.
+// See Glossary: TEXTURE, SAMPLER, COMBINED_IMAGE_SAMPLER
+class Texture {
+public:
+    // Load from `path`, or build a 1×1 white fallback if `path` is empty. Throws
+    // std::runtime_error if a non-empty path fails to load. See Glossary: TEXTURE_SAMPLING
+    Texture(VulkanContext& context, const std::string& path);
+    ~Texture();
+
+    Texture(const Texture&) = delete;
+    Texture& operator=(const Texture&) = delete;
+
+    VkImageView view() const { return m_view; }
+    VkSampler   sampler() const { return m_sampler; }
+
+private:
+    void uploadPixels(const unsigned char* pixels, uint32_t width, uint32_t height);
+    void createSampler();
+
+    VulkanContext& m_context;
+    VkImage        m_image = VK_NULL_HANDLE;
+    VkDeviceMemory m_memory = VK_NULL_HANDLE;
+    VkImageView    m_view = VK_NULL_HANDLE;
+    VkSampler      m_sampler = VK_NULL_HANDLE;
+};
+
 class Mesh {
 public:
     // Upload the given geometry to the GPU via the staging-buffer pattern.
+    // diffuseTexturePath is the model's diffuse map (empty for none); it is carried
+    // here so fromObjFile can return a fully-formed prvalue (Mesh is non-copyable).
     Mesh(VulkanContext& context, const std::vector<Vertex>& vertices,
-         const std::vector<uint32_t>& indices);
+         const std::vector<uint32_t>& indices, const std::string& diffuseTexturePath = "");
     ~Mesh();
 
     Mesh(const Mesh&) = delete;
@@ -74,6 +105,11 @@ public:
     glm::vec3 boundsCenter() const { return 0.5f * (m_boundsMin + m_boundsMax); }
     float     boundsRadius() const { return 0.5f * glm::length(m_boundsMax - m_boundsMin); }
 
+    // The diffuse texture path declared by the OBJ's material (MTL `map_Kd`),
+    // resolved relative to the OBJ's own directory. Empty if the model has no
+    // material or no diffuse map. See Glossary: MTL_FORMAT, DIFFUSE_MAP
+    const std::string& diffuseTexturePath() const { return m_diffuseTexturePath; }
+
 private:
     // Create a device-local buffer of `usage` and fill it from `data` through a
     // temporary host-visible staging buffer. See Glossary: STAGING_BUFFER
@@ -91,4 +127,7 @@ private:
     // Object-space bounding box, computed from the vertices at construction.
     glm::vec3 m_boundsMin{0.0f};
     glm::vec3 m_boundsMax{0.0f};
+
+    // Resolved diffuse texture path from the MTL, or empty. Set by fromObjFile.
+    std::string m_diffuseTexturePath;
 };

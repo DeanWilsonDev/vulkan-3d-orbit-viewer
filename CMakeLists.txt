@@ -66,9 +66,22 @@ FetchContent_Declare(
     GIT_SHALLOW TRUE
 )
 
+# --- stb_image ---------------------------------------------------------------
+# A single-header image loader (used from Chunk 13 to read the diffuse texture).
+# The stb repo has no CMake target — it is just headers — so FetchContent only
+# downloads it and we add its directory to the include path below.
+# See Glossary: TEXTURE
+FetchContent_Declare(
+    stb
+    GIT_REPOSITORY https://github.com/nothings/stb.git
+    GIT_TAG master   # stb publishes no release tags; master is the canonical source
+    GIT_SHALLOW TRUE
+)
+
 # Download + configure the dependencies. SDL3 and tinyobjloader are built from
-# source; glm is an interface (header-only) target with nothing to compile.
-FetchContent_MakeAvailable(SDL3 glm tinyobjloader)
+# source; glm is an interface (header-only) target with nothing to compile; stb is
+# header-only and just populated (no target).
+FetchContent_MakeAvailable(SDL3 glm tinyobjloader stb)
 
 # --- The executable ----------------------------------------------------------
 # main.cpp is the narrative entry point; each other .cpp is a self-contained
@@ -86,8 +99,9 @@ add_executable(vulkan-orbit-viewer
     src/camera.cpp
 )
 
-# Let the sources include each other by bare filename ("sdl_context.h").
-target_include_directories(vulkan-orbit-viewer PRIVATE src)
+# Let the sources include each other by bare filename ("sdl_context.h"), and make
+# the header-only stb_image.h findable as <stb_image.h>.
+target_include_directories(vulkan-orbit-viewer PRIVATE src ${stb_SOURCE_DIR})
 
 # SDL3::SDL3 pulls in the correct platform libraries transparently; glm::glm is
 # a header-only interface target that just adds GLM's include path;

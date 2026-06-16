@@ -2322,10 +2322,12 @@ interpolated coordinate. Without per-vertex UVs there is no correspondence betwe
 the model's surface and an image.
 
 **How it appears in this project**
-The `Vertex::uv` field is parsed from the OBJ's `vt` records and carried through to
-the GPU, but never sampled — textures are out of scope. It is kept so the vertex
-format and pipeline are complete and stable. See Glossary: UV_MAPPING,
-VERTEX_ATTRIBUTES
+`Vertex::uv` is parsed from the OBJ's `vt` records (Chunk 9) and, as of Chunk 13,
+actually used: the vertex shader passes it to the fragment shader, which samples the
+diffuse texture at it. One practical wrinkle handled in `Mesh::fromObjFile` — OBJ puts
+V=0 at the bottom of the image but Vulkan samples V=0 at the top, so V is flipped
+(`1 - v`) on load, or the texture renders upside-down. See Glossary: UV_MAPPING,
+TEXTURE_SAMPLING, VERTEX_ATTRIBUTES
 
 **Further reading**
 - [UV mapping (Wikipedia)](https://en.wikipedia.org/wiki/UV_mapping)
@@ -3029,3 +3031,438 @@ RESOURCE_LIFETIME, LOGICAL_DEVICE
 **Further reading**
 - [Vulkan Spec — Object lifetime](https://docs.vulkan.org/spec/latest/chapters/fundamentals.html#fundamentals-objectmodel-lifetime)
 - [Vulkan Tutorial — Cleanup](https://vulkan-tutorial.com/Drawing_a_triangle/Setup/Base_code)
+
+______________________________________________________________________
+
+## Chunk 13 — Diffuse Texture Support
+
+## TEXTURE
+
+**What it is**
+An image used as a source of surface data in rendering — most commonly the colour
+painted across a surface. It is stored on the GPU as an image resource and read in a
+shader at coordinates supplied per fragment.
+
+**Why it matters**
+Textures are how detail is added cheaply: instead of millions of coloured vertices, a
+single image is stretched over simple geometry. They are the foundation of almost all
+surface appearance in real-time graphics, from colour to normals to roughness.
+
+**How it appears in this project**
+The `Texture` class (`src/mesh.h` / `.cpp`) loads an image with stb_image, uploads it
+to a device-local `VkImage`, and exposes a view + sampler. The fragment shader reads it
+as the model's diffuse colour. See Glossary: TEXEL, SAMPLER, DIFFUSE_MAP
+
+**Further reading**
+- [Texture mapping (Wikipedia)](https://en.wikipedia.org/wiki/Texture_mapping)
+- [Vulkan Tutorial — Images](https://vulkan-tutorial.com/Texture_mapping/Images)
+
+______________________________________________________________________
+
+## TEXEL
+
+**What it is**
+A single addressable element of a texture — a "texture pixel". It is distinct from a
+*fragment* (a screen pixel): one texel may cover many fragments when a texture is
+magnified, or many texels may collapse into one fragment when minified.
+
+**Why it matters**
+The texel-to-fragment ratio is the whole reason filtering and mipmaps exist: when it is
+not 1:1, the GPU must decide how to combine texels into a fragment's colour. Keeping the
+texel/pixel distinction clear is key to understanding aliasing and filtering.
+
+**How it appears in this project**
+`Texture::uploadPixels` copies RGBA texels (4 bytes each) into the image via a staging
+buffer; the sampler later blends texels when the texture is scaled on screen.
+See Glossary: TEXTURE, FRAGMENT, TEXTURE_FILTERING
+
+**Further reading**
+- [Texel (Wikipedia)](https://en.wikipedia.org/wiki/Texel_(graphics))
+- [Texture filtering (Wikipedia)](https://en.wikipedia.org/wiki/Texture_filtering)
+
+______________________________________________________________________
+
+## TEXTURE_SAMPLING
+
+**What it is**
+The act of reading a colour from a texture at a given UV coordinate. Because the
+coordinate rarely lands exactly on one texel centre, sampling involves choosing or
+blending nearby texels according to the sampler's filtering rules.
+
+**Why it matters**
+It is the operation that turns "an image plus coordinates" into the actual colour a
+fragment shows. How sampling is configured (filtering, wrapping, mip selection)
+directly governs sharpness, smoothness, and aliasing.
+
+**How it appears in this project**
+`texture(diffuseTex, inUV)` in `mesh.frag` samples the diffuse map at the interpolated
+UV. The vertex shader passes UVs through; the sampler (below) decides the filtering.
+See Glossary: SAMPLER, UV_COORDINATES, TEXTURE_FILTERING
+
+**Further reading**
+- [Texture filtering (Wikipedia)](https://en.wikipedia.org/wiki/Texture_filtering)
+- [Vulkan Tutorial — Combined image sampler](https://vulkan-tutorial.com/Texture_mapping/Combined_image_sampler)
+
+______________________________________________________________________
+
+## SAMPLER
+
+**What it is**
+A Vulkan object that describes *how* a texture is read — its filtering (how texels are
+blended), addressing/wrapping (what happens outside [0,1]), mip selection, and
+anisotropy — independently of the image data itself.
+
+**Why it matters**
+Separating the sampler from the image means one image can be read in different ways, and
+one sampler reused across many images. It is where the quality/performance knobs of
+texturing live. In a shader the sampler and image together form a `sampler2D`.
+
+**How it appears in this project**
+`Texture::createSampler` builds a linear-filtering, repeat-wrapping sampler.
+It is paired with the image view into a combined image sampler descriptor.
+See Glossary: TEXTURE_FILTERING, TEXTURE_WRAPPING, COMBINED_IMAGE_SAMPLER
+
+**Further reading**
+- [Vulkan Spec — Samplers](https://docs.vulkan.org/spec/latest/chapters/samplers.html)
+- [Vulkan Tutorial — Image view and sampler](https://vulkan-tutorial.com/Texture_mapping/Image_view_and_sampler)
+
+______________________________________________________________________
+
+## TEXTURE_FILTERING
+
+**What it is**
+The rule for producing a colour when a sampled coordinate does not align with a single
+texel: pick the nearest texel, or blend several. The main modes are nearest-neighbour,
+bilinear, and trilinear.
+
+**Why it matters**
+It is the primary control over how textures look under scaling: nearest is sharp and
+blocky, bilinear is smooth, trilinear adds smooth transitions between mip levels. The
+choice trades a little performance for a lot of visual quality.
+
+**How it appears in this project**
+The sampler uses `VK_FILTER_LINEAR` for both magnification and minification (bilinear).
+See Glossary: NEAREST_NEIGHBOUR_FILTERING, BILINEAR_FILTERING, TRILINEAR_FILTERING
+
+**Further reading**
+- [Texture filtering (Wikipedia)](https://en.wikipedia.org/wiki/Texture_filtering)
+- [LearnOpenGL — Textures (filtering)](https://learnopengl.com/Getting-started/Textures)
+
+______________________________________________________________________
+
+## NEAREST_NEIGHBOUR_FILTERING
+
+**What it is**
+The simplest filtering: a sample returns the colour of the single nearest texel, with no
+blending. Magnified textures look blocky; each texel becomes a hard-edged rectangle.
+
+**Why it matters**
+It is the cheapest filter and the right choice for pixel art, UI sprites, or data
+textures where exact texel values must be preserved. Contrasting it with bilinear makes
+clear what "blending" buys and costs. (Documented for contrast; not used here.)
+
+**How it appears in this project**
+Not used — the sampler uses linear filtering. Documented as the baseline alternative.
+See Glossary: TEXTURE_FILTERING, BILINEAR_FILTERING
+
+**Further reading**
+- [Nearest-neighbour interpolation (Wikipedia)](https://en.wikipedia.org/wiki/Nearest-neighbor_interpolation)
+- [Texture filtering (Wikipedia)](https://en.wikipedia.org/wiki/Texture_filtering)
+
+______________________________________________________________________
+
+## BILINEAR_FILTERING
+
+**What it is**
+Filtering that blends the four texels surrounding a sample point, weighted by distance,
+giving a smooth result within a single mip level. The "bi" is the two axes interpolated.
+
+**Why it matters**
+It is the standard, cheap way to make textures look smooth rather than blocky when
+scaled, and the default expectation for most 3D surfaces. It does not, on its own,
+address minification aliasing at distance — that is what mipmaps and trilinear add.
+
+**How it appears in this project**
+The sampler's `VK_FILTER_LINEAR` for mag and min filters is bilinear within the single
+mip level the texture has. See Glossary: TEXTURE_FILTERING, TRILINEAR_FILTERING, MIPMAPS
+
+**Further reading**
+- [Bilinear filtering (Wikipedia)](https://en.wikipedia.org/wiki/Bilinear_filtering)
+- [LearnOpenGL — Textures](https://learnopengl.com/Getting-started/Textures)
+
+______________________________________________________________________
+
+## TRILINEAR_FILTERING
+
+**What it is**
+Bilinear filtering done on the two nearest mip levels, then blended between them by the
+fractional mip level. The "tri" adds interpolation across mip levels to bilinear's two
+in-level axes.
+
+**Why it matters**
+It removes the visible "snap" where a surface jumps from one mip level to the next as it
+recedes, giving smooth detail falloff with distance. It is the usual quality setting once
+mipmaps exist. (Documented for context; this project has a single mip level.)
+
+**How it appears in this project**
+Not active — there is only one mip level, so there is nothing to interpolate between. The
+sampler's `mipmapMode` is set to linear but `maxLod` is 0. See Glossary: MIPMAPS,
+BILINEAR_FILTERING
+
+**Further reading**
+- [Trilinear filtering (Wikipedia)](https://en.wikipedia.org/wiki/Trilinear_filtering)
+- [Mipmap (Wikipedia)](https://en.wikipedia.org/wiki/Mipmap)
+
+______________________________________________________________________
+
+## MIPMAPS
+
+**What it is**
+A precomputed chain of progressively half-sized versions of a texture (full size, ½, ¼,
+…), each a filtered downscale of the previous. The GPU picks the level whose texel
+density best matches the on-screen size.
+
+**Why it matters**
+Sampling a full-resolution texture on a surface that covers few pixels causes shimmering
+aliasing, because each fragment skips over many texels. Mipmaps fix this by reading from
+an already-downsized level, and they also improve cache behaviour. They are essential for
+textures viewed at a distance.
+
+**How it appears in this project**
+Not generated — the texture has a single mip level, which is sufficient for inspecting one
+model at close range, and keeps the chunk focused. Documented as the standard next step
+(see `docs/DECISIONS.md`). See Glossary: TRILINEAR_FILTERING, TEXTURE_FILTERING
+
+**Further reading**
+- [Mipmap (Wikipedia)](https://en.wikipedia.org/wiki/Mipmap)
+- [Vulkan Tutorial — Generating mipmaps](https://vulkan-tutorial.com/Generating_Mipmaps)
+
+______________________________________________________________________
+
+## TEXTURE_WRAPPING
+
+**What it is**
+The rule for what a sampler returns when a UV coordinate falls outside the [0,1] range.
+Common modes: repeat (tile the texture), clamp-to-edge (stretch the edge texel), and
+mirrored repeat (tile with alternating flips).
+
+**Why it matters**
+It determines how tiling textures (brick, grass) behave and prevents artefacts at the
+edges of non-tiling textures (clamp-to-edge avoids a sliver of the opposite edge bleeding
+in). Choosing the right mode per texture avoids visible seams.
+
+**How it appears in this project**
+The sampler uses `VK_SAMPLER_ADDRESS_MODE_REPEAT` on all axes. The loaded model's UVs stay
+within [0,1], so the mode is rarely exercised, but repeat is the sensible default.
+See Glossary: SAMPLER, UV_COORDINATES
+
+**Further reading**
+- [Vulkan Spec — Sampler address modes](https://docs.vulkan.org/spec/latest/chapters/samplers.html#VkSamplerAddressMode)
+- [LearnOpenGL — Textures (wrapping)](https://learnopengl.com/Getting-started/Textures)
+
+______________________________________________________________________
+
+## COMBINED_IMAGE_SAMPLER
+
+**What it is**
+A single Vulkan descriptor that bundles an image view together with a sampler, so a
+shader can access both through one binding (a `sampler2D` in GLSL). The alternative is to
+bind images and samplers as separate descriptors.
+
+**Why it matters**
+Most of the time a texture is read with one specific sampler, so pairing them in one
+descriptor is convenient and maps directly to how GLSL's `sampler2D` works. It is the
+standard way to expose a texture to a shader.
+
+**How it appears in this project**
+Descriptor binding 1 (`uniform_buffer.cpp`) is a `VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER`
+written with the `Texture`'s view + sampler; the fragment shader reads it as
+`sampler2D diffuseTex`. See Glossary: DESCRIPTOR, SAMPLER, TEXTURE
+
+**Further reading**
+- [Vulkan Spec — Descriptor types](https://docs.vulkan.org/spec/latest/chapters/descriptorsets.html#descriptorsets-combinedimagesampler)
+- [Vulkan Tutorial — Combined image sampler](https://vulkan-tutorial.com/Texture_mapping/Combined_image_sampler)
+
+______________________________________________________________________
+
+## MTL_FORMAT
+
+**What it is**
+The Wavefront Material Template Library format — the companion to OBJ that describes
+materials: colours, and crucially texture map filenames (e.g. `map_Kd` for the diffuse
+map). An OBJ references one with `mtllib`, and faces select a material with `usemtl`.
+
+**Why it matters**
+OBJ stores only geometry; the MTL is where appearance lives. To texture an OBJ model you
+must parse its MTL to find which image to load. Its paths are relative to the model, a
+common source of "texture not found" bugs.
+
+**How it appears in this project**
+tinyobjloader parses the `mtllib` automatically; `Mesh::fromObjFile` reads the first
+material's `diffuse_texname` (`map_Kd`) and resolves it relative to the OBJ's directory.
+See Glossary: OBJ_FORMAT, DIFFUSE_MAP
+
+**Further reading**
+- [Material Template Library (Wikipedia)](https://en.wikipedia.org/wiki/Wavefront_.obj_file#Material_template_library)
+- [tinyobjloader](https://github.com/tinyobjloader/tinyobjloader)
+
+______________________________________________________________________
+
+## DIFFUSE_MAP
+
+**What it is**
+A texture supplying the surface's base colour (albedo) — the "what colour is it" map, as
+opposed to maps describing how light interacts with the surface (normal, roughness,
+metallic). Also called an albedo or base-colour map.
+
+**Why it matters**
+It is the most fundamental and visually obvious texture, and often the only one a simple
+renderer uses. Distinguishing it from the other map types clarifies that "texture" is not
+one thing but a family of surface-data images.
+
+**How it appears in this project**
+The only map type implemented: loaded from the MTL's `map_Kd`, sampled in `mesh.frag`, and
+multiplied by the Lambert diffuse light. See Glossary: NORMAL_MAP, ROUGHNESS_MAP,
+LAMBERT_DIFFUSE
+
+**Further reading**
+- [Albedo (Wikipedia)](https://en.wikipedia.org/wiki/Albedo)
+- [LearnOpenGL — Textures](https://learnopengl.com/Getting-started/Textures)
+
+______________________________________________________________________
+
+## NORMAL_MAP
+
+**What it is**
+A texture that stores per-texel surface normals (encoded as RGB), letting a flat triangle
+fake fine bumps and detail by perturbing the normal used for lighting. (Documented for
+context; not implemented here.)
+
+**Why it matters**
+It is how modern games make low-poly surfaces look highly detailed — the silhouette stays
+simple but the lighting reacts as if the surface were intricately modelled. It is usually
+the second texture added after diffuse.
+
+**How it appears in this project**
+Not implemented — out of scope for this chunk (diffuse only). Documented so the diffuse
+map's role is understood among the map family. See Glossary: DIFFUSE_MAP, SURFACE_NORMAL
+
+**Further reading**
+- [Normal mapping (Wikipedia)](https://en.wikipedia.org/wiki/Normal_mapping)
+- [LearnOpenGL — Normal mapping](https://learnopengl.com/Advanced-Lighting/Normal-Mapping)
+
+______________________________________________________________________
+
+## ROUGHNESS_MAP
+
+**What it is**
+A texture (typically greyscale) controlling how rough or smooth a surface is per texel —
+rough surfaces scatter light into broad dull highlights, smooth ones give tight sharp
+ones. A core input of physically based rendering. (Documented for context; not implemented.)
+
+**Why it matters**
+It lets one surface vary between matte and glossy across its area (worn vs polished metal,
+dry vs wet patches), which fixed material parameters cannot. It is central to the PBR
+material model.
+
+**How it appears in this project**
+Not implemented — this project uses simple Lambert diffuse with no specular, so roughness
+has no role yet. Documented for orientation. See Glossary: PBR, METALLIC_MAP, SPECULAR_LIGHT
+
+**Further reading**
+- [Physically based rendering (Wikipedia)](https://en.wikipedia.org/wiki/Physically_based_rendering)
+- [LearnOpenGL — PBR theory](https://learnopengl.com/PBR/Theory)
+
+______________________________________________________________________
+
+## METALLIC_MAP
+
+**What it is**
+A texture (often greyscale) marking which texels are metal vs non-metal (dielectric). In
+PBR this flag changes how reflection and base colour behave — metals tint their
+reflections and have no diffuse term. (Documented for context; not implemented.)
+
+**Why it matters**
+The metal/non-metal distinction is fundamental to physically based materials, letting a
+single surface mix metal and non-metal regions (a painted, partly-scratched panel). It
+pairs with the roughness map in the common "metallic-roughness" PBR workflow.
+
+**How it appears in this project**
+Not implemented — outside this project's simple lighting model. Documented for context.
+See Glossary: PBR, ROUGHNESS_MAP
+
+**Further reading**
+- [Physically based rendering (Wikipedia)](https://en.wikipedia.org/wiki/Physically_based_rendering)
+- [LearnOpenGL — PBR theory](https://learnopengl.com/PBR/Theory)
+
+______________________________________________________________________
+
+## AMBIENT_OCCLUSION_MAP
+
+**What it is**
+A texture (greyscale) that bakes in how exposed each point is to ambient light — creases
+and contact points are darker because surrounding geometry blocks indirect light. It
+modulates the ambient term. (Documented for context; not implemented.)
+
+**Why it matters**
+It cheaply adds the soft contact shadows that make surfaces feel grounded and detailed,
+approximating an expensive global-illumination effect with a precomputed image. It is a
+common companion to the other PBR maps.
+
+**How it appears in this project**
+Not implemented — the ambient term here is a flat constant. Documented as one more map type
+and a pointer to what the constant ambient could become. See Glossary: AMBIENT_LIGHT,
+GLOBAL_ILLUMINATION
+
+**Further reading**
+- [Ambient occlusion (Wikipedia)](https://en.wikipedia.org/wiki/Ambient_occlusion)
+- [LearnOpenGL — SSAO](https://learnopengl.com/Advanced-Lighting/SSAO)
+
+______________________________________________________________________
+
+## PBR
+
+**What it is**
+Physically based rendering: a family of shading models that approximate the actual physics
+of light — energy conservation, microfacet surfaces, the metal/dielectric distinction — so
+materials look consistent under any lighting. Driven by maps like base-colour, roughness,
+metallic, and normal. (Documented for orientation; this project uses a simpler model.)
+
+**Why it matters**
+It is the modern standard for realistic real-time materials and the reason the various map
+types exist as a coherent set. Knowing the project's Lambert+ambient shading is a
+deliberately simpler predecessor frames where a renderer would go next.
+
+**How it appears in this project**
+Not implemented — the project uses ambient + Lambert diffuse, no specular or PBR maps.
+Documented to orient the simpler model within the bigger picture. See Glossary:
+LIGHTING_MODEL, ROUGHNESS_MAP, METALLIC_MAP
+
+**Further reading**
+- [Physically based rendering (Wikipedia)](https://en.wikipedia.org/wiki/Physically_based_rendering)
+- [LearnOpenGL — PBR theory](https://learnopengl.com/PBR/Theory)
+
+______________________________________________________________________
+
+## SRGB_COLOUR_SPACE
+
+**What it is**
+A non-linear colour encoding that allocates more precision to darker tones, matching how
+displays and human vision work. Most colour images (including diffuse textures and the
+final framebuffer) are stored in sRGB, while lighting maths must be done in *linear* space.
+
+**Why it matters**
+Lighting equations (adding, multiplying colours) are only physically correct in linear
+space. If sRGB-encoded texture values are fed straight into them, the result is subtly
+wrong — too dark or washed out. Correct rendering converts sRGB→linear on texture read and
+linear→sRGB on framebuffer write.
+
+**How it appears in this project**
+The texture uses `VK_FORMAT_R8G8B8A8_SRGB`, so the GPU converts each sample to linear
+automatically; the swapchain is an sRGB format, so the shader's linear output is converted
+back to sRGB on store. Lighting in between is linear. See Glossary: TEXTURE, COLOUR_SPACE,
+COLOUR_FORMAT
+
+**Further reading**
+- [sRGB (Wikipedia)](https://en.wikipedia.org/wiki/SRGB)
+- [Gamma correction (LearnOpenGL)](https://learnopengl.com/Advanced-Lighting/Gamma-Correction)
