@@ -1,0 +1,11 @@
+{
+	"InstallScripts" : 
+	[
+		"/Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/cmake_install.cmake",
+		"/Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/sdl3-build/cmake_install.cmake",
+		"/Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/glm-build/cmake_install.cmake",
+		"/Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/glm-build/glm/cmake_install.cmake",
+		"/Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/tinyobjloader-build/cmake_install.cmake"
+	],
+	"Parallel" : false
+}

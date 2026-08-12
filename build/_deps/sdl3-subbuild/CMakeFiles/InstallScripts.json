@@ -1,0 +1,7 @@
+{
+	"InstallScripts" : 
+	[
+		"/Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/sdl3-subbuild/cmake_install.cmake"
+	],
+	"Parallel" : false
+}
