@@ -300,6 +300,30 @@ src/sdl-context.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/vulkan-orbit-viewer.dir/build.make CMakeFiles/vulkan-orbit-viewer.dir/src/sdl-context.cpp.s
 .PHONY : src/sdl-context.cpp.s
 
+src/vulkan-context.o: src/vulkan-context.cpp.o
+.PHONY : src/vulkan-context.o
+
+# target to build an object file
+src/vulkan-context.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/vulkan-orbit-viewer.dir/build.make CMakeFiles/vulkan-orbit-viewer.dir/src/vulkan-context.cpp.o
+.PHONY : src/vulkan-context.cpp.o
+
+src/vulkan-context.i: src/vulkan-context.cpp.i
+.PHONY : src/vulkan-context.i
+
+# target to preprocess a source file
+src/vulkan-context.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/vulkan-orbit-viewer.dir/build.make CMakeFiles/vulkan-orbit-viewer.dir/src/vulkan-context.cpp.i
+.PHONY : src/vulkan-context.cpp.i
+
+src/vulkan-context.s: src/vulkan-context.cpp.s
+.PHONY : src/vulkan-context.s
+
+# target to generate assembly for a file
+src/vulkan-context.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/vulkan-orbit-viewer.dir/build.make CMakeFiles/vulkan-orbit-viewer.dir/src/vulkan-context.cpp.s
+.PHONY : src/vulkan-context.cpp.s
+
 # Help Target
 help:
 	@echo "The following are some of the valid targets for this Makefile:"
@@ -325,6 +349,9 @@ help:
 	@echo "... src/sdl-context.o"
 	@echo "... src/sdl-context.i"
 	@echo "... src/sdl-context.s"
+	@echo "... src/vulkan-context.o"
+	@echo "... src/vulkan-context.i"
+	@echo "... src/vulkan-context.s"
 .PHONY : help
 
 

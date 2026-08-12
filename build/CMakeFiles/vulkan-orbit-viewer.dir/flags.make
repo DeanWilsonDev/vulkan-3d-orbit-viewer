@@ -4,7 +4,7 @@
 # compile CXX with /usr/bin/c++
 CXX_DEFINES = 
 
-CXX_INCLUDES = -I/Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/src -I/Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/stb-src -I/Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/sdl3-build/include-revision -I/Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/sdl3-src/include -I/Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/glm-src -I/Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/tinyobjloader-src
+CXX_INCLUDES = -I/Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/src -I/Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/stb-src -I/Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/sdl3-build/include-revision -I/Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/sdl3-src/include -I/Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/glm-src -I/Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/tinyobjloader-src -isystem /Users/deanwilson/VulkanSDK/1.4.350.0/macOS/include
 
 CXX_FLAGSarm64 = -std=gnu++26 -arch arm64
 

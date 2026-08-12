@@ -713,16 +713,16 @@ TINYOBJLOADER_USE_DOUBLE:BOOL=OFF
 TINYOBJLOADER_WITH_PYTHON:BOOL=OFF
 
 //Path to a program.
-Vulkan_GLSLANG_VALIDATOR_EXECUTABLE:FILEPATH=/usr/local/bin/glslangValidator
+Vulkan_GLSLANG_VALIDATOR_EXECUTABLE:FILEPATH=/Users/deanwilson/VulkanSDK/1.4.350.0/macOS/bin/glslangValidator
 
 //Path to a program.
-Vulkan_GLSLC_EXECUTABLE:FILEPATH=/usr/local/bin/glslc
+Vulkan_GLSLC_EXECUTABLE:FILEPATH=/Users/deanwilson/VulkanSDK/1.4.350.0/macOS/bin/glslc
 
 //Path to a file.
-Vulkan_INCLUDE_DIR:PATH=/usr/local/include
+Vulkan_INCLUDE_DIR:PATH=/Users/deanwilson/VulkanSDK/1.4.350.0/macOS/include
 
 //Path to a library.
-Vulkan_LIBRARY:FILEPATH=/usr/local/lib/libvulkan.dylib
+Vulkan_LIBRARY:FILEPATH=/Users/deanwilson/VulkanSDK/1.4.350.0/macOS/lib/libvulkan.dylib
 
 //Value Computed by CMake
 glm_BINARY_DIR:STATIC=/Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/glm-build
@@ -963,7 +963,7 @@ COMPILER_SUPPORTS_WNO_ERROR_DEPRECATED_DECLARATIONS:INTERNAL=1
 //Details about finding PkgConfig
 FIND_PACKAGE_MESSAGE_DETAILS_PkgConfig:INTERNAL=[/opt/homebrew/bin/pkg-config][v3.0.5()]
 //Details about finding Vulkan
-FIND_PACKAGE_MESSAGE_DETAILS_Vulkan:INTERNAL=[/usr/local/lib/libvulkan.dylib][/usr/local/include][found components: glslc glslangValidator ][v1.4.350()]
+FIND_PACKAGE_MESSAGE_DETAILS_Vulkan:INTERNAL=[/Users/deanwilson/VulkanSDK/1.4.350.0/macOS/lib/libvulkan.dylib][/Users/deanwilson/VulkanSDK/1.4.350.0/macOS/include][found components: glslc glslangValidator ][v1.4.350()]
 //ADVANCED property for variable: GIT_EXECUTABLE
 GIT_EXECUTABLE-ADVANCED:INTERNAL=1
 //Have include alloca.h

@@ -7,6 +7,8 @@
 #include <stdexcept>
 #include <string>
 
+namespace VulkanOrbitViewer {
+
 SdlContext::SdlContext(const std::string &title, int width, int height) {
 
   if (!SDL_Init(SDL_INIT_VIDEO)) {
@@ -46,3 +48,4 @@ bool SdlContext::processEvents() {
 
   return true;
 }
+} // namespace VulkanOrbitViewer

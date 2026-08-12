@@ -1,0 +1,6 @@
+CompileFlags:
+  CompilationDatabase: build/
+  Add:
+    - "-I/usr/local/include/vulkan/vulkan.h"
+  Remove:
+    - "-arch"

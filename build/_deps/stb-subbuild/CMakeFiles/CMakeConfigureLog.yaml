@@ -45,6 +45,7 @@ events:
       - "/pkg/env/global/bin/"
       - "/Library/Apple/usr/bin/"
       - "/Users/deanwilson/Library/Application Support/JetBrains/Toolbox/scripts/"
+      - "/Users/deanwilson/VulkanSDK/1.4.350.0/macOS/bin/"
     searched_directories:
       - "/Users/deanwilson/.local/bin/uname"
       - "/Users/deanwilson/.yarn/bin/uname"
@@ -76,11 +77,11 @@ events:
         - "/Users/deanwilson/.jenv/bin"
         - "/opt/homebrew/bin"
         - "/opt/homebrew/sbin"
-        - "/Users/deanwilson/.local/share/nvim/mason/bin"
         - "/Users/deanwilson/.local/bin"
         - "/Users/deanwilson/.yarn/bin"
         - "/Users/deanwilson/.config/yarn/global/node_modules/.bin"
         - "/Users/deanwilson/.nvm/versions/node/v22.22.2/bin"
+        - "/Users/deanwilson/.local/share/nvim/mason/bin"
         - "/Applications/Postgres.app/Contents/Versions/14/bin"
         - "/opt/homebrew/opt/openjdk@17"
         - "/Users/deanwilson/.nodenv/shims"
@@ -99,6 +100,7 @@ events:
         - "/pkg/env/global/bin"
         - "/Library/Apple/usr/bin"
         - "/Users/deanwilson/Library/Application Support/JetBrains/Toolbox/scripts"
+        - "/Users/deanwilson/VulkanSDK/1.4.350.0/macOS/bin"
   -
     kind: "message-v1"
     backtrace:
@@ -151,6 +153,7 @@ events:
       - "/pkg/env/global/bin/"
       - "/Library/Apple/usr/bin/"
       - "/Users/deanwilson/Library/Application Support/JetBrains/Toolbox/scripts/"
+      - "/Users/deanwilson/VulkanSDK/1.4.350.0/macOS/bin/"
     searched_directories:
       - "/Users/deanwilson/.local/bin/install_name_tool"
       - "/Users/deanwilson/.yarn/bin/install_name_tool"
@@ -182,11 +185,11 @@ events:
         - "/Users/deanwilson/.jenv/bin"
         - "/opt/homebrew/bin"
         - "/opt/homebrew/sbin"
-        - "/Users/deanwilson/.local/share/nvim/mason/bin"
         - "/Users/deanwilson/.local/bin"
         - "/Users/deanwilson/.yarn/bin"
         - "/Users/deanwilson/.config/yarn/global/node_modules/.bin"
         - "/Users/deanwilson/.nvm/versions/node/v22.22.2/bin"
+        - "/Users/deanwilson/.local/share/nvim/mason/bin"
         - "/Applications/Postgres.app/Contents/Versions/14/bin"
         - "/opt/homebrew/opt/openjdk@17"
         - "/Users/deanwilson/.nodenv/shims"
@@ -205,5 +208,6 @@ events:
         - "/pkg/env/global/bin"
         - "/Library/Apple/usr/bin"
         - "/Users/deanwilson/Library/Application Support/JetBrains/Toolbox/scripts"
+        - "/Users/deanwilson/VulkanSDK/1.4.350.0/macOS/bin"
       CMAKE_INSTALL_PREFIX: "/usr/local"
 ...

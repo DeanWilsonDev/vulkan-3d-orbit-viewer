@@ -1,9 +1,12 @@
 #include "sdl-context.hpp"
+#include "vulkan-context.hpp"
 
 #include <cstdlib>
 #include <exception>
 #include <iostream>
 #include <ostream>
+
+using namespace VulkanOrbitViewer;
 
 int main() {
   try {
