@@ -19,17 +19,17 @@ project(sdl3-populate NONE)
 # Pass through things we've already detected in the main project to avoid
 # paying the cost of redetecting them again in ExternalProject_Add()
 set(GIT_EXECUTABLE [==[/usr/bin/git]==])
-set(Git_VERSION [==[2.50.1 (Apple Git-155)]==])
+set(Git_VERSION [==[2.55.0]==])
 set_property(GLOBAL PROPERTY _CMAKE_FindGit_GIT_EXECUTABLE_VERSION
-  [==[/usr/bin/git;2.50.1 (Apple Git-155)]==]
+  [==[/usr/bin/git;2.55.0]==]
 )
 
 
 include(ExternalProject)
 ExternalProject_Add(sdl3-populate
-                     "UPDATE_DISCONNECTED" "False" "GIT_REPOSITORY" "https://github.com/libsdl-org/SDL.git" "EXTERNALPROJECT_INTERNAL_ARGUMENT_SEPARATOR" "GIT_TAG" "release-3.2.0" "GIT_SHALLOW" "TRUE"
-                    SOURCE_DIR          "/Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/sdl3-src"
-                    BINARY_DIR          "/Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/sdl3-build"
+                     "UPDATE_DISCONNECTED" "False" "GIT_REPOSITORY" "https://github.com/libsdl-org/SDL.git" "EXTERNALPROJECT_INTERNAL_ARGUMENT_SEPARATOR" "GIT_TAG" "release-3.4.14" "GIT_SHALLOW" "TRUE"
+                    SOURCE_DIR          "/home/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/sdl3-src"
+                    BINARY_DIR          "/home/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/sdl3-build"
                     CONFIGURE_COMMAND   ""
                     BUILD_COMMAND       ""
                     INSTALL_COMMAND     ""

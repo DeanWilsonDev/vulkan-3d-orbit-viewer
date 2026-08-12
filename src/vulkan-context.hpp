@@ -3,28 +3,35 @@
 #include <SDL3/SDL_video.h>
 #include <vulkan/vulkan.h>
 
+#include <string>
 #include <cstdint>
 #include <optional>
 
-namespace VulkanOrbitViewer {
+namespace Renderer3D {
+
+struct ApplicationInfo {
+  const char* applicationName = "3D Renderer";
+  uint32_t applicationVersion = VK_MAKE_VERSION(0, 1, 0);
+  const char* engineName = "No Engine";
+  uint32_t engineVersion = VK_MAKE_VERSION(0, 1, 0);
+  uint32_t apiVersion = VK_API_VERSION_1_3;
+};
 
 struct QueueFamilyIndicies {
   std::optional<uint32_t> graphics;
   std::optional<uint32_t> present;
 
-  bool isComplete() const {
-    return this->graphics.has_value() && this->present.has_value();
-  }
+  bool IsComplete() const { return this->graphics.has_value() && this->present.has_value(); }
 };
 
 class VulkanContext {
-public:
-  VulkanContext(SDL_Window *window, bool enableValidation);
+ public:
+  VulkanContext(SDL_Window* window, bool enableValidation);
 
   ~VulkanContext();
 
-  VulkanContext(const VulkanContext &) = delete;
-  VulkanContext &operator=(const VulkanContext &) = delete;
+  VulkanContext(const VulkanContext&) = delete;
+  VulkanContext& operator=(const VulkanContext&) = delete;
 
   VkInstance GetInstance() const { return this->instance; }
   VkSurfaceKHR GetSurface() const { return this->surface; }
@@ -32,18 +39,16 @@ public:
   VkDevice GetLogicalDevice() const { return this->logicalDevice; }
   VkQueue GetGraphicsQueue() const { return this->graphicsQueue; }
   VkQueue GetPresentQueue() const { return this->presentQueue; }
-  const QueueFamilyIndicies &GetQueueFamilies() const {
-    return this->queueFamilies;
-  }
+  const QueueFamilyIndicies& GetQueueFamilies() const { return this->queueFamilies; }
 
-private:
-  void CreateInstance(SDL_Window *window);
+ private:
+  void CreateInstance(SDL_Window* window, const ApplicationInfo& applicationInfo);
   void SetupDebugMessenger();
-  void CreateSurface(SDL_Window *window);
+  void CreateSurface(SDL_Window* window);
   void PickPhysicalDevice();
   void CreateLogicalDevice();
 
-  bool enableVerification = false;
+  bool enableValidation = false;
 
   VkInstance instance = VK_NULL_HANDLE;
   VkDebugUtilsMessengerEXT debugMessenger = VK_NULL_HANDLE;
@@ -55,4 +60,4 @@ private:
 
   QueueFamilyIndicies queueFamilies;
 };
-} // namespace VulkanOrbitViewer
+}  // namespace Renderer3D

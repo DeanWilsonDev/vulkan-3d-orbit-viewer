@@ -6,22 +6,22 @@ cmake_minimum_required(VERSION ${CMAKE_VERSION}) # this file comes with cmake
 # If CMAKE_DISABLE_SOURCE_CHANGES is set to true and the source directory is an
 # existing directory in our source tree, calling file(MAKE_DIRECTORY) on it
 # would cause a fatal error, even though it would be a no-op.
-if(NOT EXISTS "/Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/stb-src")
-  file(MAKE_DIRECTORY "/Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/stb-src")
+if(NOT EXISTS "/home/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/stb-src")
+  file(MAKE_DIRECTORY "/home/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/stb-src")
 endif()
 file(MAKE_DIRECTORY
-  "/Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/stb-build"
-  "/Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/stb-subbuild/stb-populate-prefix"
-  "/Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/stb-subbuild/stb-populate-prefix/tmp"
-  "/Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/stb-subbuild/stb-populate-prefix/src/stb-populate-stamp"
-  "/Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/stb-subbuild/stb-populate-prefix/src"
-  "/Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/stb-subbuild/stb-populate-prefix/src/stb-populate-stamp"
+  "/home/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/stb-build"
+  "/home/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/stb-subbuild/stb-populate-prefix"
+  "/home/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/stb-subbuild/stb-populate-prefix/tmp"
+  "/home/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/stb-subbuild/stb-populate-prefix/src/stb-populate-stamp"
+  "/home/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/stb-subbuild/stb-populate-prefix/src"
+  "/home/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/stb-subbuild/stb-populate-prefix/src/stb-populate-stamp"
 )
 
 set(configSubDirs )
 foreach(subDir IN LISTS configSubDirs)
-    file(MAKE_DIRECTORY "/Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/stb-subbuild/stb-populate-prefix/src/stb-populate-stamp/${subDir}")
+    file(MAKE_DIRECTORY "/home/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/stb-subbuild/stb-populate-prefix/src/stb-populate-stamp/${subDir}")
 endforeach()
 if(cfgdir)
-  file(MAKE_DIRECTORY "/Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/stb-subbuild/stb-populate-prefix/src/stb-populate-stamp${cfgdir}") # cfgdir has leading slash
+  file(MAKE_DIRECTORY "/home/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/stb-subbuild/stb-populate-prefix/src/stb-populate-stamp${cfgdir}") # cfgdir has leading slash
 endif()

@@ -1,0 +1,46 @@
+{
+	"sources" : 
+	[
+		{
+			"file" : "/home/deanwilson/development/projects/vulkan-3d-orbit-viewer/_deps/glm-subbuild/CMakeFiles/glm-populate"
+		},
+		{
+			"file" : "/home/deanwilson/development/projects/vulkan-3d-orbit-viewer/_deps/glm-subbuild/CMakeFiles/glm-populate.rule"
+		},
+		{
+			"file" : "/home/deanwilson/development/projects/vulkan-3d-orbit-viewer/_deps/glm-subbuild/CMakeFiles/glm-populate-complete.rule"
+		},
+		{
+			"file" : "/home/deanwilson/development/projects/vulkan-3d-orbit-viewer/_deps/glm-subbuild/glm-populate-prefix/src/glm-populate-stamp/glm-populate-build.rule"
+		},
+		{
+			"file" : "/home/deanwilson/development/projects/vulkan-3d-orbit-viewer/_deps/glm-subbuild/glm-populate-prefix/src/glm-populate-stamp/glm-populate-configure.rule"
+		},
+		{
+			"file" : "/home/deanwilson/development/projects/vulkan-3d-orbit-viewer/_deps/glm-subbuild/glm-populate-prefix/src/glm-populate-stamp/glm-populate-download.rule"
+		},
+		{
+			"file" : "/home/deanwilson/development/projects/vulkan-3d-orbit-viewer/_deps/glm-subbuild/glm-populate-prefix/src/glm-populate-stamp/glm-populate-install.rule"
+		},
+		{
+			"file" : "/home/deanwilson/development/projects/vulkan-3d-orbit-viewer/_deps/glm-subbuild/glm-populate-prefix/src/glm-populate-stamp/glm-populate-mkdir.rule"
+		},
+		{
+			"file" : "/home/deanwilson/development/projects/vulkan-3d-orbit-viewer/_deps/glm-subbuild/glm-populate-prefix/src/glm-populate-stamp/glm-populate-patch.rule"
+		},
+		{
+			"file" : "/home/deanwilson/development/projects/vulkan-3d-orbit-viewer/_deps/glm-subbuild/glm-populate-prefix/src/glm-populate-stamp/glm-populate-test.rule"
+		},
+		{
+			"file" : "/home/deanwilson/development/projects/vulkan-3d-orbit-viewer/_deps/glm-subbuild/glm-populate-prefix/src/glm-populate-stamp/glm-populate-update.rule"
+		}
+	],
+	"target" : 
+	{
+		"labels" : 
+		[
+			"glm-populate"
+		],
+		"name" : "glm-populate"
+	}
+}

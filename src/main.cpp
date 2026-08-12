@@ -8,16 +8,17 @@
 
 using namespace VulkanOrbitViewer;
 
-int main() {
+int main()
+{
   try {
-
     SdlContext sdl("Vulkan Orbit Viewer", 1280, 720);
 
     bool running = true;
     while (running) {
       running = sdl.processEvents();
     }
-  } catch (const std::exception &e) {
+  }
+  catch (const std::exception& e) {
     std::cerr << "Fatal: " << e.what() << std::endl;
     return EXIT_FAILURE;
   }

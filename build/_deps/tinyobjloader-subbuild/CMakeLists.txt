@@ -19,17 +19,17 @@ project(tinyobjloader-populate NONE)
 # Pass through things we've already detected in the main project to avoid
 # paying the cost of redetecting them again in ExternalProject_Add()
 set(GIT_EXECUTABLE [==[/usr/bin/git]==])
-set(Git_VERSION [==[2.50.1 (Apple Git-155)]==])
+set(Git_VERSION [==[2.55.0]==])
 set_property(GLOBAL PROPERTY _CMAKE_FindGit_GIT_EXECUTABLE_VERSION
-  [==[/usr/bin/git;2.50.1 (Apple Git-155)]==]
+  [==[/usr/bin/git;2.55.0]==]
 )
 
 
 include(ExternalProject)
 ExternalProject_Add(tinyobjloader-populate
                      "UPDATE_DISCONNECTED" "False" "GIT_REPOSITORY" "https://github.com/tinyobjloader/tinyobjloader.git" "EXTERNALPROJECT_INTERNAL_ARGUMENT_SEPARATOR" "GIT_TAG" "v2.0.0rc13" "GIT_SHALLOW" "TRUE"
-                    SOURCE_DIR          "/Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/tinyobjloader-src"
-                    BINARY_DIR          "/Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/tinyobjloader-build"
+                    SOURCE_DIR          "/home/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/tinyobjloader-src"
+                    BINARY_DIR          "/home/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/tinyobjloader-build"
                     CONFIGURE_COMMAND   ""
                     BUILD_COMMAND       ""
                     INSTALL_COMMAND     ""

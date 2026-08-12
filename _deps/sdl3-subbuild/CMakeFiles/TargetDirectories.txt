@@ -1,0 +1,3 @@
+/home/deanwilson/development/projects/vulkan-3d-orbit-viewer/_deps/sdl3-subbuild/CMakeFiles/sdl3-populate.dir
+/home/deanwilson/development/projects/vulkan-3d-orbit-viewer/_deps/sdl3-subbuild/CMakeFiles/edit_cache.dir
+/home/deanwilson/development/projects/vulkan-3d-orbit-viewer/_deps/sdl3-subbuild/CMakeFiles/rebuild_cache.dir

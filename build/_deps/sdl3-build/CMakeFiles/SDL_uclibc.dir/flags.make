@@ -4,9 +4,7 @@
 # compile C with /usr/bin/cc
 C_DEFINES = -DUSING_GENERATED_CONFIG_H
 
-C_INCLUDES = -I/Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/sdl3-build/include-config-/build_config -I/Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/sdl3-src/src -I/Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/sdl3-src/include
+C_INCLUDES = -I/home/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/sdl3-build/include-config-/build_config -I/home/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/sdl3-src/src -I/home/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/sdl3-src/include
 
-C_FLAGSarm64 =  -arch arm64 -fvisibility=hidden -Wall -Wundef -Wfloat-conversion -fno-strict-aliasing -Wdocumentation -Wdocumentation-unknown-command -fcomment-block-commands=threadsafety -Wshadow -Wno-unused-local-typedefs -Wimplicit-fallthrough -fcolor-diagnostics
-
-C_FLAGS =  -arch arm64 -fvisibility=hidden -Wall -Wundef -Wfloat-conversion -fno-strict-aliasing -Wdocumentation -Wdocumentation-unknown-command -fcomment-block-commands=threadsafety -Wshadow -Wno-unused-local-typedefs -Wimplicit-fallthrough -fcolor-diagnostics
+C_FLAGS = -fPIC -fvisibility=hidden -Wall -Wundef -Wfloat-conversion -fno-strict-aliasing -Wshadow -Wno-unused-local-typedefs -Wimplicit-fallthrough -fdiagnostics-color=always
 

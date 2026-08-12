@@ -50,14 +50,14 @@ unset(_cmake_expected_targets)
 add_library(tinyobjloader STATIC IMPORTED)
 
 set_target_properties(tinyobjloader PROPERTIES
-  INTERFACE_INCLUDE_DIRECTORIES "/Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/tinyobjloader-src"
+  INTERFACE_INCLUDE_DIRECTORIES "/home/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/tinyobjloader-src"
 )
 
 # Import target "tinyobjloader" for configuration ""
 set_property(TARGET tinyobjloader APPEND PROPERTY IMPORTED_CONFIGURATIONS NOCONFIG)
 set_target_properties(tinyobjloader PROPERTIES
   IMPORTED_LINK_INTERFACE_LANGUAGES_NOCONFIG "CXX"
-  IMPORTED_LOCATION_NOCONFIG "/Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/tinyobjloader-build/libtinyobjloader.a"
+  IMPORTED_LOCATION_NOCONFIG "/home/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/tinyobjloader-build/libtinyobjloader.a"
   )
 
 # This file does not depend on other imported targets which have

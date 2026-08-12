@@ -1,0 +1,7 @@
+{
+	"InstallScripts" : 
+	[
+		"/home/deanwilson/development/projects/vulkan-3d-orbit-viewer/_deps/glm-subbuild/cmake_install.cmake"
+	],
+	"Parallel" : false
+}

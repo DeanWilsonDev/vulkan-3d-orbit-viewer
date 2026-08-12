@@ -7,19 +7,19 @@
 namespace VulkanOrbitViewer {
 
 class SdlContext {
-public:
-  SdlContext(const std::string &title, int width, int height);
+ public:
+  SdlContext(const std::string& title, int width, int height);
 
   ~SdlContext();
 
-  SdlContext(const SdlContext &) = delete;
-  SdlContext &operator=(const SdlContext &) = delete;
+  SdlContext(const SdlContext&) = delete;
+  SdlContext& operator=(const SdlContext&) = delete;
 
   bool processEvents();
 
-  SDL_Window *GetWindow() const { return this->window; }
+  SDL_Window* GetWindow() const { return this->window; }
 
-private:
-  SDL_Window *window = nullptr;
+ private:
+  SDL_Window* window = nullptr;
 };
-} // namespace VulkanOrbitViewer
+}  // namespace VulkanOrbitViewer

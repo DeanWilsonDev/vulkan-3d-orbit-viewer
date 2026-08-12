@@ -48,19 +48,19 @@ cmake_force:
 SHELL = /bin/sh
 
 # The CMake executable.
-CMAKE_COMMAND = /opt/homebrew/bin/cmake
+CMAKE_COMMAND = /usr/bin/cmake
 
 # The command to remove a file.
-RM = /opt/homebrew/bin/cmake -E rm -f
+RM = /usr/bin/cmake -E rm -f
 
 # Escaping for special characters.
 EQUALS = =
 
 # The top-level source directory on which CMake was run.
-CMAKE_SOURCE_DIR = /Users/deanwilson/development/projects/vulkan-3d-orbit-viewer
+CMAKE_SOURCE_DIR = /home/deanwilson/development/projects/vulkan-3d-orbit-viewer
 
 # The top-level build directory on which CMake was run.
-CMAKE_BINARY_DIR = /Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/build
+CMAKE_BINARY_DIR = /home/deanwilson/development/projects/vulkan-3d-orbit-viewer/build
 
 #=============================================================================
 # Targets provided globally by CMake.
@@ -68,7 +68,7 @@ CMAKE_BINARY_DIR = /Users/deanwilson/development/projects/vulkan-3d-orbit-viewer
 # Special rule for the target edit_cache
 edit_cache:
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --cyan "Running CMake cache editor..."
-	/opt/homebrew/bin/ccmake -S$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR)
+	/usr/bin/ccmake -S$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR)
 .PHONY : edit_cache
 
 # Special rule for the target edit_cache
@@ -78,7 +78,7 @@ edit_cache/fast: edit_cache
 # Special rule for the target rebuild_cache
 rebuild_cache:
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --cyan "Running CMake to regenerate build system..."
-	/opt/homebrew/bin/cmake --regenerate-during-build -S$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR)
+	/usr/bin/cmake --regenerate-during-build -S$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR)
 .PHONY : rebuild_cache
 
 # Special rule for the target rebuild_cache
@@ -97,49 +97,49 @@ list_install_components/fast: list_install_components
 # Special rule for the target install
 install: preinstall
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --cyan "Install the project..."
-	/opt/homebrew/bin/cmake -P cmake_install.cmake
+	/usr/bin/cmake -P cmake_install.cmake
 .PHONY : install
 
 # Special rule for the target install
 install/fast: preinstall/fast
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --cyan "Install the project..."
-	/opt/homebrew/bin/cmake -P cmake_install.cmake
+	/usr/bin/cmake -P cmake_install.cmake
 .PHONY : install/fast
 
 # Special rule for the target install/local
 install/local: preinstall
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --cyan "Installing only the local directory..."
-	/opt/homebrew/bin/cmake -DCMAKE_INSTALL_LOCAL_ONLY=1 -P cmake_install.cmake
+	/usr/bin/cmake -DCMAKE_INSTALL_LOCAL_ONLY=1 -P cmake_install.cmake
 .PHONY : install/local
 
 # Special rule for the target install/local
 install/local/fast: preinstall/fast
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --cyan "Installing only the local directory..."
-	/opt/homebrew/bin/cmake -DCMAKE_INSTALL_LOCAL_ONLY=1 -P cmake_install.cmake
+	/usr/bin/cmake -DCMAKE_INSTALL_LOCAL_ONLY=1 -P cmake_install.cmake
 .PHONY : install/local/fast
 
 # Special rule for the target install/strip
 install/strip: preinstall
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --cyan "Installing the project stripped..."
-	/opt/homebrew/bin/cmake -DCMAKE_INSTALL_DO_STRIP=1 -P cmake_install.cmake
+	/usr/bin/cmake -DCMAKE_INSTALL_DO_STRIP=1 -P cmake_install.cmake
 .PHONY : install/strip
 
 # Special rule for the target install/strip
 install/strip/fast: preinstall/fast
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --cyan "Installing the project stripped..."
-	/opt/homebrew/bin/cmake -DCMAKE_INSTALL_DO_STRIP=1 -P cmake_install.cmake
+	/usr/bin/cmake -DCMAKE_INSTALL_DO_STRIP=1 -P cmake_install.cmake
 .PHONY : install/strip/fast
 
 # The main all target
 all: cmake_check_build_system
-	cd /Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/build && $(CMAKE_COMMAND) -E cmake_progress_start /Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/CMakeFiles /Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/glm-build/glm//CMakeFiles/progress.marks
-	cd /Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/build && $(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 _deps/glm-build/glm/all
-	$(CMAKE_COMMAND) -E cmake_progress_start /Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/CMakeFiles 0
+	cd /home/deanwilson/development/projects/vulkan-3d-orbit-viewer/build && $(CMAKE_COMMAND) -E cmake_progress_start /home/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/CMakeFiles /home/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/glm-build/glm//CMakeFiles/progress.marks
+	cd /home/deanwilson/development/projects/vulkan-3d-orbit-viewer/build && $(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 _deps/glm-build/glm/all
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/CMakeFiles 0
 .PHONY : all
 
 # The main clean target
 clean:
-	cd /Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/build && $(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 _deps/glm-build/glm/clean
+	cd /home/deanwilson/development/projects/vulkan-3d-orbit-viewer/build && $(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 _deps/glm-build/glm/clean
 .PHONY : clean
 
 # The main clean target
@@ -148,22 +148,23 @@ clean/fast: clean
 
 # Prepare targets for installation.
 preinstall: all
-	cd /Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/build && $(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 _deps/glm-build/glm/preinstall
+	cd /home/deanwilson/development/projects/vulkan-3d-orbit-viewer/build && $(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 _deps/glm-build/glm/preinstall
 .PHONY : preinstall
 
 # Prepare targets for installation.
 preinstall/fast:
-	cd /Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/build && $(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 _deps/glm-build/glm/preinstall
+	cd /home/deanwilson/development/projects/vulkan-3d-orbit-viewer/build && $(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 _deps/glm-build/glm/preinstall
 .PHONY : preinstall/fast
 
 # clear depends
 depend:
-	cd /Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/build && $(CMAKE_COMMAND) -S$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR) --check-build-system CMakeFiles/Makefile.cmake 1
+	cd /home/deanwilson/development/projects/vulkan-3d-orbit-viewer/build && $(CMAKE_COMMAND) -P /home/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/CMakeFiles/VerifyGlobs.cmake
+	cd /home/deanwilson/development/projects/vulkan-3d-orbit-viewer/build && $(CMAKE_COMMAND) -S$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR) --check-build-system CMakeFiles/Makefile.cmake 1
 .PHONY : depend
 
 # Convenience name for target.
 _deps/glm-build/glm/CMakeFiles/glm.dir/rule:
-	cd /Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/build && $(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 _deps/glm-build/glm/CMakeFiles/glm.dir/rule
+	cd /home/deanwilson/development/projects/vulkan-3d-orbit-viewer/build && $(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 _deps/glm-build/glm/CMakeFiles/glm.dir/rule
 .PHONY : _deps/glm-build/glm/CMakeFiles/glm.dir/rule
 
 # Convenience name for target.
@@ -172,7 +173,7 @@ glm: _deps/glm-build/glm/CMakeFiles/glm.dir/rule
 
 # fast build rule for target.
 glm/fast:
-	cd /Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/build && $(MAKE) $(MAKESILENT) -f _deps/glm-build/glm/CMakeFiles/glm.dir/build.make _deps/glm-build/glm/CMakeFiles/glm.dir/build
+	cd /home/deanwilson/development/projects/vulkan-3d-orbit-viewer/build && $(MAKE) $(MAKESILENT) -f _deps/glm-build/glm/CMakeFiles/glm.dir/build.make _deps/glm-build/glm/CMakeFiles/glm.dir/build
 .PHONY : glm/fast
 
 detail/glm.o: detail/glm.cpp.o
@@ -180,7 +181,7 @@ detail/glm.o: detail/glm.cpp.o
 
 # target to build an object file
 detail/glm.cpp.o:
-	cd /Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/build && $(MAKE) $(MAKESILENT) -f _deps/glm-build/glm/CMakeFiles/glm.dir/build.make _deps/glm-build/glm/CMakeFiles/glm.dir/detail/glm.cpp.o
+	cd /home/deanwilson/development/projects/vulkan-3d-orbit-viewer/build && $(MAKE) $(MAKESILENT) -f _deps/glm-build/glm/CMakeFiles/glm.dir/build.make _deps/glm-build/glm/CMakeFiles/glm.dir/detail/glm.cpp.o
 .PHONY : detail/glm.cpp.o
 
 detail/glm.i: detail/glm.cpp.i
@@ -188,7 +189,7 @@ detail/glm.i: detail/glm.cpp.i
 
 # target to preprocess a source file
 detail/glm.cpp.i:
-	cd /Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/build && $(MAKE) $(MAKESILENT) -f _deps/glm-build/glm/CMakeFiles/glm.dir/build.make _deps/glm-build/glm/CMakeFiles/glm.dir/detail/glm.cpp.i
+	cd /home/deanwilson/development/projects/vulkan-3d-orbit-viewer/build && $(MAKE) $(MAKESILENT) -f _deps/glm-build/glm/CMakeFiles/glm.dir/build.make _deps/glm-build/glm/CMakeFiles/glm.dir/detail/glm.cpp.i
 .PHONY : detail/glm.cpp.i
 
 detail/glm.s: detail/glm.cpp.s
@@ -196,7 +197,7 @@ detail/glm.s: detail/glm.cpp.s
 
 # target to generate assembly for a file
 detail/glm.cpp.s:
-	cd /Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/build && $(MAKE) $(MAKESILENT) -f _deps/glm-build/glm/CMakeFiles/glm.dir/build.make _deps/glm-build/glm/CMakeFiles/glm.dir/detail/glm.cpp.s
+	cd /home/deanwilson/development/projects/vulkan-3d-orbit-viewer/build && $(MAKE) $(MAKESILENT) -f _deps/glm-build/glm/CMakeFiles/glm.dir/build.make _deps/glm-build/glm/CMakeFiles/glm.dir/detail/glm.cpp.s
 .PHONY : detail/glm.cpp.s
 
 # Help Target
@@ -226,6 +227,7 @@ help:
 # No rule that depends on this can have commands that come from listfiles
 # because they might be regenerated.
 cmake_check_build_system:
-	cd /Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/build && $(CMAKE_COMMAND) -S$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR) --check-build-system CMakeFiles/Makefile.cmake 0
+	cd /home/deanwilson/development/projects/vulkan-3d-orbit-viewer/build && $(CMAKE_COMMAND) -P /home/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/CMakeFiles/VerifyGlobs.cmake
+	cd /home/deanwilson/development/projects/vulkan-3d-orbit-viewer/build && $(CMAKE_COMMAND) -S$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR) --check-build-system CMakeFiles/Makefile.cmake 0
 .PHONY : cmake_check_build_system
 

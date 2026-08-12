@@ -1,14 +1,14 @@
-if(NOT EXISTS "/Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/tinyobjloader-build/install_manifest.txt")
-  message(FATAL_ERROR "Cannot find install manifest: /Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/tinyobjloader-build/install_manifest.txt")
-endif(NOT EXISTS "/Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/tinyobjloader-build/install_manifest.txt")
+if(NOT EXISTS "/home/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/tinyobjloader-build/install_manifest.txt")
+  message(FATAL_ERROR "Cannot find install manifest: /home/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/tinyobjloader-build/install_manifest.txt")
+endif(NOT EXISTS "/home/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/tinyobjloader-build/install_manifest.txt")
 
-file(READ "/Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/tinyobjloader-build/install_manifest.txt" files)
+file(READ "/home/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/tinyobjloader-build/install_manifest.txt" files)
 string(REGEX REPLACE "\n" ";" files "${files}")
 foreach(file ${files})
   message(STATUS "Uninstalling $ENV{DESTDIR}${file}")
   if(IS_SYMLINK "$ENV{DESTDIR}${file}" OR EXISTS "$ENV{DESTDIR}${file}")
     exec_program(
-      "/opt/homebrew/bin/cmake" ARGS "-E remove \"$ENV{DESTDIR}${file}\""
+      "/usr/bin/cmake" ARGS "-E remove \"$ENV{DESTDIR}${file}\""
       OUTPUT_VARIABLE rm_out
       RETURN_VALUE rm_retval
       )

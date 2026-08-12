@@ -4,9 +4,7 @@
 # compile CXX with /usr/bin/c++
 CXX_DEFINES = 
 
-CXX_INCLUDES = -I/Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/glm-src
+CXX_INCLUDES = -I/home/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/glm-src
 
-CXX_FLAGSarm64 = -std=c++26 -arch arm64 -Wno-c++98-compat -Wno-c++98-compat-pedantic
-
-CXX_FLAGS = -std=c++26 -arch arm64 -Wno-c++98-compat -Wno-c++98-compat-pedantic
+CXX_FLAGS = -std=c++26
 

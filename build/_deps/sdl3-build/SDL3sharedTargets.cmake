@@ -52,17 +52,18 @@ add_library(SDL3::SDL3-shared SHARED IMPORTED)
 set_target_properties(SDL3::SDL3-shared PROPERTIES
   COMPATIBLE_INTERFACE_BOOL "SDL3_SHARED"
   COMPATIBLE_INTERFACE_STRING "SDL_VERSION"
-  INTERFACE_LINK_DEPENDS "/Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/sdl3-src/src/dynapi/SDL_dynapi.sym"
+  INTERFACE_LINK_DEPENDS "/home/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/sdl3-src/src/dynapi/SDL_dynapi.sym"
   INTERFACE_LINK_LIBRARIES "SDL3::Headers"
   INTERFACE_SDL3_SHARED "TRUE"
   INTERFACE_SDL_VERSION "SDL3"
+  SDL_FULL_VERSION "3.4.14"
 )
 
 # Import target "SDL3::SDL3-shared" for configuration ""
 set_property(TARGET SDL3::SDL3-shared APPEND PROPERTY IMPORTED_CONFIGURATIONS NOCONFIG)
 set_target_properties(SDL3::SDL3-shared PROPERTIES
-  IMPORTED_LOCATION_NOCONFIG "/Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/sdl3-build/libSDL3.0.dylib"
-  IMPORTED_SONAME_NOCONFIG "@rpath/libSDL3.0.dylib"
+  IMPORTED_LOCATION_NOCONFIG "/home/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/sdl3-build/libSDL3.so.0.4.14"
+  IMPORTED_SONAME_NOCONFIG "libSDL3.so.0"
   )
 
 # Make sure the targets which have been exported in some other
