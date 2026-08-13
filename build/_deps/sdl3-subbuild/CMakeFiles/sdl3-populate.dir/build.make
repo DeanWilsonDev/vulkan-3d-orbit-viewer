@@ -44,19 +44,19 @@ cmake_force:
 SHELL = /bin/sh
 
 # The CMake executable.
-CMAKE_COMMAND = /usr/bin/cmake
+CMAKE_COMMAND = /opt/homebrew/bin/cmake
 
 # The command to remove a file.
-RM = /usr/bin/cmake -E rm -f
+RM = /opt/homebrew/bin/cmake -E rm -f
 
 # Escaping for special characters.
 EQUALS = =
 
 # The top-level source directory on which CMake was run.
-CMAKE_SOURCE_DIR = /home/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/sdl3-subbuild
+CMAKE_SOURCE_DIR = /Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/sdl3-subbuild
 
 # The top-level build directory on which CMake was run.
-CMAKE_BINARY_DIR = /home/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/sdl3-subbuild
+CMAKE_BINARY_DIR = /Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/sdl3-subbuild
 
 # Utility rule file for sdl3-populate.
 
@@ -77,60 +77,60 @@ CMakeFiles/sdl3-populate-complete: sdl3-populate-prefix/src/sdl3-populate-stamp/
 CMakeFiles/sdl3-populate-complete: sdl3-populate-prefix/src/sdl3-populate-stamp/sdl3-populate-build
 CMakeFiles/sdl3-populate-complete: sdl3-populate-prefix/src/sdl3-populate-stamp/sdl3-populate-install
 CMakeFiles/sdl3-populate-complete: sdl3-populate-prefix/src/sdl3-populate-stamp/sdl3-populate-test
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --blue --bold --progress-dir=/home/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/sdl3-subbuild/CMakeFiles --progress-num=$(CMAKE_PROGRESS_1) "Completed 'sdl3-populate'"
-	/usr/bin/cmake -E make_directory /home/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/sdl3-subbuild/CMakeFiles
-	/usr/bin/cmake -E touch /home/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/sdl3-subbuild/CMakeFiles/sdl3-populate-complete
-	/usr/bin/cmake -E touch /home/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/sdl3-subbuild/sdl3-populate-prefix/src/sdl3-populate-stamp/sdl3-populate-done
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --blue --bold --progress-dir=/Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/sdl3-subbuild/CMakeFiles --progress-num=$(CMAKE_PROGRESS_1) "Completed 'sdl3-populate'"
+	/opt/homebrew/bin/cmake -E make_directory /Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/sdl3-subbuild/CMakeFiles
+	/opt/homebrew/bin/cmake -E touch /Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/sdl3-subbuild/CMakeFiles/sdl3-populate-complete
+	/opt/homebrew/bin/cmake -E touch /Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/sdl3-subbuild/sdl3-populate-prefix/src/sdl3-populate-stamp/sdl3-populate-done
 
 sdl3-populate-prefix/src/sdl3-populate-stamp/sdl3-populate-update:
 .PHONY : sdl3-populate-prefix/src/sdl3-populate-stamp/sdl3-populate-update
 
 sdl3-populate-prefix/src/sdl3-populate-stamp/sdl3-populate-build: sdl3-populate-prefix/src/sdl3-populate-stamp/sdl3-populate-configure
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --blue --bold --progress-dir=/home/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/sdl3-subbuild/CMakeFiles --progress-num=$(CMAKE_PROGRESS_2) "No build step for 'sdl3-populate'"
-	cd /home/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/sdl3-build && /usr/bin/cmake -E echo_append
-	cd /home/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/sdl3-build && /usr/bin/cmake -E touch /home/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/sdl3-subbuild/sdl3-populate-prefix/src/sdl3-populate-stamp/sdl3-populate-build
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --blue --bold --progress-dir=/Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/sdl3-subbuild/CMakeFiles --progress-num=$(CMAKE_PROGRESS_2) "No build step for 'sdl3-populate'"
+	cd /Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/sdl3-build && /opt/homebrew/bin/cmake -E echo_append
+	cd /Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/sdl3-build && /opt/homebrew/bin/cmake -E touch /Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/sdl3-subbuild/sdl3-populate-prefix/src/sdl3-populate-stamp/sdl3-populate-build
 
 sdl3-populate-prefix/src/sdl3-populate-stamp/sdl3-populate-configure: sdl3-populate-prefix/tmp/sdl3-populate-cfgcmd.txt
 sdl3-populate-prefix/src/sdl3-populate-stamp/sdl3-populate-configure: sdl3-populate-prefix/src/sdl3-populate-stamp/sdl3-populate-patch
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --blue --bold --progress-dir=/home/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/sdl3-subbuild/CMakeFiles --progress-num=$(CMAKE_PROGRESS_3) "No configure step for 'sdl3-populate'"
-	cd /home/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/sdl3-build && /usr/bin/cmake -E echo_append
-	cd /home/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/sdl3-build && /usr/bin/cmake -E touch /home/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/sdl3-subbuild/sdl3-populate-prefix/src/sdl3-populate-stamp/sdl3-populate-configure
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --blue --bold --progress-dir=/Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/sdl3-subbuild/CMakeFiles --progress-num=$(CMAKE_PROGRESS_3) "No configure step for 'sdl3-populate'"
+	cd /Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/sdl3-build && /opt/homebrew/bin/cmake -E echo_append
+	cd /Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/sdl3-build && /opt/homebrew/bin/cmake -E touch /Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/sdl3-subbuild/sdl3-populate-prefix/src/sdl3-populate-stamp/sdl3-populate-configure
 
 sdl3-populate-prefix/src/sdl3-populate-stamp/sdl3-populate-download: sdl3-populate-prefix/src/sdl3-populate-stamp/sdl3-populate-gitinfo.txt
 sdl3-populate-prefix/src/sdl3-populate-stamp/sdl3-populate-download: sdl3-populate-prefix/src/sdl3-populate-stamp/sdl3-populate-mkdir
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --blue --bold --progress-dir=/home/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/sdl3-subbuild/CMakeFiles --progress-num=$(CMAKE_PROGRESS_4) "Performing download step (git clone) for 'sdl3-populate'"
-	cd /home/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps && /usr/bin/cmake -DCMAKE_MESSAGE_LOG_LEVEL=VERBOSE -P /home/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/sdl3-subbuild/sdl3-populate-prefix/tmp/sdl3-populate-gitclone.cmake
-	cd /home/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps && /usr/bin/cmake -E touch /home/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/sdl3-subbuild/sdl3-populate-prefix/src/sdl3-populate-stamp/sdl3-populate-download
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --blue --bold --progress-dir=/Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/sdl3-subbuild/CMakeFiles --progress-num=$(CMAKE_PROGRESS_4) "Performing download step (git clone) for 'sdl3-populate'"
+	cd /Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps && /opt/homebrew/bin/cmake -DCMAKE_MESSAGE_LOG_LEVEL=VERBOSE -P /Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/sdl3-subbuild/sdl3-populate-prefix/tmp/sdl3-populate-gitclone.cmake
+	cd /Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps && /opt/homebrew/bin/cmake -E touch /Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/sdl3-subbuild/sdl3-populate-prefix/src/sdl3-populate-stamp/sdl3-populate-download
 
 sdl3-populate-prefix/src/sdl3-populate-stamp/sdl3-populate-install: sdl3-populate-prefix/src/sdl3-populate-stamp/sdl3-populate-build
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --blue --bold --progress-dir=/home/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/sdl3-subbuild/CMakeFiles --progress-num=$(CMAKE_PROGRESS_5) "No install step for 'sdl3-populate'"
-	cd /home/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/sdl3-build && /usr/bin/cmake -E echo_append
-	cd /home/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/sdl3-build && /usr/bin/cmake -E touch /home/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/sdl3-subbuild/sdl3-populate-prefix/src/sdl3-populate-stamp/sdl3-populate-install
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --blue --bold --progress-dir=/Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/sdl3-subbuild/CMakeFiles --progress-num=$(CMAKE_PROGRESS_5) "No install step for 'sdl3-populate'"
+	cd /Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/sdl3-build && /opt/homebrew/bin/cmake -E echo_append
+	cd /Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/sdl3-build && /opt/homebrew/bin/cmake -E touch /Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/sdl3-subbuild/sdl3-populate-prefix/src/sdl3-populate-stamp/sdl3-populate-install
 
 sdl3-populate-prefix/src/sdl3-populate-stamp/sdl3-populate-mkdir:
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --blue --bold --progress-dir=/home/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/sdl3-subbuild/CMakeFiles --progress-num=$(CMAKE_PROGRESS_6) "Creating directories for 'sdl3-populate'"
-	/usr/bin/cmake -Dcfgdir= -P /home/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/sdl3-subbuild/sdl3-populate-prefix/tmp/sdl3-populate-mkdirs.cmake
-	/usr/bin/cmake -E touch /home/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/sdl3-subbuild/sdl3-populate-prefix/src/sdl3-populate-stamp/sdl3-populate-mkdir
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --blue --bold --progress-dir=/Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/sdl3-subbuild/CMakeFiles --progress-num=$(CMAKE_PROGRESS_6) "Creating directories for 'sdl3-populate'"
+	/opt/homebrew/bin/cmake -Dcfgdir= -P /Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/sdl3-subbuild/sdl3-populate-prefix/tmp/sdl3-populate-mkdirs.cmake
+	/opt/homebrew/bin/cmake -E touch /Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/sdl3-subbuild/sdl3-populate-prefix/src/sdl3-populate-stamp/sdl3-populate-mkdir
 
 sdl3-populate-prefix/src/sdl3-populate-stamp/sdl3-populate-patch: sdl3-populate-prefix/src/sdl3-populate-stamp/sdl3-populate-patch-info.txt
 sdl3-populate-prefix/src/sdl3-populate-stamp/sdl3-populate-patch: sdl3-populate-prefix/src/sdl3-populate-stamp/sdl3-populate-update
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --blue --bold --progress-dir=/home/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/sdl3-subbuild/CMakeFiles --progress-num=$(CMAKE_PROGRESS_7) "No patch step for 'sdl3-populate'"
-	/usr/bin/cmake -E echo_append
-	/usr/bin/cmake -E touch /home/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/sdl3-subbuild/sdl3-populate-prefix/src/sdl3-populate-stamp/sdl3-populate-patch
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --blue --bold --progress-dir=/Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/sdl3-subbuild/CMakeFiles --progress-num=$(CMAKE_PROGRESS_7) "No patch step for 'sdl3-populate'"
+	/opt/homebrew/bin/cmake -E echo_append
+	/opt/homebrew/bin/cmake -E touch /Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/sdl3-subbuild/sdl3-populate-prefix/src/sdl3-populate-stamp/sdl3-populate-patch
 
 sdl3-populate-prefix/src/sdl3-populate-stamp/sdl3-populate-update:
 .PHONY : sdl3-populate-prefix/src/sdl3-populate-stamp/sdl3-populate-update
 
 sdl3-populate-prefix/src/sdl3-populate-stamp/sdl3-populate-test: sdl3-populate-prefix/src/sdl3-populate-stamp/sdl3-populate-install
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --blue --bold --progress-dir=/home/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/sdl3-subbuild/CMakeFiles --progress-num=$(CMAKE_PROGRESS_8) "No test step for 'sdl3-populate'"
-	cd /home/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/sdl3-build && /usr/bin/cmake -E echo_append
-	cd /home/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/sdl3-build && /usr/bin/cmake -E touch /home/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/sdl3-subbuild/sdl3-populate-prefix/src/sdl3-populate-stamp/sdl3-populate-test
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --blue --bold --progress-dir=/Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/sdl3-subbuild/CMakeFiles --progress-num=$(CMAKE_PROGRESS_8) "No test step for 'sdl3-populate'"
+	cd /Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/sdl3-build && /opt/homebrew/bin/cmake -E echo_append
+	cd /Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/sdl3-build && /opt/homebrew/bin/cmake -E touch /Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/sdl3-subbuild/sdl3-populate-prefix/src/sdl3-populate-stamp/sdl3-populate-test
 
 sdl3-populate-prefix/src/sdl3-populate-stamp/sdl3-populate-update: sdl3-populate-prefix/tmp/sdl3-populate-gitupdate.cmake
 sdl3-populate-prefix/src/sdl3-populate-stamp/sdl3-populate-update: sdl3-populate-prefix/src/sdl3-populate-stamp/sdl3-populate-update-info.txt
 sdl3-populate-prefix/src/sdl3-populate-stamp/sdl3-populate-update: sdl3-populate-prefix/src/sdl3-populate-stamp/sdl3-populate-download
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --blue --bold --progress-dir=/home/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/sdl3-subbuild/CMakeFiles --progress-num=$(CMAKE_PROGRESS_9) "Performing update step for 'sdl3-populate'"
-	cd /home/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/sdl3-src && /usr/bin/cmake -Dcan_fetch=YES -DCMAKE_MESSAGE_LOG_LEVEL=VERBOSE -P /home/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/sdl3-subbuild/sdl3-populate-prefix/tmp/sdl3-populate-gitupdate.cmake
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --blue --bold --progress-dir=/Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/sdl3-subbuild/CMakeFiles --progress-num=$(CMAKE_PROGRESS_9) "Performing update step for 'sdl3-populate'"
+	cd /Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/sdl3-src && /opt/homebrew/bin/cmake -Dcan_fetch=YES -DCMAKE_MESSAGE_LOG_LEVEL=VERBOSE -P /Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/sdl3-subbuild/sdl3-populate-prefix/tmp/sdl3-populate-gitupdate.cmake
 
 CMakeFiles/sdl3-populate.dir/codegen:
 .PHONY : CMakeFiles/sdl3-populate.dir/codegen
@@ -157,6 +157,6 @@ CMakeFiles/sdl3-populate.dir/clean:
 .PHONY : CMakeFiles/sdl3-populate.dir/clean
 
 CMakeFiles/sdl3-populate.dir/depend:
-	cd /home/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/sdl3-subbuild && $(CMAKE_COMMAND) -E cmake_depends "Unix Makefiles" /home/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/sdl3-subbuild /home/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/sdl3-subbuild /home/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/sdl3-subbuild /home/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/sdl3-subbuild /home/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/sdl3-subbuild/CMakeFiles/sdl3-populate.dir/DependInfo.cmake "--color=$(COLOR)" sdl3-populate
+	cd /Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/sdl3-subbuild && $(CMAKE_COMMAND) -E cmake_depends "Unix Makefiles" /Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/sdl3-subbuild /Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/sdl3-subbuild /Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/sdl3-subbuild /Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/sdl3-subbuild /Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/sdl3-subbuild/CMakeFiles/sdl3-populate.dir/DependInfo.cmake "--color=$(COLOR)" sdl3-populate
 .PHONY : CMakeFiles/sdl3-populate.dir/depend
 

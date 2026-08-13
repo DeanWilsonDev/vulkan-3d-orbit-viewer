@@ -44,19 +44,19 @@ cmake_force:
 SHELL = /bin/sh
 
 # The CMake executable.
-CMAKE_COMMAND = /usr/bin/cmake
+CMAKE_COMMAND = /opt/homebrew/bin/cmake
 
 # The command to remove a file.
-RM = /usr/bin/cmake -E rm -f
+RM = /opt/homebrew/bin/cmake -E rm -f
 
 # Escaping for special characters.
 EQUALS = =
 
 # The top-level source directory on which CMake was run.
-CMAKE_SOURCE_DIR = /home/deanwilson/development/projects/vulkan-3d-orbit-viewer
+CMAKE_SOURCE_DIR = /Users/deanwilson/development/projects/vulkan-3d-orbit-viewer
 
 # The top-level build directory on which CMake was run.
-CMAKE_BINARY_DIR = /home/deanwilson/development/projects/vulkan-3d-orbit-viewer/build
+CMAKE_BINARY_DIR = /Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/build
 
 # Include any dependencies generated for this target.
 include CMakeFiles/vulkan-orbit-viewer.dir/depend.make
@@ -73,46 +73,46 @@ CMakeFiles/vulkan-orbit-viewer.dir/codegen:
 .PHONY : CMakeFiles/vulkan-orbit-viewer.dir/codegen
 
 CMakeFiles/vulkan-orbit-viewer.dir/src/main.cpp.o: CMakeFiles/vulkan-orbit-viewer.dir/flags.make
-CMakeFiles/vulkan-orbit-viewer.dir/src/main.cpp.o: /home/deanwilson/development/projects/vulkan-3d-orbit-viewer/src/main.cpp
+CMakeFiles/vulkan-orbit-viewer.dir/src/main.cpp.o: /Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/src/main.cpp
 CMakeFiles/vulkan-orbit-viewer.dir/src/main.cpp.o: CMakeFiles/vulkan-orbit-viewer.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_1) "Building CXX object CMakeFiles/vulkan-orbit-viewer.dir/src/main.cpp.o"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/vulkan-orbit-viewer.dir/src/main.cpp.o -MF CMakeFiles/vulkan-orbit-viewer.dir/src/main.cpp.o.d -o CMakeFiles/vulkan-orbit-viewer.dir/src/main.cpp.o -c /home/deanwilson/development/projects/vulkan-3d-orbit-viewer/src/main.cpp
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_1) "Building CXX object CMakeFiles/vulkan-orbit-viewer.dir/src/main.cpp.o"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/vulkan-orbit-viewer.dir/src/main.cpp.o -MF CMakeFiles/vulkan-orbit-viewer.dir/src/main.cpp.o.d -o CMakeFiles/vulkan-orbit-viewer.dir/src/main.cpp.o -c /Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/src/main.cpp
 
 CMakeFiles/vulkan-orbit-viewer.dir/src/main.cpp.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/vulkan-orbit-viewer.dir/src/main.cpp.i"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/deanwilson/development/projects/vulkan-3d-orbit-viewer/src/main.cpp > CMakeFiles/vulkan-orbit-viewer.dir/src/main.cpp.i
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/src/main.cpp > CMakeFiles/vulkan-orbit-viewer.dir/src/main.cpp.i
 
 CMakeFiles/vulkan-orbit-viewer.dir/src/main.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/vulkan-orbit-viewer.dir/src/main.cpp.s"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/deanwilson/development/projects/vulkan-3d-orbit-viewer/src/main.cpp -o CMakeFiles/vulkan-orbit-viewer.dir/src/main.cpp.s
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/src/main.cpp -o CMakeFiles/vulkan-orbit-viewer.dir/src/main.cpp.s
 
 CMakeFiles/vulkan-orbit-viewer.dir/src/sdl-context.cpp.o: CMakeFiles/vulkan-orbit-viewer.dir/flags.make
-CMakeFiles/vulkan-orbit-viewer.dir/src/sdl-context.cpp.o: /home/deanwilson/development/projects/vulkan-3d-orbit-viewer/src/sdl-context.cpp
+CMakeFiles/vulkan-orbit-viewer.dir/src/sdl-context.cpp.o: /Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/src/sdl-context.cpp
 CMakeFiles/vulkan-orbit-viewer.dir/src/sdl-context.cpp.o: CMakeFiles/vulkan-orbit-viewer.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_2) "Building CXX object CMakeFiles/vulkan-orbit-viewer.dir/src/sdl-context.cpp.o"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/vulkan-orbit-viewer.dir/src/sdl-context.cpp.o -MF CMakeFiles/vulkan-orbit-viewer.dir/src/sdl-context.cpp.o.d -o CMakeFiles/vulkan-orbit-viewer.dir/src/sdl-context.cpp.o -c /home/deanwilson/development/projects/vulkan-3d-orbit-viewer/src/sdl-context.cpp
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_2) "Building CXX object CMakeFiles/vulkan-orbit-viewer.dir/src/sdl-context.cpp.o"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/vulkan-orbit-viewer.dir/src/sdl-context.cpp.o -MF CMakeFiles/vulkan-orbit-viewer.dir/src/sdl-context.cpp.o.d -o CMakeFiles/vulkan-orbit-viewer.dir/src/sdl-context.cpp.o -c /Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/src/sdl-context.cpp
 
 CMakeFiles/vulkan-orbit-viewer.dir/src/sdl-context.cpp.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/vulkan-orbit-viewer.dir/src/sdl-context.cpp.i"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/deanwilson/development/projects/vulkan-3d-orbit-viewer/src/sdl-context.cpp > CMakeFiles/vulkan-orbit-viewer.dir/src/sdl-context.cpp.i
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/src/sdl-context.cpp > CMakeFiles/vulkan-orbit-viewer.dir/src/sdl-context.cpp.i
 
 CMakeFiles/vulkan-orbit-viewer.dir/src/sdl-context.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/vulkan-orbit-viewer.dir/src/sdl-context.cpp.s"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/deanwilson/development/projects/vulkan-3d-orbit-viewer/src/sdl-context.cpp -o CMakeFiles/vulkan-orbit-viewer.dir/src/sdl-context.cpp.s
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/src/sdl-context.cpp -o CMakeFiles/vulkan-orbit-viewer.dir/src/sdl-context.cpp.s
 
 CMakeFiles/vulkan-orbit-viewer.dir/src/vulkan-context.cpp.o: CMakeFiles/vulkan-orbit-viewer.dir/flags.make
-CMakeFiles/vulkan-orbit-viewer.dir/src/vulkan-context.cpp.o: /home/deanwilson/development/projects/vulkan-3d-orbit-viewer/src/vulkan-context.cpp
+CMakeFiles/vulkan-orbit-viewer.dir/src/vulkan-context.cpp.o: /Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/src/vulkan-context.cpp
 CMakeFiles/vulkan-orbit-viewer.dir/src/vulkan-context.cpp.o: CMakeFiles/vulkan-orbit-viewer.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_3) "Building CXX object CMakeFiles/vulkan-orbit-viewer.dir/src/vulkan-context.cpp.o"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/vulkan-orbit-viewer.dir/src/vulkan-context.cpp.o -MF CMakeFiles/vulkan-orbit-viewer.dir/src/vulkan-context.cpp.o.d -o CMakeFiles/vulkan-orbit-viewer.dir/src/vulkan-context.cpp.o -c /home/deanwilson/development/projects/vulkan-3d-orbit-viewer/src/vulkan-context.cpp
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_3) "Building CXX object CMakeFiles/vulkan-orbit-viewer.dir/src/vulkan-context.cpp.o"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/vulkan-orbit-viewer.dir/src/vulkan-context.cpp.o -MF CMakeFiles/vulkan-orbit-viewer.dir/src/vulkan-context.cpp.o.d -o CMakeFiles/vulkan-orbit-viewer.dir/src/vulkan-context.cpp.o -c /Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/src/vulkan-context.cpp
 
 CMakeFiles/vulkan-orbit-viewer.dir/src/vulkan-context.cpp.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/vulkan-orbit-viewer.dir/src/vulkan-context.cpp.i"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/deanwilson/development/projects/vulkan-3d-orbit-viewer/src/vulkan-context.cpp > CMakeFiles/vulkan-orbit-viewer.dir/src/vulkan-context.cpp.i
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/src/vulkan-context.cpp > CMakeFiles/vulkan-orbit-viewer.dir/src/vulkan-context.cpp.i
 
 CMakeFiles/vulkan-orbit-viewer.dir/src/vulkan-context.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/vulkan-orbit-viewer.dir/src/vulkan-context.cpp.s"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/deanwilson/development/projects/vulkan-3d-orbit-viewer/src/vulkan-context.cpp -o CMakeFiles/vulkan-orbit-viewer.dir/src/vulkan-context.cpp.s
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/src/vulkan-context.cpp -o CMakeFiles/vulkan-orbit-viewer.dir/src/vulkan-context.cpp.s
 
 # Object files for target vulkan-orbit-viewer
 vulkan__orbit__viewer_OBJECTS = \
@@ -127,14 +127,13 @@ vulkan-orbit-viewer: CMakeFiles/vulkan-orbit-viewer.dir/src/main.cpp.o
 vulkan-orbit-viewer: CMakeFiles/vulkan-orbit-viewer.dir/src/sdl-context.cpp.o
 vulkan-orbit-viewer: CMakeFiles/vulkan-orbit-viewer.dir/src/vulkan-context.cpp.o
 vulkan-orbit-viewer: CMakeFiles/vulkan-orbit-viewer.dir/build.make
-vulkan-orbit-viewer: CMakeFiles/vulkan-orbit-viewer.dir/compiler_depend.ts
-vulkan-orbit-viewer: _deps/sdl3-build/libSDL3.so.0.4.14
+vulkan-orbit-viewer: _deps/sdl3-build/libSDL3.0.dylib
 vulkan-orbit-viewer: _deps/glm-build/glm/libglm.a
-vulkan-orbit-viewer: /usr/lib/libvulkan.so
+vulkan-orbit-viewer: /Users/deanwilson/VulkanSDK/1.4.350.0/macOS/lib/libvulkan.dylib
 vulkan-orbit-viewer: _deps/tinyobjloader-build/libtinyobjloader.a
 vulkan-orbit-viewer: _deps/sdl3-src/src/dynapi/SDL_dynapi.sym
 vulkan-orbit-viewer: CMakeFiles/vulkan-orbit-viewer.dir/link.txt
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --bold --progress-dir=/home/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_4) "Linking CXX executable vulkan-orbit-viewer"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --bold --progress-dir=/Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_4) "Linking CXX executable vulkan-orbit-viewer"
 	$(CMAKE_COMMAND) -E cmake_link_script CMakeFiles/vulkan-orbit-viewer.dir/link.txt --verbose=$(VERBOSE)
 
 # Rule to build all files generated by this target.
@@ -146,6 +145,6 @@ CMakeFiles/vulkan-orbit-viewer.dir/clean:
 .PHONY : CMakeFiles/vulkan-orbit-viewer.dir/clean
 
 CMakeFiles/vulkan-orbit-viewer.dir/depend:
-	cd /home/deanwilson/development/projects/vulkan-3d-orbit-viewer/build && $(CMAKE_COMMAND) -E cmake_depends "Unix Makefiles" /home/deanwilson/development/projects/vulkan-3d-orbit-viewer /home/deanwilson/development/projects/vulkan-3d-orbit-viewer /home/deanwilson/development/projects/vulkan-3d-orbit-viewer/build /home/deanwilson/development/projects/vulkan-3d-orbit-viewer/build /home/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/CMakeFiles/vulkan-orbit-viewer.dir/DependInfo.cmake "--color=$(COLOR)" vulkan-orbit-viewer
+	cd /Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/build && $(CMAKE_COMMAND) -E cmake_depends "Unix Makefiles" /Users/deanwilson/development/projects/vulkan-3d-orbit-viewer /Users/deanwilson/development/projects/vulkan-3d-orbit-viewer /Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/build /Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/build /Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/CMakeFiles/vulkan-orbit-viewer.dir/DependInfo.cmake "--color=$(COLOR)" vulkan-orbit-viewer
 .PHONY : CMakeFiles/vulkan-orbit-viewer.dir/depend
 

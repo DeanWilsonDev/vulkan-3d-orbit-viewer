@@ -44,19 +44,19 @@ cmake_force:
 SHELL = /bin/sh
 
 # The CMake executable.
-CMAKE_COMMAND = /usr/bin/cmake
+CMAKE_COMMAND = /opt/homebrew/bin/cmake
 
 # The command to remove a file.
-RM = /usr/bin/cmake -E rm -f
+RM = /opt/homebrew/bin/cmake -E rm -f
 
 # Escaping for special characters.
 EQUALS = =
 
 # The top-level source directory on which CMake was run.
-CMAKE_SOURCE_DIR = /home/deanwilson/development/projects/vulkan-3d-orbit-viewer
+CMAKE_SOURCE_DIR = /Users/deanwilson/development/projects/vulkan-3d-orbit-viewer
 
 # The top-level build directory on which CMake was run.
-CMAKE_BINARY_DIR = /home/deanwilson/development/projects/vulkan-3d-orbit-viewer/build
+CMAKE_BINARY_DIR = /Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/build
 
 # Include any dependencies generated for this target.
 include _deps/tinyobjloader-build/CMakeFiles/tinyobjloader.dir/depend.make
@@ -75,16 +75,16 @@ _deps/tinyobjloader-build/CMakeFiles/tinyobjloader.dir/codegen:
 _deps/tinyobjloader-build/CMakeFiles/tinyobjloader.dir/tiny_obj_loader.cc.o: _deps/tinyobjloader-build/CMakeFiles/tinyobjloader.dir/flags.make
 _deps/tinyobjloader-build/CMakeFiles/tinyobjloader.dir/tiny_obj_loader.cc.o: _deps/tinyobjloader-src/tiny_obj_loader.cc
 _deps/tinyobjloader-build/CMakeFiles/tinyobjloader.dir/tiny_obj_loader.cc.o: _deps/tinyobjloader-build/CMakeFiles/tinyobjloader.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_1) "Building CXX object _deps/tinyobjloader-build/CMakeFiles/tinyobjloader.dir/tiny_obj_loader.cc.o"
-	cd /home/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/tinyobjloader-build && /usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT _deps/tinyobjloader-build/CMakeFiles/tinyobjloader.dir/tiny_obj_loader.cc.o -MF CMakeFiles/tinyobjloader.dir/tiny_obj_loader.cc.o.d -o CMakeFiles/tinyobjloader.dir/tiny_obj_loader.cc.o -c /home/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/tinyobjloader-src/tiny_obj_loader.cc
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_1) "Building CXX object _deps/tinyobjloader-build/CMakeFiles/tinyobjloader.dir/tiny_obj_loader.cc.o"
+	cd /Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/tinyobjloader-build && /usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT _deps/tinyobjloader-build/CMakeFiles/tinyobjloader.dir/tiny_obj_loader.cc.o -MF CMakeFiles/tinyobjloader.dir/tiny_obj_loader.cc.o.d -o CMakeFiles/tinyobjloader.dir/tiny_obj_loader.cc.o -c /Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/tinyobjloader-src/tiny_obj_loader.cc
 
 _deps/tinyobjloader-build/CMakeFiles/tinyobjloader.dir/tiny_obj_loader.cc.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/tinyobjloader.dir/tiny_obj_loader.cc.i"
-	cd /home/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/tinyobjloader-build && /usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/tinyobjloader-src/tiny_obj_loader.cc > CMakeFiles/tinyobjloader.dir/tiny_obj_loader.cc.i
+	cd /Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/tinyobjloader-build && /usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/tinyobjloader-src/tiny_obj_loader.cc > CMakeFiles/tinyobjloader.dir/tiny_obj_loader.cc.i
 
 _deps/tinyobjloader-build/CMakeFiles/tinyobjloader.dir/tiny_obj_loader.cc.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/tinyobjloader.dir/tiny_obj_loader.cc.s"
-	cd /home/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/tinyobjloader-build && /usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/tinyobjloader-src/tiny_obj_loader.cc -o CMakeFiles/tinyobjloader.dir/tiny_obj_loader.cc.s
+	cd /Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/tinyobjloader-build && /usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/tinyobjloader-src/tiny_obj_loader.cc -o CMakeFiles/tinyobjloader.dir/tiny_obj_loader.cc.s
 
 # Object files for target tinyobjloader
 tinyobjloader_OBJECTS = \
@@ -96,19 +96,19 @@ tinyobjloader_EXTERNAL_OBJECTS =
 _deps/tinyobjloader-build/libtinyobjloader.a: _deps/tinyobjloader-build/CMakeFiles/tinyobjloader.dir/tiny_obj_loader.cc.o
 _deps/tinyobjloader-build/libtinyobjloader.a: _deps/tinyobjloader-build/CMakeFiles/tinyobjloader.dir/build.make
 _deps/tinyobjloader-build/libtinyobjloader.a: _deps/tinyobjloader-build/CMakeFiles/tinyobjloader.dir/link.txt
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --bold --progress-dir=/home/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_2) "Linking CXX static library libtinyobjloader.a"
-	cd /home/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/tinyobjloader-build && $(CMAKE_COMMAND) -P CMakeFiles/tinyobjloader.dir/cmake_clean_target.cmake
-	cd /home/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/tinyobjloader-build && $(CMAKE_COMMAND) -E cmake_link_script CMakeFiles/tinyobjloader.dir/link.txt --verbose=$(VERBOSE)
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --bold --progress-dir=/Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_2) "Linking CXX static library libtinyobjloader.a"
+	cd /Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/tinyobjloader-build && $(CMAKE_COMMAND) -P CMakeFiles/tinyobjloader.dir/cmake_clean_target.cmake
+	cd /Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/tinyobjloader-build && $(CMAKE_COMMAND) -E cmake_link_script CMakeFiles/tinyobjloader.dir/link.txt --verbose=$(VERBOSE)
 
 # Rule to build all files generated by this target.
 _deps/tinyobjloader-build/CMakeFiles/tinyobjloader.dir/build: _deps/tinyobjloader-build/libtinyobjloader.a
 .PHONY : _deps/tinyobjloader-build/CMakeFiles/tinyobjloader.dir/build
 
 _deps/tinyobjloader-build/CMakeFiles/tinyobjloader.dir/clean:
-	cd /home/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/tinyobjloader-build && $(CMAKE_COMMAND) -P CMakeFiles/tinyobjloader.dir/cmake_clean.cmake
+	cd /Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/tinyobjloader-build && $(CMAKE_COMMAND) -P CMakeFiles/tinyobjloader.dir/cmake_clean.cmake
 .PHONY : _deps/tinyobjloader-build/CMakeFiles/tinyobjloader.dir/clean
 
 _deps/tinyobjloader-build/CMakeFiles/tinyobjloader.dir/depend:
-	cd /home/deanwilson/development/projects/vulkan-3d-orbit-viewer/build && $(CMAKE_COMMAND) -E cmake_depends "Unix Makefiles" /home/deanwilson/development/projects/vulkan-3d-orbit-viewer /home/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/tinyobjloader-src /home/deanwilson/development/projects/vulkan-3d-orbit-viewer/build /home/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/tinyobjloader-build /home/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/tinyobjloader-build/CMakeFiles/tinyobjloader.dir/DependInfo.cmake "--color=$(COLOR)" tinyobjloader
+	cd /Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/build && $(CMAKE_COMMAND) -E cmake_depends "Unix Makefiles" /Users/deanwilson/development/projects/vulkan-3d-orbit-viewer /Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/tinyobjloader-src /Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/build /Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/tinyobjloader-build /Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/tinyobjloader-build/CMakeFiles/tinyobjloader.dir/DependInfo.cmake "--color=$(COLOR)" tinyobjloader
 .PHONY : _deps/tinyobjloader-build/CMakeFiles/tinyobjloader.dir/depend
 

@@ -19,17 +19,17 @@ project(stb-populate NONE)
 # Pass through things we've already detected in the main project to avoid
 # paying the cost of redetecting them again in ExternalProject_Add()
 set(GIT_EXECUTABLE [==[/usr/bin/git]==])
-set(Git_VERSION [==[2.55.0]==])
+set(Git_VERSION [==[2.50.1 (Apple Git-155)]==])
 set_property(GLOBAL PROPERTY _CMAKE_FindGit_GIT_EXECUTABLE_VERSION
-  [==[/usr/bin/git;2.55.0]==]
+  [==[/usr/bin/git;2.50.1 (Apple Git-155)]==]
 )
 
 
 include(ExternalProject)
 ExternalProject_Add(stb-populate
                      "UPDATE_DISCONNECTED" "False" "GIT_REPOSITORY" "https://github.com/nothings/stb.git" "EXTERNALPROJECT_INTERNAL_ARGUMENT_SEPARATOR" "GIT_TAG" "master" "GIT_SHALLOW" "TRUE"
-                    SOURCE_DIR          "/home/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/stb-src"
-                    BINARY_DIR          "/home/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/stb-build"
+                    SOURCE_DIR          "/Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/stb-src"
+                    BINARY_DIR          "/Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/stb-build"
                     CONFIGURE_COMMAND   ""
                     BUILD_COMMAND       ""
                     INSTALL_COMMAND     ""

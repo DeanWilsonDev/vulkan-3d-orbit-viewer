@@ -44,19 +44,19 @@ cmake_force:
 SHELL = /bin/sh
 
 # The CMake executable.
-CMAKE_COMMAND = /usr/bin/cmake
+CMAKE_COMMAND = /opt/homebrew/bin/cmake
 
 # The command to remove a file.
-RM = /usr/bin/cmake -E rm -f
+RM = /opt/homebrew/bin/cmake -E rm -f
 
 # Escaping for special characters.
 EQUALS = =
 
 # The top-level source directory on which CMake was run.
-CMAKE_SOURCE_DIR = /home/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/tinyobjloader-subbuild
+CMAKE_SOURCE_DIR = /Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/tinyobjloader-subbuild
 
 # The top-level build directory on which CMake was run.
-CMAKE_BINARY_DIR = /home/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/tinyobjloader-subbuild
+CMAKE_BINARY_DIR = /Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/tinyobjloader-subbuild
 
 # Utility rule file for tinyobjloader-populate.
 
@@ -77,60 +77,60 @@ CMakeFiles/tinyobjloader-populate-complete: tinyobjloader-populate-prefix/src/ti
 CMakeFiles/tinyobjloader-populate-complete: tinyobjloader-populate-prefix/src/tinyobjloader-populate-stamp/tinyobjloader-populate-build
 CMakeFiles/tinyobjloader-populate-complete: tinyobjloader-populate-prefix/src/tinyobjloader-populate-stamp/tinyobjloader-populate-install
 CMakeFiles/tinyobjloader-populate-complete: tinyobjloader-populate-prefix/src/tinyobjloader-populate-stamp/tinyobjloader-populate-test
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --blue --bold --progress-dir=/home/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/tinyobjloader-subbuild/CMakeFiles --progress-num=$(CMAKE_PROGRESS_1) "Completed 'tinyobjloader-populate'"
-	/usr/bin/cmake -E make_directory /home/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/tinyobjloader-subbuild/CMakeFiles
-	/usr/bin/cmake -E touch /home/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/tinyobjloader-subbuild/CMakeFiles/tinyobjloader-populate-complete
-	/usr/bin/cmake -E touch /home/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/tinyobjloader-subbuild/tinyobjloader-populate-prefix/src/tinyobjloader-populate-stamp/tinyobjloader-populate-done
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --blue --bold --progress-dir=/Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/tinyobjloader-subbuild/CMakeFiles --progress-num=$(CMAKE_PROGRESS_1) "Completed 'tinyobjloader-populate'"
+	/opt/homebrew/bin/cmake -E make_directory /Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/tinyobjloader-subbuild/CMakeFiles
+	/opt/homebrew/bin/cmake -E touch /Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/tinyobjloader-subbuild/CMakeFiles/tinyobjloader-populate-complete
+	/opt/homebrew/bin/cmake -E touch /Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/tinyobjloader-subbuild/tinyobjloader-populate-prefix/src/tinyobjloader-populate-stamp/tinyobjloader-populate-done
 
 tinyobjloader-populate-prefix/src/tinyobjloader-populate-stamp/tinyobjloader-populate-update:
 .PHONY : tinyobjloader-populate-prefix/src/tinyobjloader-populate-stamp/tinyobjloader-populate-update
 
 tinyobjloader-populate-prefix/src/tinyobjloader-populate-stamp/tinyobjloader-populate-build: tinyobjloader-populate-prefix/src/tinyobjloader-populate-stamp/tinyobjloader-populate-configure
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --blue --bold --progress-dir=/home/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/tinyobjloader-subbuild/CMakeFiles --progress-num=$(CMAKE_PROGRESS_2) "No build step for 'tinyobjloader-populate'"
-	cd /home/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/tinyobjloader-build && /usr/bin/cmake -E echo_append
-	cd /home/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/tinyobjloader-build && /usr/bin/cmake -E touch /home/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/tinyobjloader-subbuild/tinyobjloader-populate-prefix/src/tinyobjloader-populate-stamp/tinyobjloader-populate-build
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --blue --bold --progress-dir=/Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/tinyobjloader-subbuild/CMakeFiles --progress-num=$(CMAKE_PROGRESS_2) "No build step for 'tinyobjloader-populate'"
+	cd /Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/tinyobjloader-build && /opt/homebrew/bin/cmake -E echo_append
+	cd /Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/tinyobjloader-build && /opt/homebrew/bin/cmake -E touch /Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/tinyobjloader-subbuild/tinyobjloader-populate-prefix/src/tinyobjloader-populate-stamp/tinyobjloader-populate-build
 
 tinyobjloader-populate-prefix/src/tinyobjloader-populate-stamp/tinyobjloader-populate-configure: tinyobjloader-populate-prefix/tmp/tinyobjloader-populate-cfgcmd.txt
 tinyobjloader-populate-prefix/src/tinyobjloader-populate-stamp/tinyobjloader-populate-configure: tinyobjloader-populate-prefix/src/tinyobjloader-populate-stamp/tinyobjloader-populate-patch
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --blue --bold --progress-dir=/home/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/tinyobjloader-subbuild/CMakeFiles --progress-num=$(CMAKE_PROGRESS_3) "No configure step for 'tinyobjloader-populate'"
-	cd /home/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/tinyobjloader-build && /usr/bin/cmake -E echo_append
-	cd /home/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/tinyobjloader-build && /usr/bin/cmake -E touch /home/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/tinyobjloader-subbuild/tinyobjloader-populate-prefix/src/tinyobjloader-populate-stamp/tinyobjloader-populate-configure
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --blue --bold --progress-dir=/Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/tinyobjloader-subbuild/CMakeFiles --progress-num=$(CMAKE_PROGRESS_3) "No configure step for 'tinyobjloader-populate'"
+	cd /Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/tinyobjloader-build && /opt/homebrew/bin/cmake -E echo_append
+	cd /Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/tinyobjloader-build && /opt/homebrew/bin/cmake -E touch /Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/tinyobjloader-subbuild/tinyobjloader-populate-prefix/src/tinyobjloader-populate-stamp/tinyobjloader-populate-configure
 
 tinyobjloader-populate-prefix/src/tinyobjloader-populate-stamp/tinyobjloader-populate-download: tinyobjloader-populate-prefix/src/tinyobjloader-populate-stamp/tinyobjloader-populate-gitinfo.txt
 tinyobjloader-populate-prefix/src/tinyobjloader-populate-stamp/tinyobjloader-populate-download: tinyobjloader-populate-prefix/src/tinyobjloader-populate-stamp/tinyobjloader-populate-mkdir
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --blue --bold --progress-dir=/home/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/tinyobjloader-subbuild/CMakeFiles --progress-num=$(CMAKE_PROGRESS_4) "Performing download step (git clone) for 'tinyobjloader-populate'"
-	cd /home/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps && /usr/bin/cmake -DCMAKE_MESSAGE_LOG_LEVEL=VERBOSE -P /home/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/tinyobjloader-subbuild/tinyobjloader-populate-prefix/tmp/tinyobjloader-populate-gitclone.cmake
-	cd /home/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps && /usr/bin/cmake -E touch /home/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/tinyobjloader-subbuild/tinyobjloader-populate-prefix/src/tinyobjloader-populate-stamp/tinyobjloader-populate-download
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --blue --bold --progress-dir=/Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/tinyobjloader-subbuild/CMakeFiles --progress-num=$(CMAKE_PROGRESS_4) "Performing download step (git clone) for 'tinyobjloader-populate'"
+	cd /Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps && /opt/homebrew/bin/cmake -DCMAKE_MESSAGE_LOG_LEVEL=VERBOSE -P /Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/tinyobjloader-subbuild/tinyobjloader-populate-prefix/tmp/tinyobjloader-populate-gitclone.cmake
+	cd /Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps && /opt/homebrew/bin/cmake -E touch /Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/tinyobjloader-subbuild/tinyobjloader-populate-prefix/src/tinyobjloader-populate-stamp/tinyobjloader-populate-download
 
 tinyobjloader-populate-prefix/src/tinyobjloader-populate-stamp/tinyobjloader-populate-install: tinyobjloader-populate-prefix/src/tinyobjloader-populate-stamp/tinyobjloader-populate-build
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --blue --bold --progress-dir=/home/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/tinyobjloader-subbuild/CMakeFiles --progress-num=$(CMAKE_PROGRESS_5) "No install step for 'tinyobjloader-populate'"
-	cd /home/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/tinyobjloader-build && /usr/bin/cmake -E echo_append
-	cd /home/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/tinyobjloader-build && /usr/bin/cmake -E touch /home/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/tinyobjloader-subbuild/tinyobjloader-populate-prefix/src/tinyobjloader-populate-stamp/tinyobjloader-populate-install
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --blue --bold --progress-dir=/Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/tinyobjloader-subbuild/CMakeFiles --progress-num=$(CMAKE_PROGRESS_5) "No install step for 'tinyobjloader-populate'"
+	cd /Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/tinyobjloader-build && /opt/homebrew/bin/cmake -E echo_append
+	cd /Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/tinyobjloader-build && /opt/homebrew/bin/cmake -E touch /Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/tinyobjloader-subbuild/tinyobjloader-populate-prefix/src/tinyobjloader-populate-stamp/tinyobjloader-populate-install
 
 tinyobjloader-populate-prefix/src/tinyobjloader-populate-stamp/tinyobjloader-populate-mkdir:
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --blue --bold --progress-dir=/home/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/tinyobjloader-subbuild/CMakeFiles --progress-num=$(CMAKE_PROGRESS_6) "Creating directories for 'tinyobjloader-populate'"
-	/usr/bin/cmake -Dcfgdir= -P /home/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/tinyobjloader-subbuild/tinyobjloader-populate-prefix/tmp/tinyobjloader-populate-mkdirs.cmake
-	/usr/bin/cmake -E touch /home/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/tinyobjloader-subbuild/tinyobjloader-populate-prefix/src/tinyobjloader-populate-stamp/tinyobjloader-populate-mkdir
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --blue --bold --progress-dir=/Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/tinyobjloader-subbuild/CMakeFiles --progress-num=$(CMAKE_PROGRESS_6) "Creating directories for 'tinyobjloader-populate'"
+	/opt/homebrew/bin/cmake -Dcfgdir= -P /Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/tinyobjloader-subbuild/tinyobjloader-populate-prefix/tmp/tinyobjloader-populate-mkdirs.cmake
+	/opt/homebrew/bin/cmake -E touch /Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/tinyobjloader-subbuild/tinyobjloader-populate-prefix/src/tinyobjloader-populate-stamp/tinyobjloader-populate-mkdir
 
 tinyobjloader-populate-prefix/src/tinyobjloader-populate-stamp/tinyobjloader-populate-patch: tinyobjloader-populate-prefix/src/tinyobjloader-populate-stamp/tinyobjloader-populate-patch-info.txt
 tinyobjloader-populate-prefix/src/tinyobjloader-populate-stamp/tinyobjloader-populate-patch: tinyobjloader-populate-prefix/src/tinyobjloader-populate-stamp/tinyobjloader-populate-update
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --blue --bold --progress-dir=/home/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/tinyobjloader-subbuild/CMakeFiles --progress-num=$(CMAKE_PROGRESS_7) "No patch step for 'tinyobjloader-populate'"
-	/usr/bin/cmake -E echo_append
-	/usr/bin/cmake -E touch /home/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/tinyobjloader-subbuild/tinyobjloader-populate-prefix/src/tinyobjloader-populate-stamp/tinyobjloader-populate-patch
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --blue --bold --progress-dir=/Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/tinyobjloader-subbuild/CMakeFiles --progress-num=$(CMAKE_PROGRESS_7) "No patch step for 'tinyobjloader-populate'"
+	/opt/homebrew/bin/cmake -E echo_append
+	/opt/homebrew/bin/cmake -E touch /Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/tinyobjloader-subbuild/tinyobjloader-populate-prefix/src/tinyobjloader-populate-stamp/tinyobjloader-populate-patch
 
 tinyobjloader-populate-prefix/src/tinyobjloader-populate-stamp/tinyobjloader-populate-update:
 .PHONY : tinyobjloader-populate-prefix/src/tinyobjloader-populate-stamp/tinyobjloader-populate-update
 
 tinyobjloader-populate-prefix/src/tinyobjloader-populate-stamp/tinyobjloader-populate-test: tinyobjloader-populate-prefix/src/tinyobjloader-populate-stamp/tinyobjloader-populate-install
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --blue --bold --progress-dir=/home/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/tinyobjloader-subbuild/CMakeFiles --progress-num=$(CMAKE_PROGRESS_8) "No test step for 'tinyobjloader-populate'"
-	cd /home/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/tinyobjloader-build && /usr/bin/cmake -E echo_append
-	cd /home/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/tinyobjloader-build && /usr/bin/cmake -E touch /home/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/tinyobjloader-subbuild/tinyobjloader-populate-prefix/src/tinyobjloader-populate-stamp/tinyobjloader-populate-test
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --blue --bold --progress-dir=/Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/tinyobjloader-subbuild/CMakeFiles --progress-num=$(CMAKE_PROGRESS_8) "No test step for 'tinyobjloader-populate'"
+	cd /Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/tinyobjloader-build && /opt/homebrew/bin/cmake -E echo_append
+	cd /Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/tinyobjloader-build && /opt/homebrew/bin/cmake -E touch /Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/tinyobjloader-subbuild/tinyobjloader-populate-prefix/src/tinyobjloader-populate-stamp/tinyobjloader-populate-test
 
 tinyobjloader-populate-prefix/src/tinyobjloader-populate-stamp/tinyobjloader-populate-update: tinyobjloader-populate-prefix/tmp/tinyobjloader-populate-gitupdate.cmake
 tinyobjloader-populate-prefix/src/tinyobjloader-populate-stamp/tinyobjloader-populate-update: tinyobjloader-populate-prefix/src/tinyobjloader-populate-stamp/tinyobjloader-populate-update-info.txt
 tinyobjloader-populate-prefix/src/tinyobjloader-populate-stamp/tinyobjloader-populate-update: tinyobjloader-populate-prefix/src/tinyobjloader-populate-stamp/tinyobjloader-populate-download
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --blue --bold --progress-dir=/home/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/tinyobjloader-subbuild/CMakeFiles --progress-num=$(CMAKE_PROGRESS_9) "Performing update step for 'tinyobjloader-populate'"
-	cd /home/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/tinyobjloader-src && /usr/bin/cmake -Dcan_fetch=YES -DCMAKE_MESSAGE_LOG_LEVEL=VERBOSE -P /home/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/tinyobjloader-subbuild/tinyobjloader-populate-prefix/tmp/tinyobjloader-populate-gitupdate.cmake
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --blue --bold --progress-dir=/Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/tinyobjloader-subbuild/CMakeFiles --progress-num=$(CMAKE_PROGRESS_9) "Performing update step for 'tinyobjloader-populate'"
+	cd /Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/tinyobjloader-src && /opt/homebrew/bin/cmake -Dcan_fetch=YES -DCMAKE_MESSAGE_LOG_LEVEL=VERBOSE -P /Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/tinyobjloader-subbuild/tinyobjloader-populate-prefix/tmp/tinyobjloader-populate-gitupdate.cmake
 
 CMakeFiles/tinyobjloader-populate.dir/codegen:
 .PHONY : CMakeFiles/tinyobjloader-populate.dir/codegen
@@ -157,6 +157,6 @@ CMakeFiles/tinyobjloader-populate.dir/clean:
 .PHONY : CMakeFiles/tinyobjloader-populate.dir/clean
 
 CMakeFiles/tinyobjloader-populate.dir/depend:
-	cd /home/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/tinyobjloader-subbuild && $(CMAKE_COMMAND) -E cmake_depends "Unix Makefiles" /home/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/tinyobjloader-subbuild /home/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/tinyobjloader-subbuild /home/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/tinyobjloader-subbuild /home/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/tinyobjloader-subbuild /home/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/tinyobjloader-subbuild/CMakeFiles/tinyobjloader-populate.dir/DependInfo.cmake "--color=$(COLOR)" tinyobjloader-populate
+	cd /Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/tinyobjloader-subbuild && $(CMAKE_COMMAND) -E cmake_depends "Unix Makefiles" /Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/tinyobjloader-subbuild /Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/tinyobjloader-subbuild /Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/tinyobjloader-subbuild /Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/tinyobjloader-subbuild /Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/tinyobjloader-subbuild/CMakeFiles/tinyobjloader-populate.dir/DependInfo.cmake "--color=$(COLOR)" tinyobjloader-populate
 .PHONY : CMakeFiles/tinyobjloader-populate.dir/depend
 

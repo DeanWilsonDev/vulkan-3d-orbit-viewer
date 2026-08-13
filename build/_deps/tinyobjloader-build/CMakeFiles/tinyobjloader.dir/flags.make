@@ -6,5 +6,7 @@ CXX_DEFINES =
 
 CXX_INCLUDES = 
 
-CXX_FLAGS = -std=c++11
+CXX_FLAGSarm64 = -std=c++11 -arch arm64
+
+CXX_FLAGS = -std=c++11 -arch arm64
 

@@ -3,9 +3,9 @@
 # No other meaning or use of this file is supported.
 
 method=git
-command=/usr/bin/cmake;-DCMAKE_MESSAGE_LOG_LEVEL=VERBOSE;-P;/home/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/tinyobjloader-subbuild/tinyobjloader-populate-prefix/tmp/tinyobjloader-populate-gitclone.cmake
-source_dir=/home/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/tinyobjloader-src
-work_dir=/home/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps
+command=/opt/homebrew/bin/cmake;-DCMAKE_MESSAGE_LOG_LEVEL=VERBOSE;-P;/Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/tinyobjloader-subbuild/tinyobjloader-populate-prefix/tmp/tinyobjloader-populate-gitclone.cmake
+source_dir=/Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/tinyobjloader-src
+work_dir=/Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps
 repository=https://github.com/tinyobjloader/tinyobjloader.git
 remote=origin
 init_submodules=TRUE

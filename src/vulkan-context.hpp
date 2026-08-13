@@ -2,20 +2,13 @@
 
 #include <SDL3/SDL_video.h>
 #include <vulkan/vulkan.h>
+#include "application-info.hpp"
 
 #include <string>
 #include <cstdint>
 #include <optional>
 
 namespace Renderer3D {
-
-struct ApplicationInfo {
-  const char* applicationName = "3D Renderer";
-  uint32_t applicationVersion = VK_MAKE_VERSION(0, 1, 0);
-  const char* engineName = "No Engine";
-  uint32_t engineVersion = VK_MAKE_VERSION(0, 1, 0);
-  uint32_t apiVersion = VK_API_VERSION_1_3;
-};
 
 struct QueueFamilyIndicies {
   std::optional<uint32_t> graphics;
@@ -26,7 +19,7 @@ struct QueueFamilyIndicies {
 
 class VulkanContext {
  public:
-  VulkanContext(SDL_Window* window, bool enableValidation);
+  VulkanContext(SDL_Window* window, const ApplicationInfo& appInfo, bool enableValidation);
 
   ~VulkanContext();
 

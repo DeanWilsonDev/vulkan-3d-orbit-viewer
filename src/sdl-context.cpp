@@ -31,7 +31,7 @@ SdlContext::~SdlContext()
   SDL_Quit();
 }
 
-bool SdlContext::processEvents()
+bool SdlContext::ProcessEvents()
 {
   SDL_Event event;
 

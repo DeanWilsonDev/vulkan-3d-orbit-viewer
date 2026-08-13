@@ -15,7 +15,7 @@ class SdlContext {
   SdlContext(const SdlContext&) = delete;
   SdlContext& operator=(const SdlContext&) = delete;
 
-  bool processEvents();
+  bool ProcessEvents();
 
   SDL_Window* GetWindow() const { return this->window; }
 

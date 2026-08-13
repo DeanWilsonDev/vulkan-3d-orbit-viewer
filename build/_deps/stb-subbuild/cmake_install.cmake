@@ -1,4 +1,4 @@
-# Install script for directory: /home/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/stb-subbuild
+# Install script for directory: /Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/stb-subbuild
 
 # Set the install prefix
 if(NOT DEFINED CMAKE_INSTALL_PREFIX)
@@ -27,11 +27,6 @@ if(NOT CMAKE_INSTALL_COMPONENT)
   endif()
 endif()
 
-# Install shared libraries without execute permission?
-if(NOT DEFINED CMAKE_INSTALL_SO_NO_EXE)
-  set(CMAKE_INSTALL_SO_NO_EXE "0")
-endif()
-
 # Is this installation the result of a crosscompile?
 if(NOT DEFINED CMAKE_CROSSCOMPILING)
   set(CMAKE_CROSSCOMPILING "FALSE")
@@ -40,7 +35,7 @@ endif()
 string(REPLACE ";" "\n" CMAKE_INSTALL_MANIFEST_CONTENT
        "${CMAKE_INSTALL_MANIFEST_FILES}")
 if(CMAKE_INSTALL_LOCAL_ONLY)
-  file(WRITE "/home/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/stb-subbuild/install_local_manifest.txt"
+  file(WRITE "/Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/stb-subbuild/install_local_manifest.txt"
      "${CMAKE_INSTALL_MANIFEST_CONTENT}")
 endif()
 if(CMAKE_INSTALL_COMPONENT)
@@ -56,6 +51,6 @@ else()
 endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
-  file(WRITE "/home/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/stb-subbuild/${CMAKE_INSTALL_MANIFEST}"
+  file(WRITE "/Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/stb-subbuild/${CMAKE_INSTALL_MANIFEST}"
      "${CMAKE_INSTALL_MANIFEST_CONTENT}")
 endif()

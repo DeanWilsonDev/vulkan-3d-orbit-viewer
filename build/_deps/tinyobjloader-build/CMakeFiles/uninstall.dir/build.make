@@ -44,19 +44,19 @@ cmake_force:
 SHELL = /bin/sh
 
 # The CMake executable.
-CMAKE_COMMAND = /usr/bin/cmake
+CMAKE_COMMAND = /opt/homebrew/bin/cmake
 
 # The command to remove a file.
-RM = /usr/bin/cmake -E rm -f
+RM = /opt/homebrew/bin/cmake -E rm -f
 
 # Escaping for special characters.
 EQUALS = =
 
 # The top-level source directory on which CMake was run.
-CMAKE_SOURCE_DIR = /home/deanwilson/development/projects/vulkan-3d-orbit-viewer
+CMAKE_SOURCE_DIR = /Users/deanwilson/development/projects/vulkan-3d-orbit-viewer
 
 # The top-level build directory on which CMake was run.
-CMAKE_BINARY_DIR = /home/deanwilson/development/projects/vulkan-3d-orbit-viewer/build
+CMAKE_BINARY_DIR = /Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/build
 
 # Utility rule file for uninstall.
 
@@ -67,7 +67,7 @@ include _deps/tinyobjloader-build/CMakeFiles/uninstall.dir/compiler_depend.make
 include _deps/tinyobjloader-build/CMakeFiles/uninstall.dir/progress.make
 
 _deps/tinyobjloader-build/CMakeFiles/uninstall:
-	cd /home/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/tinyobjloader-build && /usr/bin/cmake -P /home/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/tinyobjloader-build/cmake_uninstall.cmake
+	cd /Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/tinyobjloader-build && /opt/homebrew/bin/cmake -P /Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/tinyobjloader-build/cmake_uninstall.cmake
 
 _deps/tinyobjloader-build/CMakeFiles/uninstall.dir/codegen:
 .PHONY : _deps/tinyobjloader-build/CMakeFiles/uninstall.dir/codegen
@@ -81,10 +81,10 @@ _deps/tinyobjloader-build/CMakeFiles/uninstall.dir/build: uninstall
 .PHONY : _deps/tinyobjloader-build/CMakeFiles/uninstall.dir/build
 
 _deps/tinyobjloader-build/CMakeFiles/uninstall.dir/clean:
-	cd /home/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/tinyobjloader-build && $(CMAKE_COMMAND) -P CMakeFiles/uninstall.dir/cmake_clean.cmake
+	cd /Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/tinyobjloader-build && $(CMAKE_COMMAND) -P CMakeFiles/uninstall.dir/cmake_clean.cmake
 .PHONY : _deps/tinyobjloader-build/CMakeFiles/uninstall.dir/clean
 
 _deps/tinyobjloader-build/CMakeFiles/uninstall.dir/depend:
-	cd /home/deanwilson/development/projects/vulkan-3d-orbit-viewer/build && $(CMAKE_COMMAND) -E cmake_depends "Unix Makefiles" /home/deanwilson/development/projects/vulkan-3d-orbit-viewer /home/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/tinyobjloader-src /home/deanwilson/development/projects/vulkan-3d-orbit-viewer/build /home/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/tinyobjloader-build /home/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/tinyobjloader-build/CMakeFiles/uninstall.dir/DependInfo.cmake "--color=$(COLOR)" uninstall
+	cd /Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/build && $(CMAKE_COMMAND) -E cmake_depends "Unix Makefiles" /Users/deanwilson/development/projects/vulkan-3d-orbit-viewer /Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/tinyobjloader-src /Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/build /Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/tinyobjloader-build /Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/tinyobjloader-build/CMakeFiles/uninstall.dir/DependInfo.cmake "--color=$(COLOR)" uninstall
 .PHONY : _deps/tinyobjloader-build/CMakeFiles/uninstall.dir/depend
 

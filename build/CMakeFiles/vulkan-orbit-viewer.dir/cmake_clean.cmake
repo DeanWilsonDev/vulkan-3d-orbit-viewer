@@ -1,5 +1,4 @@
 file(REMOVE_RECURSE
-  "CMakeFiles/vulkan-orbit-viewer.dir/link.d"
   "CMakeFiles/vulkan-orbit-viewer.dir/src/main.cpp.o"
   "CMakeFiles/vulkan-orbit-viewer.dir/src/main.cpp.o.d"
   "CMakeFiles/vulkan-orbit-viewer.dir/src/sdl-context.cpp.o"

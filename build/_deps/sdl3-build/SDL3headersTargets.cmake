@@ -50,7 +50,7 @@ unset(_cmake_expected_targets)
 add_library(SDL3::Headers INTERFACE IMPORTED)
 
 set_target_properties(SDL3::Headers PROPERTIES
-  INTERFACE_INCLUDE_DIRECTORIES "/home/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/sdl3-build/include-revision;/home/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/sdl3-src/include"
+  INTERFACE_INCLUDE_DIRECTORIES "/Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/sdl3-build/include-revision;/Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/sdl3-src/include"
 )
 
 # This file does not depend on other imported targets which have
