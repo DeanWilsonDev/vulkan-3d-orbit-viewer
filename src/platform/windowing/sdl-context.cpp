@@ -7,7 +7,7 @@
 #include <stdexcept>
 #include <string>
 
-namespace VulkanOrbitViewer {
+namespace Platform::Windowing {
 
 SdlContext::SdlContext(const std::string& title, int width, int height)
 {
@@ -48,4 +48,4 @@ bool SdlContext::ProcessEvents()
 
   return true;
 }
-}  // namespace VulkanOrbitViewer
+}  // namespace Platform::Windowing

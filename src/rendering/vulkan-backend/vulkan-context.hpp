@@ -8,9 +8,9 @@
 #include <cstdint>
 #include <optional>
 
-namespace Renderer3D {
+namespace Rendering::VulkanBackend {
 
-struct QueueFamilyIndicies {
+struct QueueFamilyIndices {
   std::optional<uint32_t> graphics;
   std::optional<uint32_t> present;
 
@@ -32,7 +32,9 @@ class VulkanContext {
   VkDevice GetLogicalDevice() const { return this->logicalDevice; }
   VkQueue GetGraphicsQueue() const { return this->graphicsQueue; }
   VkQueue GetPresentQueue() const { return this->presentQueue; }
-  const QueueFamilyIndicies& GetQueueFamilies() const { return this->queueFamilies; }
+  const QueueFamilyIndices& GetQueueFamilies() const { return this->queueFamilies; }
+
+  void WaitIdle() const;
 
  private:
   void CreateInstance(SDL_Window* window, const ApplicationInfo& applicationInfo);
@@ -51,6 +53,6 @@ class VulkanContext {
   VkQueue graphicsQueue = VK_NULL_HANDLE;
   VkQueue presentQueue = VK_NULL_HANDLE;
 
-  QueueFamilyIndicies queueFamilies;
+  QueueFamilyIndices queueFamilies;
 };
-}  // namespace Renderer3D
+}  // namespace Rendering::VulkanBackend

@@ -4,7 +4,7 @@
 #include <SDL3/SDL.h>
 #include <string>
 
-namespace VulkanOrbitViewer {
+namespace Platform::Windowing {
 
 class SdlContext {
  public:
@@ -22,4 +22,4 @@ class SdlContext {
  private:
   SDL_Window* window = nullptr;
 };
-}  // namespace VulkanOrbitViewer
+}  // namespace Platform::Windowing

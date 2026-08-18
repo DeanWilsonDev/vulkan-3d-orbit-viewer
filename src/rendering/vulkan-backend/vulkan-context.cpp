@@ -10,7 +10,7 @@
 #include <vector>
 #include <vulkan/vulkan_core.h>
 
-namespace Renderer3D {
+namespace Rendering::VulkanBackend {
 
 namespace {
 
@@ -209,9 +209,9 @@ void VulkanContext::CreateSurface(SDL_Window* window)
   }
 }
 
-static QueueFamilyIndicies FindQueueFamilies(VkPhysicalDevice device, VkSurfaceKHR surface)
+static QueueFamilyIndices FindQueueFamilies(VkPhysicalDevice device, VkSurfaceKHR surface)
 {
-  QueueFamilyIndicies indices;
+  QueueFamilyIndices indices;
 
   uint32_t count = 0;
   vkGetPhysicalDeviceQueueFamilyProperties(device, &count, nullptr);
@@ -273,7 +273,7 @@ void VulkanContext::PickPhysicalDevice()
 
   // SIDE QUEST: Implement device scoring to prefer a descrete GPU.
   for (VkPhysicalDevice device : devices) {
-    QueueFamilyIndicies indices = FindQueueFamilies(device, this->surface);
+    QueueFamilyIndices indices = FindQueueFamilies(device, this->surface);
 
     if (indices.IsComplete() && DeviceSupportsRequiredExtensions(device)) {
       this->physicalDevice = device;
@@ -341,4 +341,9 @@ void VulkanContext::CreateLogicalDevice()
   std::cout << "[vulkan] logical device and queues created\n";
 }
 
-}  // namespace Renderer3D
+void VulkanContext::WaitIdle() const
+{
+  vkDeviceWaitIdle(this->logicalDevice);
+}
+
+}  // namespace Rendering::VulkanBackend

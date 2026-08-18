@@ -1,5 +1,5 @@
 #include "sdl-context.hpp"
-#include "vulkan-context.hpp"
+#include "rendering/vulkan-backend/vulkan-context.hpp"
 #include "application-info.hpp"
 
 #include <cstdlib>
@@ -25,7 +25,7 @@ int main()
         .engineName = "No Engine",
     };
 
-    Renderer3D::VulkanContext vulkan(sdl.GetWindow(), appInfo, ENABLE_VALIDATION);
+    Rendering::VulkanBackend::VulkanContext vulkan(sdl.GetWindow(), appInfo, ENABLE_VALIDATION);
     std::cout << "Vulkan initialised successfully";
 
     bool running = true;
