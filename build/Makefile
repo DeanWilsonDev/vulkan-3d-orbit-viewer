@@ -277,53 +277,77 @@ src/main.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/vulkan-orbit-viewer.dir/build.make CMakeFiles/vulkan-orbit-viewer.dir/src/main.cpp.s
 .PHONY : src/main.cpp.s
 
-src/sdl-context.o: src/sdl-context.cpp.o
-.PHONY : src/sdl-context.o
+src/platform/windowing/sdl-context.o: src/platform/windowing/sdl-context.cpp.o
+.PHONY : src/platform/windowing/sdl-context.o
 
 # target to build an object file
-src/sdl-context.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/vulkan-orbit-viewer.dir/build.make CMakeFiles/vulkan-orbit-viewer.dir/src/sdl-context.cpp.o
-.PHONY : src/sdl-context.cpp.o
+src/platform/windowing/sdl-context.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/vulkan-orbit-viewer.dir/build.make CMakeFiles/vulkan-orbit-viewer.dir/src/platform/windowing/sdl-context.cpp.o
+.PHONY : src/platform/windowing/sdl-context.cpp.o
 
-src/sdl-context.i: src/sdl-context.cpp.i
-.PHONY : src/sdl-context.i
+src/platform/windowing/sdl-context.i: src/platform/windowing/sdl-context.cpp.i
+.PHONY : src/platform/windowing/sdl-context.i
 
 # target to preprocess a source file
-src/sdl-context.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/vulkan-orbit-viewer.dir/build.make CMakeFiles/vulkan-orbit-viewer.dir/src/sdl-context.cpp.i
-.PHONY : src/sdl-context.cpp.i
+src/platform/windowing/sdl-context.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/vulkan-orbit-viewer.dir/build.make CMakeFiles/vulkan-orbit-viewer.dir/src/platform/windowing/sdl-context.cpp.i
+.PHONY : src/platform/windowing/sdl-context.cpp.i
 
-src/sdl-context.s: src/sdl-context.cpp.s
-.PHONY : src/sdl-context.s
+src/platform/windowing/sdl-context.s: src/platform/windowing/sdl-context.cpp.s
+.PHONY : src/platform/windowing/sdl-context.s
 
 # target to generate assembly for a file
-src/sdl-context.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/vulkan-orbit-viewer.dir/build.make CMakeFiles/vulkan-orbit-viewer.dir/src/sdl-context.cpp.s
-.PHONY : src/sdl-context.cpp.s
+src/platform/windowing/sdl-context.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/vulkan-orbit-viewer.dir/build.make CMakeFiles/vulkan-orbit-viewer.dir/src/platform/windowing/sdl-context.cpp.s
+.PHONY : src/platform/windowing/sdl-context.cpp.s
 
-src/vulkan-context.o: src/vulkan-context.cpp.o
-.PHONY : src/vulkan-context.o
+src/rendering/vulkan-backend/swapchain.o: src/rendering/vulkan-backend/swapchain.cpp.o
+.PHONY : src/rendering/vulkan-backend/swapchain.o
 
 # target to build an object file
-src/vulkan-context.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/vulkan-orbit-viewer.dir/build.make CMakeFiles/vulkan-orbit-viewer.dir/src/vulkan-context.cpp.o
-.PHONY : src/vulkan-context.cpp.o
+src/rendering/vulkan-backend/swapchain.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/vulkan-orbit-viewer.dir/build.make CMakeFiles/vulkan-orbit-viewer.dir/src/rendering/vulkan-backend/swapchain.cpp.o
+.PHONY : src/rendering/vulkan-backend/swapchain.cpp.o
 
-src/vulkan-context.i: src/vulkan-context.cpp.i
-.PHONY : src/vulkan-context.i
+src/rendering/vulkan-backend/swapchain.i: src/rendering/vulkan-backend/swapchain.cpp.i
+.PHONY : src/rendering/vulkan-backend/swapchain.i
 
 # target to preprocess a source file
-src/vulkan-context.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/vulkan-orbit-viewer.dir/build.make CMakeFiles/vulkan-orbit-viewer.dir/src/vulkan-context.cpp.i
-.PHONY : src/vulkan-context.cpp.i
+src/rendering/vulkan-backend/swapchain.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/vulkan-orbit-viewer.dir/build.make CMakeFiles/vulkan-orbit-viewer.dir/src/rendering/vulkan-backend/swapchain.cpp.i
+.PHONY : src/rendering/vulkan-backend/swapchain.cpp.i
 
-src/vulkan-context.s: src/vulkan-context.cpp.s
-.PHONY : src/vulkan-context.s
+src/rendering/vulkan-backend/swapchain.s: src/rendering/vulkan-backend/swapchain.cpp.s
+.PHONY : src/rendering/vulkan-backend/swapchain.s
 
 # target to generate assembly for a file
-src/vulkan-context.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/vulkan-orbit-viewer.dir/build.make CMakeFiles/vulkan-orbit-viewer.dir/src/vulkan-context.cpp.s
-.PHONY : src/vulkan-context.cpp.s
+src/rendering/vulkan-backend/swapchain.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/vulkan-orbit-viewer.dir/build.make CMakeFiles/vulkan-orbit-viewer.dir/src/rendering/vulkan-backend/swapchain.cpp.s
+.PHONY : src/rendering/vulkan-backend/swapchain.cpp.s
+
+src/rendering/vulkan-backend/vulkan-context.o: src/rendering/vulkan-backend/vulkan-context.cpp.o
+.PHONY : src/rendering/vulkan-backend/vulkan-context.o
+
+# target to build an object file
+src/rendering/vulkan-backend/vulkan-context.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/vulkan-orbit-viewer.dir/build.make CMakeFiles/vulkan-orbit-viewer.dir/src/rendering/vulkan-backend/vulkan-context.cpp.o
+.PHONY : src/rendering/vulkan-backend/vulkan-context.cpp.o
+
+src/rendering/vulkan-backend/vulkan-context.i: src/rendering/vulkan-backend/vulkan-context.cpp.i
+.PHONY : src/rendering/vulkan-backend/vulkan-context.i
+
+# target to preprocess a source file
+src/rendering/vulkan-backend/vulkan-context.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/vulkan-orbit-viewer.dir/build.make CMakeFiles/vulkan-orbit-viewer.dir/src/rendering/vulkan-backend/vulkan-context.cpp.i
+.PHONY : src/rendering/vulkan-backend/vulkan-context.cpp.i
+
+src/rendering/vulkan-backend/vulkan-context.s: src/rendering/vulkan-backend/vulkan-context.cpp.s
+.PHONY : src/rendering/vulkan-backend/vulkan-context.s
+
+# target to generate assembly for a file
+src/rendering/vulkan-backend/vulkan-context.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/vulkan-orbit-viewer.dir/build.make CMakeFiles/vulkan-orbit-viewer.dir/src/rendering/vulkan-backend/vulkan-context.cpp.s
+.PHONY : src/rendering/vulkan-backend/vulkan-context.cpp.s
 
 # Help Target
 help:
@@ -347,12 +371,15 @@ help:
 	@echo "... src/main.o"
 	@echo "... src/main.i"
 	@echo "... src/main.s"
-	@echo "... src/sdl-context.o"
-	@echo "... src/sdl-context.i"
-	@echo "... src/sdl-context.s"
-	@echo "... src/vulkan-context.o"
-	@echo "... src/vulkan-context.i"
-	@echo "... src/vulkan-context.s"
+	@echo "... src/platform/windowing/sdl-context.o"
+	@echo "... src/platform/windowing/sdl-context.i"
+	@echo "... src/platform/windowing/sdl-context.s"
+	@echo "... src/rendering/vulkan-backend/swapchain.o"
+	@echo "... src/rendering/vulkan-backend/swapchain.i"
+	@echo "... src/rendering/vulkan-backend/swapchain.s"
+	@echo "... src/rendering/vulkan-backend/vulkan-context.o"
+	@echo "... src/rendering/vulkan-backend/vulkan-context.i"
+	@echo "... src/rendering/vulkan-backend/vulkan-context.s"
 .PHONY : help
 
 

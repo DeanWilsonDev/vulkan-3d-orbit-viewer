@@ -7,15 +7,21 @@
 },
 {
   "directory": "/Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/build",
-  "command": "/usr/bin/c++  -I/Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/src -I/Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/stb-src -I/Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/sdl3-build/include-revision -I/Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/sdl3-src/include -I/Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/glm-src -I/Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/tinyobjloader-src -isystem /Users/deanwilson/VulkanSDK/1.4.350.0/macOS/include -std=gnu++26 -arch arm64 -o CMakeFiles/vulkan-orbit-viewer.dir/src/sdl-context.cpp.o -c /Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/src/sdl-context.cpp",
-  "file": "/Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/src/sdl-context.cpp",
-  "output": "CMakeFiles/vulkan-orbit-viewer.dir/src/sdl-context.cpp.o"
+  "command": "/usr/bin/c++  -I/Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/src -I/Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/stb-src -I/Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/sdl3-build/include-revision -I/Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/sdl3-src/include -I/Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/glm-src -I/Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/tinyobjloader-src -isystem /Users/deanwilson/VulkanSDK/1.4.350.0/macOS/include -std=gnu++26 -arch arm64 -o CMakeFiles/vulkan-orbit-viewer.dir/src/platform/windowing/sdl-context.cpp.o -c /Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/src/platform/windowing/sdl-context.cpp",
+  "file": "/Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/src/platform/windowing/sdl-context.cpp",
+  "output": "CMakeFiles/vulkan-orbit-viewer.dir/src/platform/windowing/sdl-context.cpp.o"
 },
 {
   "directory": "/Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/build",
-  "command": "/usr/bin/c++  -I/Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/src -I/Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/stb-src -I/Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/sdl3-build/include-revision -I/Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/sdl3-src/include -I/Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/glm-src -I/Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/tinyobjloader-src -isystem /Users/deanwilson/VulkanSDK/1.4.350.0/macOS/include -std=gnu++26 -arch arm64 -o CMakeFiles/vulkan-orbit-viewer.dir/src/vulkan-context.cpp.o -c /Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/src/vulkan-context.cpp",
-  "file": "/Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/src/vulkan-context.cpp",
-  "output": "CMakeFiles/vulkan-orbit-viewer.dir/src/vulkan-context.cpp.o"
+  "command": "/usr/bin/c++  -I/Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/src -I/Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/stb-src -I/Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/sdl3-build/include-revision -I/Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/sdl3-src/include -I/Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/glm-src -I/Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/tinyobjloader-src -isystem /Users/deanwilson/VulkanSDK/1.4.350.0/macOS/include -std=gnu++26 -arch arm64 -o CMakeFiles/vulkan-orbit-viewer.dir/src/rendering/vulkan-backend/vulkan-context.cpp.o -c /Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/src/rendering/vulkan-backend/vulkan-context.cpp",
+  "file": "/Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/src/rendering/vulkan-backend/vulkan-context.cpp",
+  "output": "CMakeFiles/vulkan-orbit-viewer.dir/src/rendering/vulkan-backend/vulkan-context.cpp.o"
+},
+{
+  "directory": "/Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/build",
+  "command": "/usr/bin/c++  -I/Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/src -I/Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/stb-src -I/Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/sdl3-build/include-revision -I/Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/sdl3-src/include -I/Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/glm-src -I/Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/tinyobjloader-src -isystem /Users/deanwilson/VulkanSDK/1.4.350.0/macOS/include -std=gnu++26 -arch arm64 -o CMakeFiles/vulkan-orbit-viewer.dir/src/rendering/vulkan-backend/swapchain.cpp.o -c /Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/src/rendering/vulkan-backend/swapchain.cpp",
+  "file": "/Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/src/rendering/vulkan-backend/swapchain.cpp",
+  "output": "CMakeFiles/vulkan-orbit-viewer.dir/src/rendering/vulkan-backend/swapchain.cpp.o"
 },
 {
   "directory": "/Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/sdl3-build",

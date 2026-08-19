@@ -218,7 +218,7 @@ _deps/sdl3-build/CMakeFiles/SDL3-shared.dir/all: _deps/sdl3-build/CMakeFiles/SDL
 
 # Build rule for subdir invocation for target.
 _deps/sdl3-build/CMakeFiles/SDL3-shared.dir/rule: cmake_check_build_system
-	$(CMAKE_COMMAND) -E cmake_progress_start /Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/CMakeFiles 93
+	$(CMAKE_COMMAND) -E cmake_progress_start /Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/CMakeFiles 92
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 _deps/sdl3-build/CMakeFiles/SDL3-shared.dir/all
 	$(CMAKE_COMMAND) -E cmake_progress_start /Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/CMakeFiles 0
 .PHONY : _deps/sdl3-build/CMakeFiles/SDL3-shared.dir/rule
@@ -277,12 +277,12 @@ _deps/sdl3-build/CMakeFiles/SDL3_test.dir/clean:
 _deps/sdl3-build/CMakeFiles/SDL_uclibc.dir/all:
 	$(MAKE) $(MAKESILENT) -f _deps/sdl3-build/CMakeFiles/SDL_uclibc.dir/build.make _deps/sdl3-build/CMakeFiles/SDL_uclibc.dir/depend
 	$(MAKE) $(MAKESILENT) -f _deps/sdl3-build/CMakeFiles/SDL_uclibc.dir/build.make _deps/sdl3-build/CMakeFiles/SDL_uclibc.dir/build
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/CMakeFiles --progress-num=88,89,90,91,92,93,94,95,96,97 "Built target SDL_uclibc"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/CMakeFiles --progress-num=88,89,90,91,92,93,94,95,96 "Built target SDL_uclibc"
 .PHONY : _deps/sdl3-build/CMakeFiles/SDL_uclibc.dir/all
 
 # Build rule for subdir invocation for target.
 _deps/sdl3-build/CMakeFiles/SDL_uclibc.dir/rule: cmake_check_build_system
-	$(CMAKE_COMMAND) -E cmake_progress_start /Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/CMakeFiles 10
+	$(CMAKE_COMMAND) -E cmake_progress_start /Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/CMakeFiles 9
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 _deps/sdl3-build/CMakeFiles/SDL_uclibc.dir/all
 	$(CMAKE_COMMAND) -E cmake_progress_start /Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/CMakeFiles 0
 .PHONY : _deps/sdl3-build/CMakeFiles/SDL_uclibc.dir/rule
@@ -294,7 +294,7 @@ SDL_uclibc: _deps/sdl3-build/CMakeFiles/SDL_uclibc.dir/rule
 # codegen rule for target.
 _deps/sdl3-build/CMakeFiles/SDL_uclibc.dir/codegen:
 	$(MAKE) $(MAKESILENT) -f _deps/sdl3-build/CMakeFiles/SDL_uclibc.dir/build.make _deps/sdl3-build/CMakeFiles/SDL_uclibc.dir/codegen
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/CMakeFiles --progress-num=88,89,90,91,92,93,94,95,96,97 "Finished codegen for target SDL_uclibc"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/CMakeFiles --progress-num=88,89,90,91,92,93,94,95,96 "Finished codegen for target SDL_uclibc"
 .PHONY : _deps/sdl3-build/CMakeFiles/SDL_uclibc.dir/codegen
 
 # clean rule for target.
@@ -309,12 +309,12 @@ _deps/sdl3-build/CMakeFiles/SDL_uclibc.dir/clean:
 _deps/glm-build/glm/CMakeFiles/glm.dir/all:
 	$(MAKE) $(MAKESILENT) -f _deps/glm-build/glm/CMakeFiles/glm.dir/build.make _deps/glm-build/glm/CMakeFiles/glm.dir/depend
 	$(MAKE) $(MAKESILENT) -f _deps/glm-build/glm/CMakeFiles/glm.dir/build.make _deps/glm-build/glm/CMakeFiles/glm.dir/build
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/CMakeFiles --progress-num= "Built target glm"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/CMakeFiles --progress-num=97 "Built target glm"
 .PHONY : _deps/glm-build/glm/CMakeFiles/glm.dir/all
 
 # Build rule for subdir invocation for target.
 _deps/glm-build/glm/CMakeFiles/glm.dir/rule: cmake_check_build_system
-	$(CMAKE_COMMAND) -E cmake_progress_start /Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/CMakeFiles 0
+	$(CMAKE_COMMAND) -E cmake_progress_start /Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/CMakeFiles 1
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 _deps/glm-build/glm/CMakeFiles/glm.dir/all
 	$(CMAKE_COMMAND) -E cmake_progress_start /Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/CMakeFiles 0
 .PHONY : _deps/glm-build/glm/CMakeFiles/glm.dir/rule
@@ -326,7 +326,7 @@ glm: _deps/glm-build/glm/CMakeFiles/glm.dir/rule
 # codegen rule for target.
 _deps/glm-build/glm/CMakeFiles/glm.dir/codegen:
 	$(MAKE) $(MAKESILENT) -f _deps/glm-build/glm/CMakeFiles/glm.dir/build.make _deps/glm-build/glm/CMakeFiles/glm.dir/codegen
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/CMakeFiles --progress-num= "Finished codegen for target glm"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/CMakeFiles --progress-num=97 "Finished codegen for target glm"
 .PHONY : _deps/glm-build/glm/CMakeFiles/glm.dir/codegen
 
 # clean rule for target.

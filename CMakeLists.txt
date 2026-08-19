@@ -44,8 +44,10 @@ FetchContent_Declare(
 
 FetchContent_MakeAvailable(SDL3 glm tinyobjloader stb)
 
-add_executable(vulkan-orbit-viewer src/main.cpp src/sdl-context.cpp
-                                   src/vulkan-context.cpp)
+add_executable(
+  vulkan-orbit-viewer
+  src/main.cpp src/platform/windowing/sdl-context.cpp
+  src/rendering/vulkan-backend/vulkan-context.cpp src/rendering/vulkan-backend/swapchain.cpp)
 
 target_include_directories(vulkan-orbit-viewer PRIVATE src ${stb_SOURCE_DIR})
 

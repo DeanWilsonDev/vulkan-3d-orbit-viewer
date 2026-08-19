@@ -201,6 +201,21 @@ void Swapchain::Create()
             << (presentMode == VK_PRESENT_MODE_MAILBOX_KHR ? "MAILBOX" : "FIFO") << '\n';
 }
 
+void Swapchain::Destroy()
+{
+  for (VkImageView view : this->imageViews) {
+    vkDestroyImageView(this->context.GetLogicalDevice(), view, nullptr);
+  }
+
+  this->imageViews.clear();
+  this->images.clear();
+
+  if(this->swapchain != VK_NULL_HANDLE){
+    vkDestroySwapchainKHR(this->context.GetLogicalDevice(), this->swapchain, nullptr);
+    this->swapchain = VK_NULL_HANDLE;
+  }
+}
+
 VkSwapchainKHR Swapchain::GetSwapchainHandle() const
 {
   return this->swapchain;

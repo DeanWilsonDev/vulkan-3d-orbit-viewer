@@ -1,6 +1,6 @@
 CMakeFiles/vulkan-orbit-viewer.dir/src/main.cpp.o: \
   /Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/src/main.cpp \
-  /Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/src/sdl-context.hpp \
+  /Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/src/platform/windowing/sdl-context.hpp \
   /Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/sdl3-src/include/SDL3/SDL_video.h \
   /Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/sdl3-src/include/SDL3/SDL_stdinc.h \
   /Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/build/_deps/sdl3-src/include/SDL3/SDL_platform_defines.h \
@@ -492,7 +492,7 @@ CMakeFiles/vulkan-orbit-viewer.dir/src/main.cpp.o: \
   /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/c++/v1/__iterator/empty.h \
   /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/c++/v1/__iterator/reverse_access.h \
   /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/c++/v1/__iterator/size.h \
-  /Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/src/vulkan-context.hpp \
+  /Users/deanwilson/development/projects/vulkan-3d-orbit-viewer/src/rendering/vulkan-backend/vulkan-context.hpp \
   /usr/local/include/vulkan/vulkan.h \
   /usr/local/include/vulkan/vk_platform.h \
   /usr/local/include/vulkan/vulkan_core.h \
